@@ -1,0 +1,4 @@
+To install Beesoft Commander you should start a perl script named install.pl.
+He should be executable (chmod +x rebuild.pl).
+
+Piotr
