@@ -100,6 +100,7 @@ private:
    void md5_create      ();
    void md5_check       ();
    void date_time       ();
+   void drop_files      ( const QMap<QString, QVariant>& );
 };
 
 #endif // INCLUDED_QBtWorkspace_h

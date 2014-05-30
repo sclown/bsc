@@ -73,6 +73,7 @@ public:
       MD5_CREATE,
       MD5_CHECK,
       DATE_TIME,
+      DROP_FILES,
    };
 
 public:

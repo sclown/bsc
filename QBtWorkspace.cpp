@@ -108,6 +108,7 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
    QBtEventsController::instance()->append( this, QBtEvent::MD5_CREATE );
    QBtEventsController::instance()->append( this, QBtEvent::MD5_CHECK );
    QBtEventsController::instance()->append( this, QBtEvent::DATE_TIME );
+   QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
 }
 // end of QBtWorkspace
 
@@ -181,6 +182,9 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
          break;
       case QBtEvent::DATE_TIME:
          date_time();
+         break;
+      case QBtEvent::DROP_FILES:
+         drop_files( event->data(0).toMap() );
          break;
    }
 }
@@ -607,3 +611,21 @@ void QBtWorkspace::date_time()
    }
 }
 // end of date_time
+
+void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
+{
+    QStringList files = userInfo["files"].toStringList();
+    QString dropPath = userInfo["drop_target"].toString();
+    SelectionsSet dropedFiles;
+    foreach (QString file, files) {
+        dropedFiles.insert(file);
+    }
+
+
+    QBtDirCopyDialog dialog( this );
+    dialog.set_source( dropedFiles );
+    dialog.set_destination( dropPath );
+    if( dialog.exec() != QDialog::Accepted ) return;
+    left_panel_->current_view()->refresh();
+    right_panel_->current_view()->refresh();
+}
