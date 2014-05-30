@@ -50,6 +50,8 @@ private:
    QBtDirModel( const QBtDirModel& );
    QBtDirModel& operator=( const QBtDirModel& );
 
+   QVariant dropInfo_;
+
 //******* METHODS *******
 public:
    void update              ( const QString& );
@@ -60,11 +62,16 @@ public:
    void cdup                ();
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
+   QStringList mimeTypes() const;
+   Qt::ItemFlags flags(const QModelIndex &index) const;
+   Qt::DropActions supportedDropActions() const;
+   bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 private slots:
    void work_started_slot   ();
    void items_count_slot    ( qint32 );
    void item_info_slot      ( qint32, QVariant, QStringList );
    void work_finished_slot  ( QString );
+   void notify_drop         ();
 };
 
 #endif // INCLUDED_QBtDirModel_h

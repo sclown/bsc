@@ -39,6 +39,9 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFileIconProvider>
+#include <QMimeData>
+#include <QUrl>
+#include <QTimer>
 
 
 //*******************************************************************
@@ -211,6 +214,40 @@ void QBtDirModel::append_row( const qint32 in_row,
 }
 // end of append_row
 
+QStringList QBtDirModel::mimeTypes() const
+{
+    return QStringList() << "text/uri-list";
+}
+
+Qt::ItemFlags QBtDirModel::flags(const QModelIndex &index) const
+{
+    return Qt::ItemIsSelectable | Qt::ItemIsDragEnabled |
+            Qt::ItemIsDropEnabled | Qt::ItemIsEnabled;
+}
+
+Qt::DropActions QBtDirModel::supportedDropActions() const
+{
+    return Qt::CopyAction | Qt::MoveAction;
+}
+
+bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
+{
+    QList<QUrl> urls = data->urls();
+    QStringList files;
+    foreach (QUrl url, urls) {
+        if(url.scheme() == "file"){
+            files += url.path();
+        }
+    }
+    QMap<QString, QVariant> userInfo;
+    userInfo["action"] = QVariant(action);
+    userInfo["files"] = QVariant(files);
+    userInfo["drop_target"] = current_path();
+    dropInfo_ = userInfo;
+    QTimer::singleShot( 100, this, SLOT( notify_drop() ) );
+    return !files.empty();
+}
+
 //###################################################################
 //#                                                                 #
 //#                   P R I V A T E   S L O T S                     #
@@ -260,3 +297,8 @@ void QBtDirModel::work_finished_slot( const QString in_path )
    busy_ = false;
 }
 // end of work_finished_slot
+
+void QBtDirModel::notify_drop()
+{
+    QBtEventsController::instance()->send_event( QBtEvent::DROP_FILES, dropInfo_ );
+}
