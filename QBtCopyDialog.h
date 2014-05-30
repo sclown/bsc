@@ -39,6 +39,7 @@
 class QProgressBar;
 class QCheckBox;
 class QPushButton;
+class QLineEdit;
 class QBtInfoField;
 
 /*------- class declaration:
@@ -69,6 +70,7 @@ private:
    static const char* const DST_LABEL;
    static const char* const RENAME;
    static const char* const NEW_FILE_NAME;
+   static const char* const SRC_ITEMS_COUNT_TEXT;
 protected:
    static const char* const DIR_NOT_WRITABLE;
    static const char* const DIR_NOT_READABLE;
@@ -83,8 +85,6 @@ protected:
 //******* MEMBERS *******
 private:
    QFontMetrics  const font_metrics_;
-   QBtInfoField* const src_path_;
-   QBtInfoField* const dst_path_;
    QProgressBar* const progress_;
    QCheckBox*    const remove_;
    QCheckBox*    const owner_;
@@ -98,13 +98,16 @@ protected:
    bool                ask_again_;
    SelectionsSet       sources_;
    QString             destpath_;
+   QBtInfoField* const src_path_;
+   QLineEdit*    const dst_path_;
 
 //******* METHODS *******
 public:
    void set_source     ( const SelectionsSet& );
    void set_destination( const QString& );
 private:
-   void showEvent      ( QShowEvent* );
+   void     showEvent           ( QShowEvent* );
+   QString  sourceInitialText   ();
 protected:
    virtual void copy_file  ( const QString&, const QString& ) = 0;
    virtual void copy_dir   ( const QString&, const QString& ) = 0;

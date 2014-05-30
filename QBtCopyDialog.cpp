@@ -42,6 +42,8 @@
 #include <QInputDialog>
 #include <QFileInfo>
 #include <QProcess>
+#include <QDirModel>
+#include <QCompleter>
 #include <QtDebug>
 
 /*------- constants:
@@ -67,6 +69,7 @@ const char* const QBtCopyDialog::NEW_FILE_NAME    = QT_TR_NOOP( "New file name:"
 const char* const QBtCopyDialog::MKDIR_ERROR      = QT_TR_NOOP( "Can't create the directory: %1" );
 const char* const QBtCopyDialog::CANT_DEL_FILE    = QT_TR_NOOP( "Can't remove a file:\n%1" );
 const char* const QBtCopyDialog::CANT_DEL_DIR     = QT_TR_NOOP( "Can't remove a directory:\n%1" );
+const char* const QBtCopyDialog::SRC_ITEMS_COUNT_TEXT    = QT_TR_NOOP( "%1 items" );
 
 
 //*******************************************************************
@@ -74,8 +77,6 @@ const char* const QBtCopyDialog::CANT_DEL_DIR     = QT_TR_NOOP( "Can't remove a 
 //*******************************************************************
 QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , font_metrics_ ( font() )
-, src_path_     ( new QBtInfoField )
-, dst_path_     ( new QBtInfoField )
 , progress_     ( new QProgressBar )
 , remove_       ( new QCheckBox( tr( REMOVE      ) ) )
 , owner_        ( new QCheckBox( tr( OWNER       ) ) )
@@ -88,11 +89,18 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , ask_again_    ( true )
 , sources_      ( SelectionsSet() )
 , destpath_     ( QString() )
+, src_path_     ( new QBtInfoField )
+, dst_path_     ( new QLineEdit )
 {
    reset_progress( 1000 );
    
    QGroupBox* const src_dst_gbox = new QGroupBox( tr( SRC_DST_CAPTION ) );
    QGridLayout* const grid = new QGridLayout( src_dst_gbox );
+
+   QCompleter *completer = new QCompleter(this);
+   completer->setModel(new QDirModel(completer));
+   dst_path_->setCompleter(completer);
+
    QLabel* const src_label = new QLabel( tr( SRC_LABEL ) );
    QLabel* const dst_label = new QLabel( tr( DST_LABEL ) );
    src_label->setBuddy( src_path_ );
@@ -154,11 +162,21 @@ void QBtCopyDialog::showEvent( QShowEvent* const in_event )
       dst_path_->setPalette( p );
    }
    
+   display_paths(sourceInitialText(), destpath_);
    QBtShared::resize_width( this, 40 );
    start_->setDefault( true );
    QDialog::showEvent( in_event );
 }
 // end of showEvent
+
+QString QBtCopyDialog::sourceInitialText()
+{
+    if( sources_.size() == 1 )
+    {
+        return *sources_.begin();
+    }
+    return tr( SRC_ITEMS_COUNT_TEXT ).arg( sources_.size() );
+}
 
 //*******************************************************************
 // started                                                 PROTECTED
@@ -217,19 +235,8 @@ void QBtCopyDialog::set_destination( const QString& in_data )
 //*******************************************************************
 void QBtCopyDialog::display_paths( const QString& in_src_path, const QString& in_dst_path )
 {
-   const qint32 MAXLEN = src_path_->width();
-
-   QString src_path = in_src_path;
-   if( font_metrics_.width( src_path ) > MAXLEN ) {
-      QBtShared::elide( font_metrics_, MAXLEN, src_path );
-   }
-   src_path_->setText( src_path );
-   
-   QString dst_path = in_dst_path;
-   if( font_metrics_.width( dst_path ) > MAXLEN ) {
-      QBtShared::elide( font_metrics_, MAXLEN, dst_path );
-   }
-   dst_path_->setText( dst_path );
+   src_path_->setText( in_src_path );
+   dst_path_->setText( in_dst_path );
 
    QBtShared::idle();
 }

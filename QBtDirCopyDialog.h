@@ -47,6 +47,7 @@ class QBtDirCopyDialog : public QBtCopyDialog
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
    QBtDirCopyDialog( QWidget* = 0 );
+   virtual ~QBtDirCopyDialog();
 private:
    QBtDirCopyDialog( const QBtDirCopyDialog& );
    QBtDirCopyDialog& operator=( const QBtDirCopyDialog& );

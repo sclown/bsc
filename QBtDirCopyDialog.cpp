@@ -35,7 +35,7 @@
 #include <QFileInfo>
 #include <QDateTime>
 #include <QMessageBox>
-#include <QDateTime>
+#include <QLineEdit>
 #include <QtDebug>
 
 /*------- constants:
@@ -49,16 +49,22 @@ const QString     QBtDirCopyDialog::CHOWN   = "chown %1:%2 %3";
 //*******************************************************************
 QBtDirCopyDialog::QBtDirCopyDialog( QWidget* const in_parent ) : QBtCopyDialog( in_parent )
 {
-   setWindowTitle( tr( CAPTION ) );
+    setWindowTitle( tr( CAPTION ) );
 }
 // end of QBtDirCopyDialog
 
+
+QBtDirCopyDialog::~QBtDirCopyDialog()
+{
+
+}
 
 //*******************************************************************
 // start                                      PRIVATE inherited slot
 //*******************************************************************
 void QBtDirCopyDialog::start()
 {
+   destpath_ = dst_path_->text();
    const QFileInfo fi( destpath_ );
    if( !fi.isWritable() ) {
       QMessageBox::critical( this, tr( CAPTION ), tr( DIR_NOT_WRITABLE ).arg( destpath_ ) );
