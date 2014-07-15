@@ -47,7 +47,8 @@ SOURCES =  \
 	QBtView.cpp \
 	QBtViewDelegate.cpp \
 	QBtViewModel.cpp \
-	QBtWiper.cpp \
+        QBtViewSelectionModel.cpp \
+        QBtWiper.cpp \
 	QBtWorkedThread.cpp \
 	QBtWorkspace.cpp \
 	bsc.cpp
@@ -99,8 +100,9 @@ HEADERS =  \
 	QBtView.h \
 	QBtViewDelegate.h \
 	QBtViewItem.h \
-	QBtViewModel.h \
-	QBtViewStandardItem.h \
+        QBtViewModel.h \
+        QBtViewSelectionModel.h \
+        QBtViewStandardItem.h \
 	QBtWiper.h \
 	QBtWorkedThread.h \
 	QBtWorkspace.h

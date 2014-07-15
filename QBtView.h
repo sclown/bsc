@@ -39,6 +39,7 @@
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QBtViewModel;
+class QBtViewSelectionModel;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -67,6 +68,7 @@ private:
 //****** MEMBERS *******
 private:
    QBtViewModel*         model_;
+   QBtViewSelectionModel*  selectionModel_;
    std::queue< qint32 >  requests_;
    std::stack< QString > initial_file_stack_;
 
@@ -78,6 +80,9 @@ private:
    static const char* const RENAME_CAPTION;
    static const char* const RENAME_PROMPT;
    static const char* const RENAME_ERROR;
+   static const char* const MASK_SELECTION_CAPTION;
+   static const char* const MASK_SELECTION_PROMPT;
+   static const char* const MASK_DESELECTION_PROMPT;
 
 //******* METHODS *******
 public:
@@ -88,7 +93,7 @@ public:
    void           update                   ( const QString& );
    const QString& current_path             () const;
    void           goto_top                 ();
-   const SelectionsSet&  get_selected_items() const;
+   SelectionsSet  get_selected_items() const;
    void           refresh                  ( const QString& = QString());
    void           unselect_all             ();
 private:
@@ -113,15 +118,16 @@ private:
    void    edit              ();
    void    console_start     () const;
    bool    is_ext_declared   ( const QString&, QString&, QString& ) const;
+   QString get_selection_mask ( bool select ) const;
 private slots:
    void    enter            ( const QModelIndex& );
+   void    selectionChangedSlot( const QItemSelection & selected, const QItemSelection & deselected );
+   void    request_finished();
 signals:
    void    dir_count        ( qint32 );
    void    file_count       ( qint32 );
    void    select_count     ( qint32 );
    void    path_changed     ( const QString& );
-private slots:
-   void    request_finished();
 };
 
 #endif // INCLUDED_QBtView_h

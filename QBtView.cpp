@@ -31,6 +31,8 @@
 #include "QBtConfig.h"
 #include "QBtSettings.h"
 #include "QBtDirModel.h"
+#include "QBtViewSelectionModel.h"
+#include "QBtViewItem.h"
 #include "QBtViewDelegate.h"
 #include "QBtEventsController.h"
 #include "QBtDeleteQuest.h"
@@ -58,6 +60,9 @@ const char* const QBtView::MKDIR_ERROR    = QT_TR_NOOP( "Can't create the subdir
 const char* const QBtView::RENAME_CAPTION = QT_TR_NOOP( "Rename a file/dir"  );
 const char* const QBtView::RENAME_PROMPT  = QT_TR_NOOP( "Enter a new file name:" );
 const char* const QBtView::RENAME_ERROR   = QT_TR_NOOP( "Can't rename the file\nfrom: %1\nto: %2" );
+const char* const QBtView::MASK_SELECTION_CAPTION = QT_TR_NOOP( "File selection" );
+const char* const QBtView::MASK_SELECTION_PROMPT  = QT_TR_NOOP( "Enter selection mask:" );
+const char* const QBtView::MASK_DESELECTION_PROMPT= QT_TR_NOOP( "Enter deselection mask" );
 
 
 //*******************************************************************
@@ -66,6 +71,7 @@ const char* const QBtView::RENAME_ERROR   = QT_TR_NOOP( "Can't rename the file\n
 QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
 : QTreeView ( in_parent )
 , model_    ( new QBtDirModel )
+, selectionModel_ ( 0 )
 {
    setAutoFillBackground( true );
    
@@ -73,7 +79,8 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setRootIsDecorated( false );
    setEditTriggers( NoEditTriggers );
    setAllColumnsShowFocus( true );
-   
+   setSelectionMode(QAbstractItemView::ExtendedSelection);
+
    header()->setStretchLastSection( true );
    header()->setSortIndicator( 0, Qt::AscendingOrder );
    header()->setSortIndicatorShown( true );
@@ -83,7 +90,9 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
 
    connect( model_, SIGNAL( update_finished() ), this, SLOT( request_finished() ) );
    setModel( model_ );
-   
+   selectionModel_ = new QBtViewSelectionModel( model_ );
+   setSelectionModel( selectionModel_ );
+
    requests_.push( RESIZE_COLUMNS );
    requests_.push( GOTO_TOP );
    model_->update( in_path );
@@ -105,6 +114,8 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    
    connect( this, SIGNAL( doubleClicked ( const QModelIndex& ) ),
             this, SLOT  ( enter         ( const QModelIndex& ) ) );
+   connect( selectionModel_, SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
+            this, SLOT( selectionChangedSlot( const QItemSelection&, const QItemSelection& ) ) );
 }
 // end of QBtView
 
@@ -495,9 +506,9 @@ const QString& QBtView::current_path() const
 //*******************************************************************
 // get_selected_items                                         PUBLIC
 //*******************************************************************
-const SelectionsSet&  QBtView::get_selected_items() const
+SelectionsSet QBtView::get_selected_items() const
 {
-   return model_->get_selected_items();
+   return selectionModel_->get_selected_items();
 }
 // end of get_selected_items
 
@@ -508,22 +519,21 @@ const SelectionsSet&  QBtView::get_selected_items() const
 //*******************************************************************
 void QBtView::select()
 {
-   const QModelIndex index = currentIndex();
-   if( model_->select( index ) ) {
-      emit select_count( model_->select_count() );
-      const QModelIndex next_index = model_->head_item_index( index.row() + 1 );
-      if( next_index.isValid() ) {
-         setCurrentIndex( next_index );
-         scrollTo( next_index );
-      }
-      else {
-         // Co prawda na tej pozycji juz jestesmy,
-         // ale wywoluje te funkcje po to aby zostala
-         // ona ponownie odmalowana na ekranie.
-         // [Ostatni i zaznaczony jednoczesnie.]
-         scrollTo( index );
-      }
-   }
+    const QModelIndex index = currentIndex();
+    selectionModel_->select( index, QItemSelectionModel::Toggle );
+    emit select_count( selectionModel_->selection_count() );
+    const QModelIndex next_index = model_->head_item_index( index.row() + 1 );
+    if( next_index.isValid() ) {
+        setCurrentIndex( next_index );
+        scrollTo( next_index );
+    }
+    else {
+        // Co prawda na tej pozycji juz jestesmy,
+        // ale wywoluje te funkcje po to aby zostala
+        // ona ponownie odmalowana na ekranie.
+        // [Ostatni i zaznaczony jednoczesnie.]
+        scrollTo( index );
+    }
 }
 // end of select
 
@@ -624,6 +634,11 @@ void QBtView::enter( const QModelIndex& in_index )
 }
 // end of enter
 
+void QBtView::selectionChangedSlot( const QItemSelection &selected, const QItemSelection &deselected )
+{
+    emit select_count( selectionModel_->selection_count() );
+}
+
 //*******************************************************************
 // is_ext_declared                                           PRIVATE
 //*******************************************************************
@@ -649,6 +664,22 @@ bool QBtView::is_ext_declared( const QString& in_ext, QString& out_prg, QString&
    return false;
 }
 // end of is_ext_declared
+
+QString QBtView::get_selection_mask(bool select) const
+{
+    bool ok = false;
+    const QString mask = QInputDialog::getText(
+                            const_cast<QBtView*>(this),
+                            tr( MASK_SELECTION_CAPTION ),
+                            select ? tr( MASK_SELECTION_PROMPT ) : tr( MASK_DESELECTION_PROMPT ),
+                            QLineEdit::Normal,
+                            QString(),
+                            &ok );
+    if( !ok ) {
+        return "";
+    }
+    return mask;
+}
 
 //*******************************************************************
 // refresh                                                    PUBLIC
@@ -690,8 +721,9 @@ void QBtView::jump_to_home()
 //*******************************************************************
 void QBtView::select_mask()
 {
-   model_->select_mask( true, this );
-   emit select_count( model_->select_count() );
+    QString mask = get_selection_mask(true);
+    selectionModel_->select_mask( mask, QItemSelectionModel::Select );
+    emit select_count( selectionModel_->selection_count() );
 }
 // end of select_mask
 
@@ -700,8 +732,9 @@ void QBtView::select_mask()
 //*******************************************************************
 void QBtView::deselect_mask()
 {
-   model_->select_mask( false, this );
-   emit select_count( model_->select_count() );
+    QString mask = get_selection_mask(true);
+    selectionModel_->select_mask( mask, QItemSelectionModel::Deselect );
+    emit select_count( selectionModel_->selection_count() );
 }
 // end of deselect_mask
 
@@ -710,8 +743,8 @@ void QBtView::deselect_mask()
 //*******************************************************************
 void QBtView::revert_selection()
 {
-   model_->revert_selections();
-   emit select_count( model_->select_count() );
+    selectionModel_->select_all(QItemSelectionModel::Toggle);
+    emit select_count( selectionModel_->selection_count() );
 }
 // end of revert_selection
 
@@ -720,8 +753,8 @@ void QBtView::revert_selection()
 //*******************************************************************
 void QBtView::select_all()
 {
-   model_->select_all();
-   emit select_count( model_->select_count() );
+    selectionModel_->select_all(QItemSelectionModel::Select);
+    emit select_count( selectionModel_->selection_count() );
 }
 // end of select_all
 
@@ -730,8 +763,8 @@ void QBtView::select_all()
 //*******************************************************************
 void QBtView::unselect_all()
 {
-   model_->clear_selections();
-   emit select_count( model_->select_count() );
+    selectionModel_->select_all(QItemSelectionModel::Deselect);
+   emit select_count( selectionModel_->selection_count() );
 }
 // end of unselect_all
 
@@ -758,7 +791,7 @@ void QBtView::request_finished()
    }
    emit dir_count   ( model_->dir_count ()   );
    emit file_count  ( model_->file_count()   );
-   emit select_count( model_->select_count() );
+   emit select_count( selectionModel_->selection_count() );
    emit path_changed( model_->current_path() );
 }
 // end of request_finished

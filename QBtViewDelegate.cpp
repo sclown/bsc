@@ -34,6 +34,7 @@
 #include "QBtConfig.h"
 #include <QApplication>
 #include <QPalette>
+#include <QPainter>
 #include <QtDebug>
 
 //*******************************************************************
@@ -63,6 +64,7 @@ void QBtViewDelegate::paint(  QPainter*                   in_painter,
 
    QStyleOptionViewItem options = in_options;
    QPalette palette             = options.palette;
+
 
       
    if( has_focus ) {
@@ -111,5 +113,20 @@ void QBtViewDelegate::paint(  QPainter*                   in_painter,
    }
    options.palette = palette;
    QItemDelegate::paint( in_painter, options, in_index );
+   if(has_focus && current_row)
+   {
+       in_painter->setPen( QPen( Qt::black, 1, Qt::DotLine ) );
+       QRect oRect = options.rect.adjusted( 0,1,0,0 );
+       in_painter->drawLine( oRect.topLeft(), oRect.topRight());
+       in_painter->drawLine( oRect.bottomLeft(), oRect.bottomRight());
+       if(in_index.column()==0) {
+           in_painter->drawLine( oRect.topLeft(), oRect.bottomLeft());
+       }
+       if(in_index.column()==model->columnCount()-1) {
+           in_painter->drawLine( oRect.topRight(), oRect.bottomRight());
+       }
+
+
+   }
 }
 // end of paint

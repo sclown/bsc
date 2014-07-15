@@ -139,10 +139,21 @@ QBtViewItem* QBtViewModel::head_item( const QModelIndex& in_index ) const
    return 0;
 }
 QBtViewItem* QBtViewModel::head_item( const qint32 in_row ) const
+
 {
    return dynamic_cast<QBtViewItem*>( invisibleRootItem()->child( in_row, 0 ) );
 }
 // end of head_item
+
+QModelIndexList QBtViewModel::row_indexes(const qint32 in_row) const
+{
+    QModelIndexList result;
+    const qint32 n = invisibleRootItem()->columnCount();
+    for( qint32 i = 0; i < n; ++i ) {
+        result.append( indexFromItem( invisibleRootItem()->child( in_row, i ) ) );
+    }
+    return result;
+}
 
 //*******************************************************************
 // head_item_index                                            PUBLIC
@@ -166,127 +177,3 @@ bool QBtViewModel::valid_dir_name( const QString& in_path )
    return true;
 }
 // end of valid_dir_name
-
-//*******************************************************************
-// select_this_item                                          PRIVATE
-//*******************************************************************
-void QBtViewModel::select_this_item( const bool in_selected, QBtViewItem* const in_it )
-{
-   if( in_selected ) selections_.insert( in_it->finfo().path() );
-   else              selections_.erase ( in_it->finfo().path() );
-   in_it->selected( in_selected );
-}
-// end of select_this_item
-
-//*******************************************************************
-// select                                                     PUBLIC
-//*******************************************************************
-bool QBtViewModel::select( const QModelIndex& in_index )
-{
-   QBtViewItem* const it = head_item( in_index );
-   if( it ) {
-      if( it->text() != PARENT_DIR ) {
-         select_this_item( !it->selected(), it );
-         return true;
-      }
-   }
-   return false;
-}
-// end of select
-
-//*******************************************************************
-// select_mask                                                PUBLIC
-//*******************************************************************
-void QBtViewModel::select_mask( const bool in_selection_state, QWidget* const in_widget )
-{
-   const qint32 n = rowCount();
-
-   if( n > 0 ) {
-      bool ok = false;
-      const QString mask = QInputDialog::getText(
-                              in_widget,
-                              tr( MASK_SELECTION_CAPTION ),
-                              in_selection_state ? tr( MASK_SELECTION_PROMPT ) : tr( MASK_DESELECTION_PROMPT ),
-                              QLineEdit::Normal,
-                              QString(),
-                              &ok );
-      if( ok ) {
-         QRegExp exp( mask, Qt::CaseSensitive, QRegExp::Wildcard );
-         
-         for( qint32 i = 0; i < n; ++i ) {
-            QBtViewItem* const it = head_item( i );
-            if( it ) {
-               if( PARENT_DIR == it->text() ) continue;
-               if( exp.indexIn( it->finfo().full_name() ) != -1 ) {
-                  select_this_item( in_selection_state, it );
-               }
-            }
-         }     
-      }
-   }
-   emit dataChanged( QModelIndex(), QModelIndex() );
-}
-// end of select_mask
-
-//*******************************************************************
-// revert_selections                                          PUBLIC
-//*******************************************************************
-void QBtViewModel::revert_selections()
-{
-   const qint32 n = rowCount();
-   for( qint32 i = 0; i < n; ++i ) {
-      QBtViewItem* const it = head_item( i );
-      if( it ) {
-         if( PARENT_DIR == it->text() ) continue;
-         select_this_item( !it->selected(), it );
-      }
-   }
-   emit dataChanged( QModelIndex(), QModelIndex() );
-}
-// end of revert_selections
-
-//*******************************************************************
-// clear_selections                                           PUBLIC
-//*******************************************************************
-void QBtViewModel::clear_selections()
-{
-   selections_.clear();
-   
-   const qint32 n = rowCount();
-   for( qint32 i = 0; i < n; ++i ) {
-      QBtViewItem* const it = head_item( i );
-      if( it ) {
-         if( PARENT_DIR == it->text() ) continue;
-         select_this_item( false, it );
-      }
-   }
-   emit dataChanged( QModelIndex(), QModelIndex() );
-}
-// end of clear_selections
-
-//*******************************************************************
-// select_all                                                 PUBLIC
-//*******************************************************************
-void QBtViewModel::select_all()
-{
-   selections_.clear();
-   const qint32 n = rowCount();
-   for( qint32 i = 0; i < n; ++i ) {
-      QBtViewItem* const it = head_item( i );
-      if( it ) {
-         if( PARENT_DIR == it->text() ) continue;
-         select_this_item( true, it );
-      }
-   }
-   emit dataChanged( QModelIndex(), QModelIndex() );
-}
-// end of select_all
-
-//*******************************************************************
-// get_selected_items                                         PUBLIC
-//*******************************************************************
-const SelectionsSet& QBtViewModel::get_selected_items() const
-{
-   return selections_;
-}
-// end of get_selected_items

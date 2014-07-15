@@ -98,12 +98,7 @@ public:
    QBtViewItem*          head_item         ( const QModelIndex& ) const;
    QBtViewItem*          head_item         ( qint32 ) const;
    QModelIndex           head_item_index   ( qint32 ) const;
-   bool                  select            ( const QModelIndex& );
-   void                  select_mask       ( bool, QWidget* = 0 );
-   void                  revert_selections ();
-   void                  clear_selections  ();
-   void                  select_all        ();
-   const SelectionsSet&  get_selected_items() const;
+   QModelIndexList       row_indexes        (const qint32 in_row ) const;
    //--------------------------------------------
    qint32                dir_count         () const { return dir_count_;         }
    qint32                file_count        () const { return file_count_;        }
