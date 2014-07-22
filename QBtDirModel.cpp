@@ -130,6 +130,16 @@ void QBtDirModel::cdup()
 }
 // end of cdup
 
+bool QBtDirModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+    return QBtViewModel::removeRows(row, count, parent);
+}
+
+bool QBtDirModel::setItemData(const QModelIndex &index, const QMap<int, QVariant> &roles)
+{
+    return QBtViewModel::setItemData(index, roles);
+}
+
 //*******************************************************************
 // append_row                                                PRIVATE
 //*******************************************************************
@@ -228,6 +238,20 @@ Qt::ItemFlags QBtDirModel::flags(const QModelIndex &index) const
 Qt::DropActions QBtDirModel::supportedDropActions() const
 {
     return Qt::CopyAction | Qt::MoveAction;
+}
+
+QMimeData *QBtDirModel::mimeData(const QModelIndexList &indexes) const
+{
+    QMimeData *mimeData = new QMimeData();
+    QList<QUrl> urls;
+    foreach (const QModelIndex &index, indexes) {
+        if (index.isValid() && index.column()==0) {
+            urls.append(QUrl("file://" + file_path(index)));
+        }
+    }
+    mimeData->setUrls(urls);
+    return mimeData;
+
 }
 
 bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)

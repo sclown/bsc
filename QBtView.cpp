@@ -50,6 +50,7 @@
 #include <QProcess>
 #include <QtDebug>
 #include <QMessageBox>
+#include <QDrag>
 using namespace std;
 
 /*------- constants:
@@ -92,6 +93,7 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setModel( model_ );
    selectionModel_ = new QBtViewSelectionModel( model_ );
    setSelectionModel( selectionModel_ );
+   setDragDropOverwriteMode(false);
 
    requests_.push( RESIZE_COLUMNS );
    requests_.push( GOTO_TOP );
@@ -764,9 +766,15 @@ void QBtView::select_all()
 void QBtView::unselect_all()
 {
     selectionModel_->select_all(QItemSelectionModel::Deselect);
-   emit select_count( selectionModel_->selection_count() );
+    emit select_count( selectionModel_->selection_count() );
 }
 // end of unselect_all
+
+void QBtView::startDrag(Qt::DropActions supportedActions)
+{
+    QTreeView::startDrag(supportedActions);
+    refresh();
+}
 
 //*******************************************************************
 // request_finished                                     PRIVATE slot

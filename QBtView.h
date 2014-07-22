@@ -96,6 +96,8 @@ public:
    SelectionsSet  get_selected_items() const;
    void           refresh                  ( const QString& = QString());
    void           unselect_all             ();
+protected:
+   virtual void startDrag(Qt::DropActions supportedActions);
 private:
    void    settings          ();
    void    keyPressEvent     ( QKeyEvent* );

@@ -60,11 +60,14 @@ public:
    bool is_dir              ( const QModelIndex& );
    bool is_readable         ( const QModelIndex& );
    void cdup                ();
+   bool removeRows          ( int row, int count, const QModelIndex &parent );
+   bool setItemData         ( const QModelIndex &index, const QMap<int, QVariant> &roles );
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
    QStringList mimeTypes() const;
    Qt::ItemFlags flags(const QModelIndex &index) const;
    Qt::DropActions supportedDropActions() const;
+   QMimeData* mimeData(const QModelIndexList &indexes) const;
    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
 private slots:
    void work_started_slot   ();
