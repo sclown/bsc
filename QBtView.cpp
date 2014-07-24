@@ -51,6 +51,7 @@
 #include <QtDebug>
 #include <QMessageBox>
 #include <QDrag>
+#include <QDesktopServices>
 using namespace std;
 
 /*------- constants:
@@ -318,8 +319,7 @@ void QBtView::find()
    model_->clear();
    const QFileInfo fi( file_path );
    requests_.push( RESIZE_COLUMNS );
-   requests_.push( INITIAL_FILE_SELECT );
-   initial_file_stack_.push( fi.fileName() );
+   set_initial_file_request( fi.fileName() );
    model_->update( fi.absolutePath() );
 }
 // end of find
@@ -582,57 +582,43 @@ void QBtView::console_start() const
 //*******************************************************************
 void QBtView::enter( const QModelIndex& in_index )
 {
-   const QString fname = model_->file_full_name( in_index ); // tak ma byc ze wzgledu na ..
-   const QFileInfo fi( model_->file_path( in_index ) );
-   const QString fpath = fi.absoluteFilePath();
-   const QString dir = fi.absolutePath();
-   
-   if( fi.isDir() ) {                                 // KATALOG
-      if( fi.isExecutable() && fi.isReadable() ) {
-         if( ".." == fname ) {
-            one_level_up();
-         }
-         else {
-            initial_file_stack_.push( fi.fileName() );
-            requests_.push( GOTO_TOP );
-            model_->update( fpath );
-         }
-      }
-      return;
-   }
-   else {                                             // PLIK (NIE KATALOG)
-      if( fi.isExecutable() ) {                       // wykonywalne
-         if( QBtShared::is_binary_file( fpath ) ) {   // program
+    const QString fname = model_->file_full_name( in_index ); // tak ma byc ze wzgledu na ..
+    const QFileInfo fi( model_->file_path( in_index ) );
+    const QString fpath = fi.absoluteFilePath();
+    const QString dir = fi.absolutePath();
+
+    if( fi.isDir() ) {                                 // KATALOG
+        if( fi.isExecutable() && fi.isReadable() ) {
+            if( ".." == fname ) {
+                one_level_up();
+            }
+            else if(fi.isBundle() && fpath.endsWith(".app"))
+            {
+                QDesktopServices::openUrl(QUrl::fromLocalFile(fpath));
+            }
+            else {
+                initial_file_stack_.push( fi.fileName() );
+                requests_.push( GOTO_TOP );
+                model_->update( fpath );
+            }
+        }
+        return;
+    }
+    if( fi.isExecutable() ) {                       // wykonywalne
+        if( QBtShared::is_binary_file( fpath ) ) {   // program
             static const QString PRG = "%1 &";
             system( PRG.arg( fpath ).toLocal8Bit() );
-         }
-         else {                                       // skrypt
+        }
+        else {                                       // skrypt
             static const QString GNOME = "gnome-terminal --working-directory=%1 --command=%2";
             static const QString KDE = "konsole --workdir %1 -e %2";
             const QString cmd = QBtShared::is_gnome() ? GNOME : KDE;
             system( cmd.arg( dir ).arg( fpath ).toLocal8Bit() );
-         }
-      }
-      else {                                          // ZWYKLY PLIK
-         const QString ext = fi.suffix().toLower();
-         QString prg = QString();
-         QString par = QString();
-         if( is_ext_declared( ext, prg, par  ) ) {
-            par.replace( "$dir", fi.absolutePath() );
-            par.replace( "$name", fi.fileName() );
-            par.replace( "$path", fi.absoluteFilePath() );
-            const QString cmd = "\"%1\" \"%2\" &";
-            system( cmd.arg( prg ).arg( par ).toLocal8Bit() );
-         }
-         else {
-            static const QString GNOME = "gnome-open %1";
-            static const QString KDE   = "kfmclient exec %1";
-//            const QString cmd = QBtShared::is_gnome() ? GNOME : KDE;
-            const QString cmd = "open %1";
-            system( cmd.arg( fpath ).toLocal8Bit() );
-         }
-      }
-   }
+        }
+    }
+    else {                                          // ZWYKLY PLIK
+        QDesktopServices::openUrl(QUrl::fromLocalFile(fpath));
+    }
 }
 // end of enter
 
@@ -689,8 +675,7 @@ QString QBtView::get_selection_mask(bool select) const
 void QBtView::refresh( const QString& in_path )
 {
    requests_.push( RESIZE_COLUMNS );
-   requests_.push( INITIAL_FILE_SELECT );
-   initial_file_stack_.push( in_path.isEmpty() ? selected_file_full_name() : in_path );
+   set_initial_file_request( in_path.isEmpty() ? selected_file_full_name() : in_path );
    model_->refresh();
 }
 // end of refresh
@@ -700,8 +685,14 @@ void QBtView::refresh( const QString& in_path )
 //*******************************************************************
 void QBtView::one_level_up()
 {
-   requests_.push( INITIAL_FILE_SELECT );
-   model_->cdup();
+    if( initial_file_stack_.empty() ) {
+        QFileInfo info(current_path());
+        if( !info.isRoot() ) {
+            initial_file_stack_.push( info.fileName() );
+        }
+    }
+    requests_.push( INITIAL_FILE_SELECT );
+    model_->cdup();
 }
 // end_level_up
 
