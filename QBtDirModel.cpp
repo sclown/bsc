@@ -58,6 +58,8 @@ QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
             this   , SLOT  ( item_info_slot    ( qint32, QVariant, QStringList ) ) );
    connect( thread_, SIGNAL( work_finished     ( const QString ) ),
             this   , SLOT  ( work_finished_slot( const QString ) ) );
+   connect( &watcher_, SIGNAL( directoryChanged      ( const QString & ) ),
+            this    , SLOT  ( directory_changed_slot ( const QString ) ) );
 }
 // end of QBtDirModel
 
@@ -76,6 +78,7 @@ QBtDirModel::~QBtDirModel()
 //*******************************************************************
 void QBtDirModel::update( const QString& in_path )
 {
+   watcher_.removePath( current_path_ );
    thread_->update( in_path );
 }
 void QBtDirModel::update( const QModelIndex& in_index )
@@ -184,13 +187,6 @@ void QBtDirModel::append_row( const qint32 in_row,
 //      root_it->setChild( in_row, childIndex, item );
 //   }
 //   ++childIndex;
-   {  // Prawa dostepu
-      QBtViewStandardItem* const item = new QBtViewStandardItem;
-      item->setTextAlignment( Qt::AlignLeft );
-      item->setText( in_data[ childIndex ] );
-      root_it->setChild( in_row, childIndex, item );
-   }
-   ++childIndex;
    {  // Rozmiar pliku
       QBtViewStandardItem* const item = new QBtViewStandardItem;
       item->setTextAlignment( Qt::AlignRight );
@@ -206,6 +202,13 @@ void QBtDirModel::append_row( const qint32 in_row,
    ++childIndex;
    {  // Czas
       QBtViewStandardItem* const item = new QBtViewStandardItem;
+      item->setText( in_data[ childIndex ] );
+      root_it->setChild( in_row, childIndex, item );
+   }
+   ++childIndex;
+   {  // Prawa dostepu
+      QBtViewStandardItem* const item = new QBtViewStandardItem;
+      item->setTextAlignment( Qt::AlignLeft );
       item->setText( in_data[ childIndex ] );
       root_it->setChild( in_row, childIndex, item );
    }
@@ -318,9 +321,20 @@ void QBtDirModel::work_finished_slot( const QString in_path )
    current_path_ = in_path;
    QApplication::restoreOverrideCursor();
    emit update_finished();
+   watcher_.addPath( current_path_ );
    busy_ = false;
 }
 // end of work_finished_slot
+
+void QBtDirModel::directory_changed_slot( const QString &in_path )
+{
+    QTimer::singleShot( 100, this, SLOT( delayed_refresh() ) );
+}
+
+void QBtDirModel::delayed_refresh()
+{
+    refresh();
+}
 
 void QBtDirModel::notify_drop()
 {

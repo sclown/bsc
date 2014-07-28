@@ -31,6 +31,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtViewModel.h"
+#include <QFileSystemWatcher>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -51,6 +52,7 @@ private:
    QBtDirModel& operator=( const QBtDirModel& );
 
    QVariant dropInfo_;
+   QFileSystemWatcher watcher_;
 
 //******* METHODS *******
 public:
@@ -74,6 +76,8 @@ private slots:
    void items_count_slot    ( qint32 );
    void item_info_slot      ( qint32, QVariant, QStringList );
    void work_finished_slot  ( QString );
+   void directory_changed_slot ( const QString& );
+   void delayed_refresh     ();
    void notify_drop         ();
 };
 
