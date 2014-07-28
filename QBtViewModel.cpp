@@ -68,10 +68,10 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
    QStringList hdrs;
    hdrs  << HDR_NAME
 //         << HDR_EXT
-         << HDR_ACCESS
          << HDR_SIZE
          << HDR_DATE
          << HDR_TIME
+         << HDR_ACCESS
          << HDR_OWNER
          << HDR_GROUP;
    setHorizontalHeaderLabels ( hdrs );

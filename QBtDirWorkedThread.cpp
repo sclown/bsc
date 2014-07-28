@@ -98,7 +98,7 @@ void QBtDirWorkedThread::run()
             const QString time   = fi.lastmod().time().toString( "hh:mm:ss" );
             const QString owner  = fi.owner();
             const QString group  = fi.group();
-            data << name /*<< ext*/ << access << size << date << time << owner << group;
+            data << name /*<< ext*/ << size << date << time << access << owner << group;
          }
          emit item_info( row++, QVariant::fromValue( fi ), data );
       }
