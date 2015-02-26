@@ -44,6 +44,8 @@
 #include <QProcess>
 #include <QLineEdit>
 #include <QKeyEvent>
+#include <QCompleter>
+#include <QDirModel>
 #include <QtDebug>
 
 /*------- constants:
@@ -69,22 +71,36 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    path_->setEditable( true );
    path_->setDuplicatesEnabled( false );
    path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
+   path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
+   QCompleter *completer = new QCompleter(this);
+   QDirModel *model = new QDirModel(completer);
+   model->setFilter(QDir::AllEntries | QDir::Hidden );
+   completer->setModel(model);
+   completer->setCompletionMode(QCompleter::InlineCompletion);
+   path_->setCompleter(completer);
    fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
    tbar_->setElideMode( Qt::ElideLeft );
 
+
    //===== zaden z ponizszych elementow nie reaguje na tab =====
-   path_  ->setFocusPolicy( Qt::NoFocus );
-   fstab_ ->setFocusPolicy( Qt::NoFocus );
+   path_  ->setFocusPolicy( Qt::ClickFocus );
+   fstab_ ->setFocusPolicy( Qt::ClickFocus );
    tbar_  ->setFocusPolicy( Qt::NoFocus );
    wstack_->setFocusPolicy( Qt::NoFocus );
 
    // sciezka/fstab ---------------------------------------
+   QHBoxLayout* const hb_combofix = new QHBoxLayout;
+   hb_combofix->setContentsMargins(0,8,0,0);
+   hb_combofix->addWidget( path_ );
    QHBoxLayout* const hb_top = new QHBoxLayout;
    hb_top->setMargin( 0 );
-   hb_top->addWidget( path_ );
+   hb_top->addLayout( hb_combofix );
    hb_top->addWidget( fstab_ );
-   hb_top->setStretchFactor( path_, 8 );
+   hb_top->setStretchFactor( hb_combofix, 8 );
    hb_top->setStretchFactor( fstab_, 2 );
+   int h1 = path_->height();
+   int h2 = fstab_->minimumHeight();
+   QMargins mrg = hb_top->contentsMargins();
 
    // opisy dirs/files/selected ---------------------------
    QHBoxLayout* const hb_dirs = new QHBoxLayout;
@@ -187,7 +203,13 @@ void QBtPanel::keyPressEvent( QKeyEvent* in_event )
             in_event->accept();
             QBtEventsController::instance()->send_event( QBtEvent::SHOW_RIGHT_FSTAB );
             break;
+        case Qt::Key_Down:
+            in_event->accept();
+            path_->lineEdit()->selectAll();
+            path_->setFocus();
+            break;
       }
+
    }
    QWidget::keyPressEvent( in_event );
 }
@@ -504,6 +526,7 @@ void QBtPanel::update_selected_count( const qint32 in_count )
 //*******************************************************************
 void QBtPanel::path_changed( const QString& in_text )
 {
+    int indx = path_->currentIndex();
    current_path( in_text );
    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
    view->update( in_text );

@@ -82,6 +82,8 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setEditTriggers( NoEditTriggers );
    setAllColumnsShowFocus( true );
    setSelectionMode(QAbstractItemView::ExtendedSelection);
+   setHorizontalScrollMode(ScrollPerItem);
+   setVerticalScrollMode(ScrollPerItem);
 
    header()->setStretchLastSection( true );
    header()->setSortIndicator( 0, Qt::AscendingOrder );
@@ -164,6 +166,9 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
          case Qt::Key_A:
             unselect_all();
             break;
+         case Qt::Key_Down:
+            in_event->ignore();
+            return;
       }
    }
    else if( in_event->modifiers() & Qt::ControlModifier ) {
@@ -181,6 +186,10 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
             break;
          case Qt::Key_K:
             console_start();
+            break;
+      case Qt::Key_Left:
+      case Qt::Key_Right:
+            open_oposite();
             break;
       }
    }
@@ -230,6 +239,7 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
    }
    QTreeView::keyPressEvent( in_event );
 }
+
 // end of keyPressEvent
 
 //*******************************************************************
@@ -577,6 +587,11 @@ void QBtView::console_start() const
 }
 // end of console_start
 
+void QBtView::open_oposite() const
+{
+    QBtEventsController::instance()->send_event( QBtEvent::OPEN_OPOSITE );
+}
+
 //*******************************************************************
 // enter                                                PRIVATE slot
 //*******************************************************************
@@ -709,9 +724,7 @@ void QBtView::jump_to_home()
 }
 // end of jump_to_home
 
-//*******************************************************************
-// select_mask                                               PRIVATE
-//*******************************************************************
+//*******************************************************************// select_mask                                               PRIVATE//*******************************************************************
 void QBtView::select_mask()
 {
     QString mask = get_selection_mask(true);
@@ -767,6 +780,11 @@ void QBtView::startDrag(Qt::DropActions supportedActions)
     refresh();
 }
 
+void QBtView::scrollContentsBy(int dx, int dy)
+{
+    QTreeView::scrollContentsBy(0, dy);
+}
+
 //*******************************************************************
 // request_finished                                     PRIVATE slot
 //*******************************************************************
@@ -800,8 +818,9 @@ void QBtView::request_finished()
 //*******************************************************************
 void QBtView::resize_columns()
 {
-   for( qint32 i = 0; i < model_->columnCount(); ++i ) {
-      resizeColumnToContents( i );
+   setColumnWidth(0, width()*0.55);
+   for( qint32 i = 1; i < model_->columnCount(); ++i ) {
+       setColumnWidth(i, width()*0.15);
    }
 }
 // end of resize_columns

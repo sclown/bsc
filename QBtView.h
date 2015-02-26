@@ -32,6 +32,7 @@
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
 #include <QTreeView>
+#include <QTreeView>
 #include <stack>
 #include <queue>
 
@@ -98,6 +99,7 @@ public:
    void           unselect_all             ();
 protected:
    virtual void startDrag(Qt::DropActions supportedActions);
+   virtual void scrollContentsBy(int dx, int dy);
 private:
    void    settings          ();
    void    keyPressEvent     ( QKeyEvent* );
@@ -119,6 +121,7 @@ private:
    void    view              ();
    void    edit              ();
    void    console_start     () const;
+   void    open_oposite      () const;
    bool    is_ext_declared   ( const QString&, QString&, QString& ) const;
    QString get_selection_mask ( bool select ) const;
 private slots:
@@ -130,6 +133,7 @@ signals:
    void    file_count       ( qint32 );
    void    select_count     ( qint32 );
    void    path_changed     ( const QString& );
+   void    show_path        ( const QString& ) const;
 };
 
 #endif // INCLUDED_QBtView_h
