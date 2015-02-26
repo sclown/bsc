@@ -74,6 +74,7 @@ public:
       MD5_CHECK,
       DATE_TIME,
       DROP_FILES,
+      OPEN_OPOSITE,
    };
 
 public:

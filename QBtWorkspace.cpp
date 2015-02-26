@@ -109,6 +109,7 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
    QBtEventsController::instance()->append( this, QBtEvent::MD5_CHECK );
    QBtEventsController::instance()->append( this, QBtEvent::DATE_TIME );
    QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
+   QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
 }
 // end of QBtWorkspace
 
@@ -185,6 +186,9 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
          break;
       case QBtEvent::DROP_FILES:
          drop_files( event->data(0).toMap() );
+         break;
+      case QBtEvent::OPEN_OPOSITE:
+         open_oposite();
          break;
    }
 }
@@ -628,4 +632,16 @@ void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
     if( dialog.exec() != QDialog::Accepted ) return;
     left_panel_->current_view()->refresh();
     right_panel_->current_view()->refresh();
+}
+
+void QBtWorkspace::open_oposite()
+{
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
+    QString source_path = src->selected_file_path();
+    if( !QFileInfo( source_path ).isDir() ) {
+       return;
+    }
+    dst->update(source_path);
 }
