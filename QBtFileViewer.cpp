@@ -34,15 +34,18 @@
 #include <QTextStream>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QLineEdit>
 #include <QPushButton>
 #include <QTextBrowser>
 #include <QApplication>
+#include <QKeyEvent>
 #include <QtDebug>
 
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtFileViewer::CAPTION            = QT_TR_NOOP( "File viewer"    );
 const char* const QBtFileViewer::CANCEL             = QT_TR_NOOP( "&Cancel" );
+const char* const QBtFileViewer::SEARCH             = QT_TR_NOOP( "&Search" );
 
 
 //*******************************************************************
@@ -51,22 +54,40 @@ const char* const QBtFileViewer::CANCEL             = QT_TR_NOOP( "&Cancel" );
 QBtFileViewer::QBtFileViewer( QWidget* const in_parent, const QString& in_path ) : QDialog( in_parent )
 , path_    ( in_path )
 , browser_ ( new QTextBrowser )
+, search_edit_ ( new QLineEdit )
+, search_  ( new QPushButton( tr( SEARCH ) ) )
 , cancel_  ( new QPushButton( tr( CANCEL ) ) )
+, search_index_ ( 0 )
 {
    setWindowTitle( tr( CAPTION ) );
 
-   QHBoxLayout* const btn_layout = new QHBoxLayout;
-   btn_layout->addStretch();
-   btn_layout->addWidget( cancel_ );
+   QHBoxLayout* const search_layout = new QHBoxLayout;
+   search_layout->addSpacing( 8 );
+   search_layout->addWidget( search_edit_ );
+   search_layout->addWidget( search_ );
+   search_layout->setContentsMargins( 5, 5, 5, 5 );
 
    QVBoxLayout* const main_layout = new QVBoxLayout;
+   main_layout->addLayout( search_layout );
    main_layout->addWidget( browser_ );
-   main_layout->addLayout( btn_layout );
+   main_layout->setContentsMargins( 0, 0, 0, 20 );
+   main_layout->setSpacing( 0 );
    setLayout( main_layout );
+   browser_->setFocus();
 
    connect( cancel_, SIGNAL( clicked() ), this, SLOT( accept() ) );
+   connect( search_, SIGNAL( clicked() ), this, SLOT( search() ) );
+   connect( search_edit_, SIGNAL( returnPressed() ), this, SLOT( search() ) );
 }
 // end of QBtFileViewer
+
+void QBtFileViewer::keyPressEvent( QKeyEvent *event )
+{
+    if(event->matches(QKeySequence::Find))
+    {
+        search_edit_->setFocus();
+    }
+}
 
 //*******************************************************************
 // showEvent                                       PRIVATE inherited
@@ -75,7 +96,7 @@ void QBtFileViewer::showEvent( QShowEvent* const in_event )
 {
    load_file();
    
-   QBtShared::resize( this, 60, 50 );
+   QBtShared::resize( this, 80, 70 );
    QDialog::showEvent( in_event );
 }
 // end of showEvent
@@ -154,8 +175,11 @@ void QBtFileViewer::html_file( const QString& in_path )
 //*******************************************************************
 void QBtFileViewer::text_file( const QString& in_path )
 {
-   static const QString cmd = "cat -n \"%1\"";
-   do_it( cmd.arg( in_path ) );
+    QFile file(in_path);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        return;
+    }
+    browser_->insertPlainText( QTextStream(&file).readAll() );
 }
 // end of text_file
 
@@ -164,8 +188,11 @@ void QBtFileViewer::text_file( const QString& in_path )
 //*******************************************************************
 void QBtFileViewer::other_file( const QString& in_path )
 {
-   static const QString cmd = "xxd -g 1 \"%1\"";
-   do_it( cmd.arg( in_path ) );
+    QFile file(in_path);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        return;
+    }
+    browser_->insertPlainText( QTextStream(&file).readAll() );
 }
 // end of other_file
 
@@ -199,13 +226,19 @@ void QBtFileViewer::image_file( const QString& in_path )
 //*******************************************************************
 void QBtFileViewer::do_it( const QString& in_cmd )
 {
-   set_font();
+//   set_font();
 
    QBtSystemCall syscall;
    syscall.run( in_cmd );
    browser_->setLineWrapMode( QTextEdit::NoWrap );
    browser_->insertPlainText( syscall.result() );
 }
+
+QTextCharFormat QBtFileViewer::defaultCharFormat()
+{
+    return QTextCharFormat();
+}
+
 // end of do_it
 
 //*******************************************************************
@@ -219,3 +252,53 @@ void QBtFileViewer::set_font()
    browser_->setFont( fnt );   
 }
 // end of set_font
+
+void QBtFileViewer::highlightSearch(QTextDocument *document, QString searchString)
+{
+    QTextCursor highlightCursor(document);
+    QTextCharFormat plainFormat( highlightCursor.charFormat() );
+    QTextCharFormat colorFormat = plainFormat;
+    colorFormat.setForeground( Qt::red );
+    while( !highlightCursor.isNull() && !highlightCursor.atEnd() ) {
+        highlightCursor = document->find( searchString, highlightCursor );
+        if( !highlightCursor.isNull() ) {
+            search_results_.append( highlightCursor.anchor() );
+            highlightCursor.mergeCharFormat( colorFormat );
+        }
+    }
+}
+
+void QBtFileViewer::search()
+{
+    QString searchString = search_edit_->text();
+    QTextDocument *document = browser_->document();
+    QTextCursor cursor(document);
+
+    cursor.beginEditBlock();
+
+
+    if( searchString != search_text_ || searchString.isEmpty() || search_results_.isEmpty()) {
+        search_results_.clear();
+        search_index_ = 0;
+        cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+        cursor.setCharFormat( defaultCharFormat() );
+        if( !searchString.isEmpty() ) {
+            highlightSearch(document, searchString);
+        }
+    }
+    search_text_ = searchString;
+
+    if( !search_results_.isEmpty() ) {
+        cursor.setPosition( search_results_[search_index_] );
+        cursor.movePosition( QTextCursor::Right, QTextCursor::KeepAnchor, search_text_.length() );
+        browser_->setTextCursor(cursor);
+        ++search_index_;
+        if(search_index_>=search_results_.size())
+        {
+            search_index_ = 0;
+        }
+    }
+
+    cursor.endEditBlock();
+
+}

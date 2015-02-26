@@ -31,11 +31,13 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include <QDialog>
+#include <QTextCharFormat>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QTextBrowser;
 class QPushButton;
+class QLineEdit;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -54,15 +56,22 @@ private:
 private:
    static const char* const CAPTION;
    static const char* const CANCEL;
+   static const char* const SEARCH;
 
 //******* MEMBERS *******
 private:
    const QString       path_;
    QTextBrowser* const browser_;
+   QLineEdit*    const search_edit_;
+   QPushButton*  const search_;
    QPushButton*  const cancel_;
+   QList<int>          search_results_;
+   int                 search_index_;
+   QString             search_text_;
 
 //******* METHODS *******
 private:
+   void keyPressEvent(QKeyEvent* );
    void showEvent  ( QShowEvent* );
    void tar_file   ( const QString& );
    void zip_file   ( const QString& );
@@ -73,6 +82,10 @@ private:
    void set_font   ();
    void load_file  ();
    void do_it      ( const QString& );
+   void highlightSearch(QTextDocument *document, QString searchString);
+   QTextCharFormat defaultCharFormat();
+private slots:
+   void search();
 };
 
 #endif // INCLUDED_QBtFileViewer_h
