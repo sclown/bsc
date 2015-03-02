@@ -38,6 +38,7 @@ class QBtTabBar;
 class QStackedWidget;
 class QLabel;
 class QComboBox;
+class QHBoxLayout;
 class QBtView;
 
 /*------- class declaration:
@@ -76,6 +77,7 @@ public:
    void           show_fstab            ();
    void           set_tab_id            ( qint32 );
    QBtView* const current_view          () const;
+   QHBoxLayout * const pathLineLayout();
 private:
    void           keyPressEvent         ( QKeyEvent* );
    void           customEvent           ( QEvent* );

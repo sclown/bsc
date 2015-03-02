@@ -58,6 +58,30 @@ const char* const QBtPanel::SELECTED = QT_TR_NOOP( "Selected:" );
 //*******************************************************************
 // QBtPanel                                          CONSTRUCTOR
 //*******************************************************************
+QHBoxLayout * const QBtPanel::pathLineLayout()
+{
+    QHBoxLayout* const hb_top = new QHBoxLayout;
+    hb_top->setMargin( 0 );
+
+#if defined(Q_OS_MAC) //layout hack for os x
+    path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
+    QHBoxLayout* const hb_combofix = new QHBoxLayout;
+    hb_combofix->setContentsMargins(0,8,0,0);
+    hb_combofix->addWidget( path_ );
+    hb_top->addLayout( hb_combofix );
+    hb_top->addWidget( fstab_ );
+    hb_top->setStretchFactor( hb_combofix, 8 );
+    hb_top->setStretchFactor( fstab_, 2 );
+#else
+    hb_top->addWidget( path_ );
+    hb_top->addWidget( fstab_ );
+    hb_top->setStretchFactor( path_, 8 );
+    hb_top->setStretchFactor( fstab_, 2 );
+#endif
+
+    return hb_top;
+}
+
 QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( in_parent )
 , idx_      ( in_idx )
 , path_     ( new QComboBox )
@@ -71,7 +95,6 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    path_->setEditable( true );
    path_->setDuplicatesEnabled( false );
    path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
-   path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
    QCompleter *completer = new QCompleter(this);
    QDirModel *model = new QDirModel(completer);
    model->setFilter(QDir::AllEntries | QDir::Hidden );
@@ -89,18 +112,7 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    wstack_->setFocusPolicy( Qt::NoFocus );
 
    // sciezka/fstab ---------------------------------------
-   QHBoxLayout* const hb_combofix = new QHBoxLayout;
-   hb_combofix->setContentsMargins(0,8,0,0);
-   hb_combofix->addWidget( path_ );
-   QHBoxLayout* const hb_top = new QHBoxLayout;
-   hb_top->setMargin( 0 );
-   hb_top->addLayout( hb_combofix );
-   hb_top->addWidget( fstab_ );
-   hb_top->setStretchFactor( hb_combofix, 8 );
-   hb_top->setStretchFactor( fstab_, 2 );
-   int h1 = path_->height();
-   int h2 = fstab_->minimumHeight();
-   QMargins mrg = hb_top->contentsMargins();
+   QHBoxLayout* const hb_top = pathLineLayout();
 
    // opisy dirs/files/selected ---------------------------
    QHBoxLayout* const hb_dirs = new QHBoxLayout;

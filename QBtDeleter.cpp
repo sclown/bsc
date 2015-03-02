@@ -59,7 +59,6 @@ QBtDeleter::QBtDeleter( QWidget* const in_parent ) : QDialog( in_parent )
 , run_    ( new QPushButton( tr( RUN    ) ) )
 , cancel_ ( new QPushButton( tr( CANCEL ) ) )
 , parser_ ( new QBtDirParser( true, this ) )
-, wiper_  ( 0 )
 , break_  ( false )
 , runned_ ( false )
 , wipe_   ( false )
@@ -156,12 +155,6 @@ void QBtDeleter::set_data( const SelectionsSet& in_data, const bool in_wipe )
       info_->setText( *data_.begin() );
    }
 
-   if( wipe_ ) {
-      if( wiper_ ) delete wiper_;
-      wiper_ = new QBtWiper( this );
-      connect( wiper_, SIGNAL( wipe_progress( const QString& ) ),
-               this  , SLOT  ( progress     ( const QString& ) ) );
-   }
 }
 // end of set_data
 
@@ -195,7 +188,6 @@ void QBtDeleter::finished()
    if( !break_ && ( it_ != end_ ) ) {
       parser_->run( *it_ );
    }
-   delete wiper_;
    QApplication::restoreOverrideCursor();
    accept();
 }
@@ -206,10 +198,7 @@ void QBtDeleter::finished()
 //*******************************************************************
 void QBtDeleter::current_item ( const QString& in_path )
 {
-   if( wipe_ ) {
-      wiper_->wipe( in_path );
-   }
-   else {
+   {
       progress( in_path );
    }
 }

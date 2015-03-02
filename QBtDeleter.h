@@ -39,7 +39,6 @@ class QFrame;
 class QPushButton;
 class QBtInfoField;
 class QBtDirParser;
-class QBtWiper;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -71,7 +70,6 @@ private:
    QPushButton*            const run_;
    QPushButton*            const cancel_;
    QBtDirParser*           const parser_;
-   QBtWiper*                     wiper_;
    bool                          break_;
    bool                          runned_;
    bool                          wipe_;
