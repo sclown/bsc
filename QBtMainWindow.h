@@ -116,6 +116,8 @@ private:
    static const char* const MD5_CREATE_ACCEL;
    static const char* const MD5_CHECK_ACCEL;
    static const char* const FIND_ACCEL;
+   static const char* const SHELL_ICON;
+   static const char* const TERMINAL_ICON;
    //------- Languages -------
    static const char* const CS_LANG;
    static const char* const DE_LANG;
@@ -163,6 +165,8 @@ private:
    QAction*        const ftp_disconnect_;
    QAction*        const system_info_;
    QAction*        const find_;
+   QAction*        const open_shell_;
+   QAction*        const open_terminal_;
    //------- Languages -------
    QAction*        const cs_lang_;
    QAction*        const de_lang_;
@@ -215,6 +219,8 @@ private slots:
    void ftp_disconnect   ();
    void system_info      ();
    void find             ();
+   void open_shell       ();
+   void open_terminal    ();
    //------- Languages -------
    void lang             ( QAction* );
    //------- Help -------

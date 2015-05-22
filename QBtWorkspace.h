@@ -100,6 +100,9 @@ private:
    void md5_create      ();
    void md5_check       ();
    void date_time       ();
+   void open_shell      ();
+   void open_terminal   ();
+   void open            (const QString &path, const QStringList &args, const QString &pwd);
    void drop_files      ( const QMap<QString, QVariant>& );
    void open_oposite    ();
 };

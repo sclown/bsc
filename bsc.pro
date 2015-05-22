@@ -1,8 +1,8 @@
 TEMPLATE =  app
 CONFIG +=  qt thread warn_on x11
 QT += widgets
-QMAKE_CXXFLAGS_DEBUG = -O0 -g
-QMAKE_CXXFLAGS_RELEASE = -O3
+#QMAKE_CXXFLAGS_DEBUG = -O0 -g
+#QMAKE_CXXFLAGS_RELEASE = -O3
 MOC_DIR =  ./tmp
 SOURCES =  \
 	QBtAttrDialog.cpp \
@@ -105,3 +105,7 @@ HEADERS =  \
 	QBtWorkedThread.h \
 	QBtWorkspace.h
 RESOURCES =  bsc.qrc
+APP_SCPT_FILES.files = scripts/openTerminal.scpt \
+	scripts/openFinder.scpt 
+APP_SCPT_FILES.path = Contents/Resources/scripts
+QMAKE_BUNDLE_DATA += APP_SCPT_FILES

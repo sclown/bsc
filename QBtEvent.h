@@ -75,6 +75,9 @@ public:
       DATE_TIME,
       DROP_FILES,
       OPEN_OPOSITE,
+      OPEN_SHELL,
+      OPEN_TERMINAL,
+      EXECUTE
    };
 
 public:

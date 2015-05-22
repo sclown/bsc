@@ -1,29 +1,30 @@
-<!DOCTYPE RCC><RCC version="1.0">
-<qresource>
-   <file>img/bsc.png</file>
-   <file>img/refresh.png</file>
-   <file>img/filter.png</file>
-   <file>img/configure.png</file>
-   <file>img/exit.png</file>
-   <file>img/tab_new.png</file>
-   <file>img/tab_remove.png</file>
-   <file>img/switch.png</file>
-   <file>img/joining.png</file>
-   <file>img/tree.png</file>
-   <file>img/cmpfiles.png</file>
-   <file>img/cmpdir.png</file>
-   <file>img/dirsynch.png</file>
-   <file>img/datetime.png</file>
-   <file>img/select.png</file>
-   <file>img/unselect.png</file>
-   <file>img/revers.png</file>
-   <file>img/connect.png</file>
-   <file>img/disconnect.png</file>
-   <file>img/system.png</file>
-   <file>img/qt.png</file>
-   <file>img/fonts.png</file>
-   <file>img/folder.png</file>
-   <file>img/noreadable.png</file>
-   <file>img/find.png</file>
-</qresource>
+<RCC>
+    <qresource prefix="/">
+        <file>img/bsc.png</file>
+        <file>img/refresh.png</file>
+        <file>img/filter.png</file>
+        <file>img/configure.png</file>
+        <file>img/exit.png</file>
+        <file>img/tab_new.png</file>
+        <file>img/tab_remove.png</file>
+        <file>img/switch.png</file>
+        <file>img/joining.png</file>
+        <file>img/tree.png</file>
+        <file>img/cmpfiles.png</file>
+        <file>img/cmpdir.png</file>
+        <file>img/dirsynch.png</file>
+        <file>img/datetime.png</file>
+        <file>img/select.png</file>
+        <file>img/unselect.png</file>
+        <file>img/revers.png</file>
+        <file>img/connect.png</file>
+        <file>img/disconnect.png</file>
+        <file>img/system.png</file>
+        <file>img/qt.png</file>
+        <file>img/fonts.png</file>
+        <file>img/folder.png</file>
+        <file>img/noreadable.png</file>
+        <file>img/find.png</file>
+        <file>img/terminal.png</file>
+    </qresource>
 </RCC>

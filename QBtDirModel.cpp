@@ -111,6 +111,13 @@ bool QBtDirModel::is_dir( const QModelIndex& in_index )
 }
 // end of is_dir
 
+
+bool QBtDirModel::is_executable(const QModelIndex& in_index)
+{
+    const QFileInfo fi( file_path( in_index ) );
+    return !fi.isDir() || (fi.isBundle() && fi.suffix() == ".app");
+}
+
 //*******************************************************************
 // is_readable                                                PUBLIC
 //*******************************************************************

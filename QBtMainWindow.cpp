@@ -88,6 +88,8 @@ const char* const QBtMainWindow::FTP_CONNECT_ICON    = "connect.png";
 const char* const QBtMainWindow::FTP_DISCONNECT_ICON = "disconnect.png";
 const char* const QBtMainWindow::SYSTEM_INFO_ICON    = "system.png";
 const char* const QBtMainWindow::FIND_ICON           = "find.png";
+const char* const QBtMainWindow::SHELL_ICON          = "folder.png";
+const char* const QBtMainWindow::TERMINAL_ICON       = "terminal.png";
 const char* const QBtMainWindow::NEW_TAB             = QT_TR_NOOP( "&Create new tab" );
 const char* const QBtMainWindow::DEL_TAB             = QT_TR_NOOP( "&Remove current tab" );
 const char* const QBtMainWindow::SWITCH_TABS         = QT_TR_NOOP( "&Switch panels" );
@@ -163,6 +165,8 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 , ftp_disconnect_  ( new QAction( QIcon( IMG_LOC + FTP_DISCONNECT_ICON ), "", this  ) )
 , system_info_     ( new QAction( QIcon( IMG_LOC + SYSTEM_INFO_ICON    ), "", this  ) )
 , find_            ( new QAction( QIcon( IMG_LOC + FIND_ICON           ), "", this  ) )
+, open_shell_      ( new QAction( QIcon( IMG_LOC + SHELL_ICON          ), "", this  ) )
+, open_terminal_    ( new QAction( QIcon( IMG_LOC + TERMINAL_ICON       ), "", this  ) )
 //------- Languages -------
 , cs_lang_         ( new QAction( this ) )
 , de_lang_         ( new QAction( this ) )
@@ -377,6 +381,8 @@ void QBtMainWindow::create_tool_bars()
    
    //------- Operations -------
    addToolBar( operations_tbar_ );
+   operations_tbar_->addAction( open_shell_ );
+   operations_tbar_->addAction( open_terminal_ );
    operations_tbar_->addAction( find_ );
    operations_tbar_->addAction( dir_tree_ );
    operations_tbar_->addAction( cmp_files_ );
@@ -420,6 +426,8 @@ void QBtMainWindow::update_action()
    connect( ftp_disconnect_, SIGNAL( triggered() ), this, SLOT( ftp_disconnect() ) );
    connect( system_info_   , SIGNAL( triggered() ), this, SLOT( system_info()    ) );
    connect( find_          , SIGNAL( triggered() ), this, SLOT( find()           ) );
+   connect( open_shell_    , SIGNAL( triggered() ), this, SLOT( open_shell()     ) );
+   connect( open_terminal_ , SIGNAL( triggered() ), this, SLOT( open_terminal()  ) );
    //------- Languages -------
    cs_lang_->setCheckable( true );
    de_lang_->setCheckable( true );
@@ -711,6 +719,16 @@ void QBtMainWindow::find()
    QBtEventsController::instance()->send_event( QBtEvent::FIND_REQUEST );
 }
 // end of find
+
+void QBtMainWindow::open_shell()
+{
+   QBtEventsController::instance()->send_event( QBtEvent::OPEN_SHELL );
+}
+
+void QBtMainWindow::open_terminal()
+{
+   QBtEventsController::instance()->send_event( QBtEvent::OPEN_TERMINAL );
+}
 
 void QBtMainWindow::lang( QAction* )
 {

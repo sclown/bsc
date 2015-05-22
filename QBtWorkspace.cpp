@@ -52,6 +52,9 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QInputDialog>
+#include <QResource>
+#include <QCoreApplication>
+#include <QDesktopServices>
 #include <QtDebug>
 
 /*------- local constants:
@@ -80,36 +83,39 @@ const QString     QBtWorkspace::Md5Check      = "md5sum -c %1";
 // QBtWorkspace                                          CONSTRUCTOR
 //*******************************************************************
 QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
-, splitter_   ( new QSplitter( Qt::Horizontal )            )
-, left_panel_ ( new QBtPanel ( LEFT_PANEL_ID , splitter_ ) )
-, right_panel_( new QBtPanel ( RIGHT_PANEL_ID, splitter_ ) )
+  , splitter_   ( new QSplitter( Qt::Horizontal )            )
+  , left_panel_ ( new QBtPanel ( LEFT_PANEL_ID , splitter_ ) )
+  , right_panel_( new QBtPanel ( RIGHT_PANEL_ID, splitter_ ) )
 {
-   setFocusPolicy( Qt::NoFocus );
-   splitter_->setFocusPolicy( Qt::ClickFocus );
-   
-   splitter_->setHandleWidth( 5 );
-   splitter_->setOpaqueResize();
-   
-   QHBoxLayout* const hb = new QHBoxLayout( this );
-   hb->setMargin( 0 );
-   hb->setSpacing( 0 );
-   hb->addWidget( splitter_ );
+    setFocusPolicy( Qt::NoFocus );
+    splitter_->setFocusPolicy( Qt::ClickFocus );
 
-   restore();
-   
-   QBtEventsController::instance()->append( this, QBtEvent::SWITCH_TAB_REQUEST );
-   QBtEventsController::instance()->append( this, QBtEvent::F5_KEY );
-   QBtEventsController::instance()->append( this, QBtEvent::F9_KEY );
-   QBtEventsController::instance()->append( this, QBtEvent::COMPARE_FILES );
-   QBtEventsController::instance()->append( this, QBtEvent::COMPARE_DIRS );
-   QBtEventsController::instance()->append( this, QBtEvent::SYNC_DIRS );
-   QBtEventsController::instance()->append( this, QBtEvent::JOIN_FILES );
-   QBtEventsController::instance()->append( this, QBtEvent::DIR_TREE );
-   QBtEventsController::instance()->append( this, QBtEvent::MD5_CREATE );
-   QBtEventsController::instance()->append( this, QBtEvent::MD5_CHECK );
-   QBtEventsController::instance()->append( this, QBtEvent::DATE_TIME );
-   QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
-   QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
+    splitter_->setHandleWidth( 5 );
+    splitter_->setOpaqueResize();
+
+    QHBoxLayout* const hb = new QHBoxLayout( this );
+    hb->setMargin( 0 );
+    hb->setSpacing( 0 );
+    hb->addWidget( splitter_ );
+
+    restore();
+
+    QBtEventsController::instance()->append( this, QBtEvent::SWITCH_TAB_REQUEST );
+    QBtEventsController::instance()->append( this, QBtEvent::F5_KEY );
+    QBtEventsController::instance()->append( this, QBtEvent::F9_KEY );
+    QBtEventsController::instance()->append( this, QBtEvent::COMPARE_FILES );
+    QBtEventsController::instance()->append( this, QBtEvent::COMPARE_DIRS );
+    QBtEventsController::instance()->append( this, QBtEvent::SYNC_DIRS );
+    QBtEventsController::instance()->append( this, QBtEvent::JOIN_FILES );
+    QBtEventsController::instance()->append( this, QBtEvent::DIR_TREE );
+    QBtEventsController::instance()->append( this, QBtEvent::MD5_CREATE );
+    QBtEventsController::instance()->append( this, QBtEvent::MD5_CHECK );
+    QBtEventsController::instance()->append( this, QBtEvent::DATE_TIME );
+    QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
+    QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
+    QBtEventsController::instance()->append( this, QBtEvent::OPEN_SHELL );
+    QBtEventsController::instance()->append( this, QBtEvent::OPEN_TERMINAL );
+    QBtEventsController::instance()->append( this, QBtEvent::EXECUTE );
 }
 // end of QBtWorkspace
 
@@ -118,8 +124,8 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
 //*******************************************************************
 QBtWorkspace::~QBtWorkspace()
 {
-   save();
-   QBtEventsController::instance()->remove( this );
+    save();
+    QBtEventsController::instance()->remove( this );
 }
 // end of ~QBtWorkspace
 
@@ -128,17 +134,17 @@ QBtWorkspace::~QBtWorkspace()
 //*******************************************************************
 void QBtWorkspace::keyPressEvent( QKeyEvent* in_event )
 {
-   switch( in_event->key() ) {
-      case Qt::Key_F5:
-         in_event->accept();
-         copy();
-         break;
-      case Qt::Key_F9:
-         in_event->accept();
-         pack();
-         break;
-   }
-   QWidget::keyPressEvent( in_event );
+    switch( in_event->key() ) {
+    case Qt::Key_F5:
+        in_event->accept();
+        copy();
+        break;
+    case Qt::Key_F9:
+        in_event->accept();
+        pack();
+        break;
+    }
+    QWidget::keyPressEvent( in_event );
 }
 // end of keyPressEvent
 
@@ -147,50 +153,59 @@ void QBtWorkspace::keyPressEvent( QKeyEvent* in_event )
 //*******************************************************************
 void QBtWorkspace::customEvent( QEvent* const in_event )
 {
-   const QBtEvent* const event = dynamic_cast< QBtEvent* >( in_event );
-   const int type = static_cast<int>( event->type() );
+    const QBtEvent* const event = dynamic_cast< QBtEvent* >( in_event );
+    const int type = static_cast<int>( event->type() );
 
-   switch( type ) {
-      case QBtEvent::SWITCH_TAB_REQUEST:
-         switch_panels();
-         break;
-      case QBtEvent::F5_KEY:
-         copy();
-         break;
-      case QBtEvent::F9_KEY:
-         pack();
-         break;
-      case QBtEvent::COMPARE_FILES:
-         compare_files();
-         break;
-      case QBtEvent::COMPARE_DIRS:
-         compare_dirs();
-         break;
-      case QBtEvent::SYNC_DIRS:
-         sync_dirs();
-         break;
-      case QBtEvent::JOIN_FILES:
-         join_files();
-         break;
-      case QBtEvent::DIR_TREE:
-         dir_tree();
-         break;
-      case QBtEvent::MD5_CREATE:
-         md5_create();
-         break;
-      case QBtEvent::MD5_CHECK:
-         md5_check();
-         break;
-      case QBtEvent::DATE_TIME:
-         date_time();
-         break;
-      case QBtEvent::DROP_FILES:
-         drop_files( event->data(0).toMap() );
-         break;
-      case QBtEvent::OPEN_OPOSITE:
-         open_oposite();
-         break;
-   }
+    switch( type ) {
+    case QBtEvent::SWITCH_TAB_REQUEST:
+        switch_panels();
+        break;
+    case QBtEvent::F5_KEY:
+        copy();
+        break;
+    case QBtEvent::F9_KEY:
+        pack();
+        break;
+    case QBtEvent::COMPARE_FILES:
+        compare_files();
+        break;
+    case QBtEvent::COMPARE_DIRS:
+        compare_dirs();
+        break;
+    case QBtEvent::SYNC_DIRS:
+        sync_dirs();
+        break;
+    case QBtEvent::JOIN_FILES:
+        join_files();
+        break;
+    case QBtEvent::DIR_TREE:
+        dir_tree();
+        break;
+    case QBtEvent::MD5_CREATE:
+        md5_create();
+        break;
+    case QBtEvent::MD5_CHECK:
+        md5_check();
+        break;
+    case QBtEvent::DATE_TIME:
+        date_time();
+        break;
+    case QBtEvent::DROP_FILES:
+        drop_files( event->data(0).toMap() );
+        break;
+    case QBtEvent::OPEN_OPOSITE:
+        open_oposite();
+        break;
+    case QBtEvent::OPEN_SHELL:
+        open_shell();
+        break;
+    case QBtEvent::OPEN_TERMINAL:
+        open_terminal();
+        break;
+    case QBtEvent::EXECUTE:
+        open( event->data(0).toString(), QStringList(), QString() );
+        break;
+    }
 }
 // end of customEvent
 
@@ -199,8 +214,8 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
 //*******************************************************************
 void QBtWorkspace::save()
 {
-   QBtSettings stt;
-   stt.save( QBtConfig::WORKSPACE_GROUP + QBtConfig::SPLITTER_KEY, splitter_->saveState() );
+    QBtSettings stt;
+    stt.save( QBtConfig::WORKSPACE_GROUP + QBtConfig::SPLITTER_KEY, splitter_->saveState() );
 }
 // end of save
 
@@ -209,15 +224,15 @@ void QBtWorkspace::save()
 //*******************************************************************
 void QBtWorkspace::restore()
 {
-   QBtSettings stt;
-   QVariant data;
-   if( stt.read( QBtConfig::WORKSPACE_GROUP + QBtConfig::SPLITTER_KEY, data ) ) {
-      splitter_->restoreState( data.toByteArray() );
-   }
-   else {
-      splitter_->setStretchFactor( 0, 1 );
-      splitter_->setStretchFactor( 1, 1 );
-   }
+    QBtSettings stt;
+    QVariant data;
+    if( stt.read( QBtConfig::WORKSPACE_GROUP + QBtConfig::SPLITTER_KEY, data ) ) {
+        splitter_->restoreState( data.toByteArray() );
+    }
+    else {
+        splitter_->setStretchFactor( 0, 1 );
+        splitter_->setStretchFactor( 1, 1 );
+    }
 }
 // end of restore
 
@@ -226,14 +241,14 @@ void QBtWorkspace::restore()
 //*******************************************************************
 void QBtWorkspace::switch_panels()
 {
-   splitter_->insertWidget( 0, right_panel_ );
-   
-   QBtPanel* const tmp = left_panel_;
-   left_panel_ = right_panel_;
-   right_panel_ = tmp;
+    splitter_->insertWidget( 0, right_panel_ );
 
-   left_panel_ ->set_tab_id( LEFT_PANEL_ID  );
-   right_panel_->set_tab_id( RIGHT_PANEL_ID );
+    QBtPanel* const tmp = left_panel_;
+    left_panel_ = right_panel_;
+    right_panel_ = tmp;
+
+    left_panel_ ->set_tab_id( LEFT_PANEL_ID  );
+    right_panel_->set_tab_id( RIGHT_PANEL_ID );
 }
 // end of switch_panels
 
@@ -242,19 +257,19 @@ void QBtWorkspace::switch_panels()
 //*******************************************************************
 bool QBtWorkspace::src_and_dst_view( QBtView*& out_src, QBtView*& out_dst ) const
 {
-   QBtView* const v1 = left_panel_ ->current_view();
-   QBtView* const v2 = right_panel_->current_view();
-   if( !v1 || !v2 ) return false;
+    QBtView* const v1 = left_panel_ ->current_view();
+    QBtView* const v2 = right_panel_->current_view();
+    if( !v1 || !v2 ) return false;
 
-   if( v1->hasFocus() ) {
-      out_src = v1;
-      out_dst = v2;
-   }
-   else {
-      out_src = v2;
-      out_dst = v1;
-   }
-   return true;
+    if( v1->hasFocus() ) {
+        out_src = v1;
+        out_dst = v2;
+    }
+    else {
+        out_src = v2;
+        out_dst = v1;
+    }
+    return true;
 }
 // end of src_and_dst_view
 
@@ -263,13 +278,13 @@ bool QBtWorkspace::src_and_dst_view( QBtView*& out_src, QBtView*& out_dst ) cons
 //*******************************************************************
 bool QBtWorkspace::get_selections( QBtView* const in_view, SelectionsSet& out_data ) const
 {
-   out_data = in_view->get_selected_items();
-   if( out_data.empty() ) {
-      if( QBtShared::is_regular_file( in_view->selected_file_full_name() ) ) {
-         out_data.insert( in_view->selected_file_path() );
-      }
-   }
-   return !out_data.empty();
+    out_data = in_view->get_selected_items();
+    if( out_data.empty() ) {
+        if( QBtShared::is_regular_file( in_view->selected_file_full_name() ) ) {
+            out_data.insert( in_view->selected_file_path() );
+        }
+    }
+    return !out_data.empty();
 }
 // end of get_selections
 
@@ -278,25 +293,25 @@ bool QBtWorkspace::get_selections( QBtView* const in_view, SelectionsSet& out_da
 //*******************************************************************
 void QBtWorkspace::copy()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) {
-      return;
-   }
-   
-   SelectionsSet data = SelectionsSet();
-   if( !get_selections( src, data ) ) {
-      return;
-   }
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) {
+        return;
+    }
 
-   QBtDirCopyDialog dialog( this );
-   dialog.set_source( data );
-   dialog.set_destination( dst->current_path() );
-   if( dialog.exec() != QDialog::Accepted ) return;
+    SelectionsSet data = SelectionsSet();
+    if( !get_selections( src, data ) ) {
+        return;
+    }
 
-   src->unselect_all();
-   src->refresh();
-   dst->refresh();
+    QBtDirCopyDialog dialog( this );
+    dialog.set_source( data );
+    dialog.set_destination( dst->current_path() );
+    if( dialog.exec() != QDialog::Accepted ) return;
+
+    src->unselect_all();
+    src->refresh();
+    dst->refresh();
 }
 // end of copy
 
@@ -305,30 +320,30 @@ void QBtWorkspace::copy()
 //*******************************************************************
 void QBtWorkspace::pack()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
-   
-   SelectionsSet data = SelectionsSet();
-   if( !get_selections( src, data ) ) return;
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   bool ok;
-   const QString pack_file_name = QInputDialog::getText( this, tr( InputCaption ),
-                                                               tr( InputPrompt ),
-                                                               QLineEdit::Normal,
-                                                               QString(),
-                                                               &ok );
-   if( !ok ) return;
-   if( pack_file_name.trimmed().isEmpty() ) return;
+    SelectionsSet data = SelectionsSet();
+    if( !get_selections( src, data ) ) return;
 
-   QBtPackDialog dialog( this );
-   dialog.set_source( data );
-   dialog.set_destination( dst->current_path(), pack_file_name.trimmed() );
-   if( dialog.exec() != QDialog::Accepted ) return;
-   
-   src->unselect_all();
-   src->refresh();
-   dst->refresh( QFileInfo( dialog.get_dst_path() ).fileName() );
+    bool ok;
+    const QString pack_file_name = QInputDialog::getText( this, tr( InputCaption ),
+                                                          tr( InputPrompt ),
+                                                          QLineEdit::Normal,
+                                                          QString(),
+                                                          &ok );
+    if( !ok ) return;
+    if( pack_file_name.trimmed().isEmpty() ) return;
+
+    QBtPackDialog dialog( this );
+    dialog.set_source( data );
+    dialog.set_destination( dst->current_path(), pack_file_name.trimmed() );
+    if( dialog.exec() != QDialog::Accepted ) return;
+
+    src->unselect_all();
+    src->refresh();
+    dst->refresh( QFileInfo( dialog.get_dst_path() ).fileName() );
 }
 // end of pack
 
@@ -337,32 +352,32 @@ void QBtWorkspace::pack()
 //*******************************************************************
 void QBtWorkspace::compare_files()
 {
-   QBtView* const v1 = left_panel_ ->current_view();
-   QBtView* const v2 = right_panel_->current_view();
-   if( !v1 || !v2 ) return;
+    QBtView* const v1 = left_panel_ ->current_view();
+    QBtView* const v2 = right_panel_->current_view();
+    if( !v1 || !v2 ) return;
 
-   SelectionsSet d1 = SelectionsSet();
-   SelectionsSet d2 = SelectionsSet();
-   get_selections( v1, d1 );
-   get_selections( v2, d2 );
-   if( d1.size() != 1 ) return;
-   if( d2.size() != 1 ) return;
+    SelectionsSet d1 = SelectionsSet();
+    SelectionsSet d2 = SelectionsSet();
+    get_selections( v1, d1 );
+    get_selections( v2, d2 );
+    if( d1.size() != 1 ) return;
+    if( d2.size() != 1 ) return;
 
-   const QFileInfo f1( *d1.begin() );
-   const QFileInfo f2( *d2.begin() );
-   
-   if( f1.isFile() && f2.isFile() ) {
-      const QString fpath1 = f1.absoluteFilePath();
-      const QString fpath2 = f2.absoluteFilePath();
-      
-      QBtCompareFileDialog dialog( this, fpath1, fpath2 );
-      if( QDialog::Accepted == dialog.exec() ) {
-         diff( fpath1, fpath2 );
-      }
-   }
-   else {
-      QMessageBox::information( this, tr( CompareFiles ), tr( NoFiles ) );
-   }
+    const QFileInfo f1( *d1.begin() );
+    const QFileInfo f2( *d2.begin() );
+
+    if( f1.isFile() && f2.isFile() ) {
+        const QString fpath1 = f1.absoluteFilePath();
+        const QString fpath2 = f2.absoluteFilePath();
+
+        QBtCompareFileDialog dialog( this, fpath1, fpath2 );
+        if( QDialog::Accepted == dialog.exec() ) {
+            diff( fpath1, fpath2 );
+        }
+    }
+    else {
+        QMessageBox::information( this, tr( CompareFiles ), tr( NoFiles ) );
+    }
 }
 // end of compare_files   
 
@@ -371,28 +386,28 @@ void QBtWorkspace::compare_files()
 //*******************************************************************
 void QBtWorkspace::compare_dirs()
 {
-   QBtView* const src = left_panel_ ->current_view();
-   QBtView* const dst = right_panel_->current_view();
-   if( !src || !dst ) return;
+    QBtView* const src = left_panel_ ->current_view();
+    QBtView* const dst = right_panel_->current_view();
+    if( !src || !dst ) return;
 
-   SelectionsSet d1 = SelectionsSet();
-   SelectionsSet d2 = SelectionsSet();
-   get_selections( src, d1 );
-   get_selections( dst, d2 );
-   if( d1.size() != 1 ) return;
-   if( d2.size() != 1 ) return;
-   
-   const QFileInfo fi1( *d1.begin() );
-   const QFileInfo fi2( *d2.begin() );
+    SelectionsSet d1 = SelectionsSet();
+    SelectionsSet d2 = SelectionsSet();
+    get_selections( src, d1 );
+    get_selections( dst, d2 );
+    if( d1.size() != 1 ) return;
+    if( d2.size() != 1 ) return;
 
-   if( fi1.isDir() && fi2.isDir() ) {
-      QBtCompareDirsDialog dialog( this );
-      dialog.set_dirs( fi1.absoluteFilePath(), fi2.absoluteFilePath() );
-      dialog.exec();
-   }
-   else {
-      QMessageBox::critical( this, tr( UserError ), tr( CmpNoDirs ) );
-   }
+    const QFileInfo fi1( *d1.begin() );
+    const QFileInfo fi2( *d2.begin() );
+
+    if( fi1.isDir() && fi2.isDir() ) {
+        QBtCompareDirsDialog dialog( this );
+        dialog.set_dirs( fi1.absoluteFilePath(), fi2.absoluteFilePath() );
+        dialog.exec();
+    }
+    else {
+        QMessageBox::critical( this, tr( UserError ), tr( CmpNoDirs ) );
+    }
 }
 // end of compare_dirs
 
@@ -401,28 +416,28 @@ void QBtWorkspace::compare_dirs()
 //*******************************************************************
 void QBtWorkspace::sync_dirs()
 {
-   QBtView* const src = left_panel_ ->current_view();
-   QBtView* const dst = right_panel_->current_view();
-   if( !src || !dst ) return;
+    QBtView* const src = left_panel_ ->current_view();
+    QBtView* const dst = right_panel_->current_view();
+    if( !src || !dst ) return;
 
-   SelectionsSet d1 = SelectionsSet();
-   SelectionsSet d2 = SelectionsSet();
-   get_selections( src, d1 );
-   get_selections( dst, d2 );
-   if( d1.size() != 1 ) return;
-   if( d2.size() != 1 ) return;
-   
-   const QFileInfo fi1( *d1.begin() );
-   const QFileInfo fi2( *d2.begin() );
+    SelectionsSet d1 = SelectionsSet();
+    SelectionsSet d2 = SelectionsSet();
+    get_selections( src, d1 );
+    get_selections( dst, d2 );
+    if( d1.size() != 1 ) return;
+    if( d2.size() != 1 ) return;
 
-   if( fi1.isDir() && fi2.isDir() ) {
-      QBtSyncDirsDialog dialog( this );
-      dialog.set_dirs( fi1.absoluteFilePath(), fi2.absoluteFilePath() );
-      dialog.exec();
-   }
-   else {
-      QMessageBox::critical( this, tr( UserError ), tr( SyncNoDirs ) );
-   }
+    const QFileInfo fi1( *d1.begin() );
+    const QFileInfo fi2( *d2.begin() );
+
+    if( fi1.isDir() && fi2.isDir() ) {
+        QBtSyncDirsDialog dialog( this );
+        dialog.set_dirs( fi1.absoluteFilePath(), fi2.absoluteFilePath() );
+        dialog.exec();
+    }
+    else {
+        QMessageBox::critical( this, tr( UserError ), tr( SyncNoDirs ) );
+    }
 }
 // end of sync_dirs
 
@@ -431,30 +446,30 @@ void QBtWorkspace::sync_dirs()
 //*******************************************************************
 void QBtWorkspace::diff( const QString& in_fname_1, const QString& in_fname_2 ) const
 {
-   const QString fname1  = QBtShared::quoted_fpath( in_fname_1 );
-   const QString fname2  = QBtShared::quoted_fpath( in_fname_2 );
-   const QString beediff = QBtShared::slashed_dir( QDir::homePath() ) + "/beediff/beediff %1 %2";
-   bool          ok      = true;
-   
-   QBtSettings stt;
-   QVariant data;
-   if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
-      ok = data.toBool();
-   }
+    const QString fname1  = QBtShared::quoted_fpath( in_fname_1 );
+    const QString fname2  = QBtShared::quoted_fpath( in_fname_2 );
+    const QString beediff = QBtShared::slashed_dir( QDir::homePath() ) + "/beediff/beediff %1 %2";
+    bool          ok      = true;
 
-   QString muster = beediff;
-   if( !ok ) {
-      if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
-         muster = data.toString().trimmed();
-         if( muster.isEmpty() ) {
-            return;
-         }
-      }
-   }
+    QBtSettings stt;
+    QVariant data;
+    if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
+        ok = data.toBool();
+    }
 
-   QProcess process;
-   const QString cmd = muster.arg( fname1 ).arg( fname2 );
-   process.startDetached( cmd );
+    QString muster = beediff;
+    if( !ok ) {
+        if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
+            muster = data.toString().trimmed();
+            if( muster.isEmpty() ) {
+                return;
+            }
+        }
+    }
+
+    QProcess process;
+    const QString cmd = muster.arg( fname1 ).arg( fname2 );
+    process.startDetached( cmd );
 }
 // end of diff
 
@@ -463,55 +478,55 @@ void QBtWorkspace::diff( const QString& in_fname_1, const QString& in_fname_2 ) 
 //*******************************************************************
 void QBtWorkspace::join_files()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   // aby moc cos laczyc musza byc zaznaczone co najmniej 1 plik.
-   SelectionsSet data = SelectionsSet();
-   get_selections( src, data );
-   if( data.empty() ) return;
+    // aby moc cos laczyc musza byc zaznaczone co najmniej 1 plik.
+    SelectionsSet data = SelectionsSet();
+    get_selections( src, data );
+    if( data.empty() ) return;
 
-   // uzytkownik musi miec uprawnienia do zapisu w docelowym katalogu
-   QString dst_dir = dst->current_path();
-   const QFileInfo dst_dir_fi( dst_dir );
-   if( !dst_dir_fi.isWritable() ) {
-      QMessageBox::critical( this, tr( FilesJoining ), tr( NoWritableDir ).arg( dst_dir ) );
-      return;
-   }
+    // uzytkownik musi miec uprawnienia do zapisu w docelowym katalogu
+    QString dst_dir = dst->current_path();
+    const QFileInfo dst_dir_fi( dst_dir );
+    if( !dst_dir_fi.isWritable() ) {
+        QMessageBox::critical( this, tr( FilesJoining ), tr( NoWritableDir ).arg( dst_dir ) );
+        return;
+    }
 
-   // uzytkownik musi podac nazwe pliku wynikowego
-   bool ok;
-   const QString fname = QInputDialog::getText( this,
-                                                tr( FilesJoining ),
-                                                tr( EnterFileName ),
-                                                QLineEdit::Normal,
-                                                QString(),
-                                                &ok );
-   if( !ok || fname.trimmed().isEmpty() ) return;
+    // uzytkownik musi podac nazwe pliku wynikowego
+    bool ok;
+    const QString fname = QInputDialog::getText( this,
+                                                 tr( FilesJoining ),
+                                                 tr( EnterFileName ),
+                                                 QLineEdit::Normal,
+                                                 QString(),
+                                                 &ok );
+    if( !ok || fname.trimmed().isEmpty() ) return;
 
-   // Absolutna sciezka do pliku wynikowego.
-   if( !dst_dir.endsWith( '/' ) ) dst_dir += '/';
-   const QString dst_fpath = dst_dir + fname;
+    // Absolutna sciezka do pliku wynikowego.
+    if( !dst_dir.endsWith( '/' ) ) dst_dir += '/';
+    const QString dst_fpath = dst_dir + fname;
 
-   // jesli plik juz istnieje uzytkownik musi podjac decyzje co z tym fantem zrobic
-   const QFileInfo dst_fi( dst_fpath );
-   if( dst_fi.exists() ) {
-      const int answer = QMessageBox::question( this,
-                                                tr( FilesJoining ),
-                                                tr( CanOverwrite ).arg( dst_fpath ),
-                                                QMessageBox::Yes,
-                                                QMessageBox::No );
-      if( QMessageBox::No == answer ) return;
-   }
+    // jesli plik juz istnieje uzytkownik musi podjac decyzje co z tym fantem zrobic
+    const QFileInfo dst_fi( dst_fpath );
+    if( dst_fi.exists() ) {
+        const int answer = QMessageBox::question( this,
+                                                  tr( FilesJoining ),
+                                                  tr( CanOverwrite ).arg( dst_fpath ),
+                                                  QMessageBox::Yes,
+                                                  QMessageBox::No );
+        if( QMessageBox::No == answer ) return;
+    }
 
-   // wykonaj laczenie plikow
-   QBtFileJoiner dialog( this, data, dst_fpath );
-   if( QDialog::Accepted == dialog.exec() ) {
-      // odswiez pokazywana zawartosc i ustaw sie na tym pliku.
-      dst->refresh( QFileInfo( dst_fpath ).fileName() );
-       if( src->current_path() == dst->current_path() ) src->refresh();
-   }
+    // wykonaj laczenie plikow
+    QBtFileJoiner dialog( this, data, dst_fpath );
+    if( QDialog::Accepted == dialog.exec() ) {
+        // odswiez pokazywana zawartosc i ustaw sie na tym pliku.
+        dst->refresh( QFileInfo( dst_fpath ).fileName() );
+        if( src->current_path() == dst->current_path() ) src->refresh();
+    }
 }
 // end of join_files
 
@@ -520,15 +535,15 @@ void QBtWorkspace::join_files()
 //*******************************************************************
 void QBtWorkspace::dir_tree()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   QBtDirSelector dialog( this,  src->current_path() );
-   if( QDialog::Accepted == dialog.exec() ) {
-      // przejdz do tego katalogu i pokaz jego zawartosc
-      src->update( dialog.path() );
-   }
+    QBtDirSelector dialog( this,  src->current_path() );
+    if( QDialog::Accepted == dialog.exec() ) {
+        // przejdz do tego katalogu i pokaz jego zawartosc
+        src->update( dialog.path() );
+    }
 }
 // end of dir_tree
 
@@ -537,35 +552,35 @@ void QBtWorkspace::dir_tree()
 //*******************************************************************
 void QBtWorkspace::md5_create()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
-   
-   SelectionsSet data = SelectionsSet();
-   get_selections( src, data );
-   if( data.size() != 1 ) return;
-   
-   const QString src_fpath = *data.begin();
-   const QString src_dir   = src->current_path();
-   const QString dst_fpath = src_fpath + ".md5sum";
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   if( QFileInfo( dst_fpath ).exists() ) QFile::remove( dst_fpath );
-   if( QFileInfo( src_fpath ).isDir() ) {
-      return;
-   }
-   if( !QFileInfo( src_dir ).isWritable() ) {
-      QMessageBox::critical( this, tr( Md5 ), tr( NoWritableDir ).arg( src_dir ) );
-      return;
-   }
+    SelectionsSet data = SelectionsSet();
+    get_selections( src, data );
+    if( data.size() != 1 ) return;
 
-   QBtShared::set_cursor( Qt::BusyCursor );
-   const QString cmd = Md5Create.arg( QBtShared::quoted_fpath( src_fpath ),
-                                      QBtShared::quoted_fpath( dst_fpath ) );
-   system( cmd.toLocal8Bit() );
-   QBtShared::restore_cursor();
-   
-   src->refresh( QFileInfo( dst_fpath).fileName() );
-   if( src->current_path() == dst->current_path() ) dst->refresh();
+    const QString src_fpath = *data.begin();
+    const QString src_dir   = src->current_path();
+    const QString dst_fpath = src_fpath + ".md5sum";
+
+    if( QFileInfo( dst_fpath ).exists() ) QFile::remove( dst_fpath );
+    if( QFileInfo( src_fpath ).isDir() ) {
+        return;
+    }
+    if( !QFileInfo( src_dir ).isWritable() ) {
+        QMessageBox::critical( this, tr( Md5 ), tr( NoWritableDir ).arg( src_dir ) );
+        return;
+    }
+
+    QBtShared::set_cursor( Qt::BusyCursor );
+    const QString cmd = Md5Create.arg( QBtShared::quoted_fpath( src_fpath ),
+                                       QBtShared::quoted_fpath( dst_fpath ) );
+    system( cmd.toLocal8Bit() );
+    QBtShared::restore_cursor();
+
+    src->refresh( QFileInfo( dst_fpath).fileName() );
+    if( src->current_path() == dst->current_path() ) dst->refresh();
 }
 // end of md5_create
 
@@ -574,21 +589,21 @@ void QBtWorkspace::md5_create()
 //*******************************************************************
 void QBtWorkspace::md5_check()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   SelectionsSet data = SelectionsSet();
-   get_selections( src, data );
-   if( data.size() != 1 ) return;
-   
-   const QString src_fpath = *data.begin();
-   
-   QBtSystemCall sc;
-   sc.run( Md5Check.arg( QBtShared::quoted_fpath( src_fpath ) ) );
-   const QString msg = sc.result();
+    SelectionsSet data = SelectionsSet();
+    get_selections( src, data );
+    if( data.size() != 1 ) return;
 
-   QMessageBox::information( this, tr( Md5 ), msg );
+    const QString src_fpath = *data.begin();
+
+    QBtSystemCall sc;
+    sc.run( Md5Check.arg( QBtShared::quoted_fpath( src_fpath ) ) );
+    const QString msg = sc.result();
+
+    QMessageBox::information( this, tr( Md5 ), msg );
 }
 // end of md5_check
 
@@ -597,24 +612,110 @@ void QBtWorkspace::md5_check()
 //*******************************************************************
 void QBtWorkspace::date_time()
 {
-   QBtView* src = 0;
-   QBtView* dst = 0;
-   if( !src_and_dst_view( src, dst ) ) return;
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
 
-   SelectionsSet d1 = SelectionsSet();
-   SelectionsSet d2 = SelectionsSet();
-   get_selections( src, d1 );
-   get_selections( dst, d2 );
-   if( d1.empty() ) return;
-   if( d2.size() != 1 ) return;
-   
-   QBtTimeStamp dialog( this, d1, *d2.begin() );
-   if( QDialog::Accepted == dialog.exec() ) {
-      src->refresh();
-      if( src->current_path() == dst->current_path() ) dst->refresh();
-   }
+    SelectionsSet d1 = SelectionsSet();
+    SelectionsSet d2 = SelectionsSet();
+    get_selections( src, d1 );
+    get_selections( dst, d2 );
+    if( d1.empty() ) return;
+    if( d2.size() != 1 ) return;
+
+    QBtTimeStamp dialog( this, d1, *d2.begin() );
+    if( QDialog::Accepted == dialog.exec() ) {
+        src->refresh();
+        if( src->current_path() == dst->current_path() ) dst->refresh();
+    }
 }
+
 // end of date_time
+
+
+void QBtWorkspace::open_shell()
+{
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
+
+    // Mac, Windows support folder or file.
+#if defined(Q_OS_WIN)
+    const QString explorer = Environment::systemEnvironment().searchInPath(QLatin1String("explorer.exe"));
+    if (explorer.isEmpty()) {
+        QMessageBox::warning(NULL,
+                             tr("Launching Windows Explorer failed"),
+                             tr("Could not find explorer.exe in path to launch Windows Explorer."));
+        return;
+    }
+    QString param;
+    if (!QFileInfo(src->current_path()).isDir())
+        param = QLatin1String("/select,");
+    param += QDir::toNativeSeparators(pathIn);
+    QProcess::startDetached(explorer, QStringList(param));
+#elif defined(Q_OS_MAC)
+    QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp();
+    QString script(dir.path() + "/Resources/scripts/openFinder.scpt");
+    QProcess::startDetached(script, QStringList(src->current_path()));
+    open(script, QStringList(src->selected_file_path()), src->current_path());
+#else
+    // we cannot select a file here, because no file browser really supports it...
+    const QFileInfo fileInfo(src->current_path());
+    const QString folder = fileInfo.absoluteFilePath();
+    const QString app = Utils::UnixUtils::fileBrowser(Core::ICore::instance()->settings());
+    QProcess browserProc;
+    const QString browserArgs = Utils::UnixUtils::substituteFileBrowserParameters(app, folder);
+    if (debug)
+        qDebug() <<  browserArgs;
+    bool success = browserProc.startDetached(browserArgs);
+    const QString error = QString::fromLocal8Bit(browserProc.readAllStandardError());
+    success = success && error.isEmpty();
+    if (!success)
+        showGraphicalShellError(NULL, app, error);
+#endif
+}
+
+void QBtWorkspace::open_terminal()
+{
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
+
+    QString terminalEmulator;
+    QStringList args;
+#if defined(Q_OS_WIN)
+    terminalEmulator = "cmd.exe";
+#elif defined(Q_OS_MAC)
+    QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp();
+    QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
+    terminalEmulator = script;
+    args << src->current_path();
+#else
+//        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));
+//        terminalEmulator = args.takeFirst();
+//        args.append(QString::fromLocal8Bit(qgetenv("SHELL")));
+#endif
+    open(terminalEmulator, args, src->current_path());
+
+}
+
+void QBtWorkspace::open( const QString &path, const QStringList &args, const QString &pwd )
+{
+    const QFileInfo fileInfo(path);
+    if(!args.isEmpty()) {
+#if defined(Q_OS_MAC)
+        if(!fileInfo.isExecutable() || fileInfo.isDir()) {
+            QProcess::startDetached(QLatin1String("open"), QStringList() << "-a" << path << args);
+            return;
+        }
+#endif
+        QProcess::startDetached(path, args, pwd);
+        return;
+    }
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+}
 
 void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
 {
@@ -641,7 +742,7 @@ void QBtWorkspace::open_oposite()
     if( !src_and_dst_view( src, dst ) ) return;
     QString source_path = src->selected_file_path();
     if( !QFileInfo( source_path ).isDir() ) {
-       return;
+        return;
     }
     dst->update(source_path);
 }

@@ -31,7 +31,6 @@
 #include "QBtInfoField.h"
 #include "QBtShared.h"
 #include "QBtDirParser.h"
-#include "QBtWiper.h"
 #include <QVBoxLayout>
 #include <QPushButton>
 #include <QKeyEvent>

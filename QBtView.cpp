@@ -178,6 +178,9 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
             in_event->accept();
             jump_to_home();
             break;
+         case Qt::Key_Backspace:
+            remove_selected();
+            break;
          case Qt::Key_A:
             select_all();
             break;
@@ -190,6 +193,10 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
       case Qt::Key_Left:
       case Qt::Key_Right:
             open_oposite();
+            break;
+      case Qt::Key_Up:
+      case Qt::Key_Down:
+            open_in_shell();
             break;
       }
    }
@@ -426,8 +433,9 @@ void QBtView::view()
 //*******************************************************************
 void QBtView::edit()
 {
-   QBtFileEditor dialog( this, selected_file_path() );
-   dialog.exec();
+   QProcess::execute("/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl", QStringList(selected_file_path()));
+//   QBtFileEditor dialog( this, selected_file_path() );
+//   dialog.exec();
 }
 // end of edit
 
@@ -592,47 +600,35 @@ void QBtView::open_oposite() const
     QBtEventsController::instance()->send_event( QBtEvent::OPEN_OPOSITE );
 }
 
+void QBtView::open_in_shell() const
+{
+    QBtEventsController::instance()->send_event( QBtEvent::EXECUTE, model_->file_path( currentIndex() ) );
+}
+
 //*******************************************************************
 // enter                                                PRIVATE slot
 //*******************************************************************
 void QBtView::enter( const QModelIndex& in_index )
 {
+
     const QString fname = model_->file_full_name( in_index ); // tak ma byc ze wzgledu na ..
     const QFileInfo fi( model_->file_path( in_index ) );
     const QString fpath = fi.absoluteFilePath();
     const QString dir = fi.absolutePath();
 
-    if( fi.isDir() ) {                                 // KATALOG
-        if( fi.isExecutable() && fi.isReadable() ) {
-            if( ".." == fname ) {
-                one_level_up();
-            }
-            else if(fi.isBundle() && fpath.endsWith(".app"))
-            {
-                QDesktopServices::openUrl(QUrl::fromLocalFile(fpath));
-            }
-            else {
-                initial_file_stack_.push( fi.fileName() );
-                requests_.push( GOTO_TOP );
-                model_->update( fpath );
-            }
-        }
+    if( model_->is_executable(in_index) ) {
+        QBtEventsController::instance()->send_event( QBtEvent::EXECUTE, model_->file_path( in_index ) );
         return;
     }
-    if( fi.isExecutable() ) {                       // wykonywalne
-        if( QBtShared::is_binary_file( fpath ) ) {   // program
-            static const QString PRG = "%1 &";
-            system( PRG.arg( fpath ).toLocal8Bit() );
+    if( fi.isDir() && fi.isExecutable() && fi.isReadable() ) {
+        if( QBtShared::PARENT_DIR == fname ) {
+            one_level_up();
         }
-        else {                                       // skrypt
-            static const QString GNOME = "gnome-terminal --working-directory=%1 --command=%2";
-            static const QString KDE = "konsole --workdir %1 -e %2";
-            const QString cmd = QBtShared::is_gnome() ? GNOME : KDE;
-            system( cmd.arg( dir ).arg( fpath ).toLocal8Bit() );
+        else {
+            initial_file_stack_.push( fi.fileName() );
+            requests_.push( GOTO_TOP );
+            model_->update( fi.absoluteFilePath() );
         }
-    }
-    else {                                          // ZWYKLY PLIK
-        QDesktopServices::openUrl(QUrl::fromLocalFile(fpath));
     }
 }
 // end of enter

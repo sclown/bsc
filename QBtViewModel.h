@@ -88,6 +88,7 @@ public:
    virtual void   update      ( const QModelIndex& ) = 0;
    virtual void   refresh     ()                     = 0;
    virtual bool   is_dir      ( const QModelIndex& ) = 0;
+   virtual bool   is_executable ( const QModelIndex& ) = 0;
    virtual bool   is_readable ( const QModelIndex& ) = 0;
    virtual void   cdup        ()                     = 0;
    //--------------------------------------------

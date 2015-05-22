@@ -60,6 +60,7 @@ public:
    void update              ( const QModelIndex& );
    void refresh             ();
    bool is_dir              ( const QModelIndex& );
+   bool is_executable       ( const QModelIndex& );
    bool is_readable         ( const QModelIndex& );
    void cdup                ();
    bool removeRows          ( int row, int count, const QModelIndex &parent );
