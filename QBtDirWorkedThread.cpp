@@ -60,49 +60,49 @@ void QBtDirWorkedThread::update( const QString& in_path )
 void QBtDirWorkedThread::run()
 {
    QDir dir( path_ );
-   if( dir.exists() && dir.isReadable() ) {
-      //-------------------------------
-      const quint32 filter_state = 
-         QBtConfig::instance()->filter()
-         ? ( QDir::AllDirs | QDir::Files )
-         : ( QDir::AllDirs | QDir::Files | QDir::Hidden );
-      dir.setFilter( static_cast< QDir::Filters >( filter_state ) );
-      dir.setSorting( QDir::Name | QDir::DirsFirst | QDir::IgnoreCase );
-      const QFileInfoList data = dir.entryInfoList();
-      //-------------------------------
-      emit work_started();
-      const qint32 n = data.size();
-      emit items_count( n - ( dir.isRoot() ? 2 : 1 ) );
-      //-------------------------------
-      for( qint32 i = 0, row = 0; i < n; ++i ) {
-         const QBtFileInfo fi( QFileInfo( data.at( i ) ) );
-         
-         if( "." == fi.full_name() ) continue;
-         if( ( ".." == fi.full_name() ) && ( path_ == QDir::rootPath() ) ) continue;
-
-         QStringList data;
-         if( ".." == fi.full_name() ) {
-            data << fi.full_name();
-         }
-         else
-         {
-            QString name   = fi.full_name();
-            QString ext    = fi.ext();
-            if( name.isEmpty() ) {
-               name = '.' + ext;
-               ext.clear();
-            }
-            const QString access = QBtShared::access( fi );
-            const QString size   = QBtShared::num2str( fi.size() );
-            const QString date   = fi.lastmod().date().toString( "dd-MM-yyyy" );
-            const QString time   = fi.lastmod().time().toString( "hh:mm:ss" );
-            const QString owner  = fi.owner();
-            const QString group  = fi.group();
-            data << name /*<< ext*/ << size << date << time << access << owner << group;
-         }
-         emit item_info( row++, QVariant::fromValue( fi ), data );
-      }
-      emit work_finished( path_ );
+   if( !dir.exists() && !dir.isReadable() ) {
+       return;
    }
+  //-------------------------------
+  const quint32 filter_state =
+     QBtConfig::instance()->filter()
+     ? ( QDir::AllDirs | QDir::Files )
+     : ( QDir::AllDirs | QDir::Files | QDir::Hidden );
+  dir.setFilter( static_cast< QDir::Filters >( filter_state | QDir::NoDotAndDotDot ) );
+  dir.setSorting( QDir::Name | QDir::DirsFirst | QDir::IgnoreCase );
+  const QFileInfoList data = dir.entryInfoList();
+  //-------------------------------
+  emit work_started();
+  const qint32 n = data.size();
+  emit items_count( n );
+  //-------------------------------
+  for( qint32 i = 0, row = 1; i < n; ++i ) {
+     const QBtFileInfo fi( QFileInfo( data.at( i ) ) );
+
+     if( "." == fi.full_name() ) continue;
+     if( ".." == fi.full_name() ) continue;
+
+     QStringList data;
+    QString name   = fi.full_name();
+    QString ext    = fi.ext();
+    if( name.isEmpty() ) {
+       name = '.' + ext;
+       ext.clear();
+    }
+    const QString access = QBtShared::access( fi );
+    const QString size   = QBtShared::num2str( fi.size() );
+    const QString date   = fi.lastmod().date().toString( "dd-MM-yyyy" );
+    const QString time   = fi.lastmod().time().toString( "hh:mm:ss" );
+    const QString owner  = fi.owner();
+    const QString group  = fi.group();
+    data << name /*<< ext*/ << size << date << time << access << owner << group;
+    emit item_info( row++, QVariant::fromValue( fi ), data );
+  }
+  if( path_ != QDir::rootPath() ) {
+      const QBtFileInfo fi( QFileInfo( dir.absoluteFilePath("..") ) );
+     QString dotdot = fi.path();
+     emit item_info( 0, QVariant::fromValue( fi ), QStringList("..") );
+  }
+  emit work_finished( path_ );
 }
 // end of run

@@ -86,7 +86,7 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setVerticalScrollMode(ScrollPerItem);
 
    header()->setStretchLastSection( true );
-   header()->setSortIndicator( 0, Qt::AscendingOrder );
+   header()->setSortIndicator( 0, Qt::DescendingOrder );
    header()->setSortIndicatorShown( true );
    header()->setSectionsClickable( true );
 

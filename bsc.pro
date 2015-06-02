@@ -5,8 +5,8 @@ QT += widgets
 #QMAKE_CXXFLAGS_RELEASE = -O3
 MOC_DIR =  ./tmp
 SOURCES =  \
-	QBtAttrDialog.cpp \
-	QBtButtonSpace.cpp \
+        QBtAttrDialog.cpp \
+        QBtButtonSpace.cpp \
 	QBtCanOverwrite.cpp \
 	QBtColorDemo.cpp \
 	QBtCompareDirsDialog.cpp \
@@ -50,7 +50,8 @@ SOURCES =  \
         QBtViewSelectionModel.cpp \
 	QBtWorkedThread.cpp \
 	QBtWorkspace.cpp \
-	bsc.cpp
+	bsc.cpp \
+        3rdprty/dircompleter.cpp
 HEADERS =  \
 	BtTypes.h \
 	QBtAttrDialog.h \
@@ -103,7 +104,8 @@ HEADERS =  \
         QBtViewSelectionModel.h \
         QBtViewStandardItem.h \
 	QBtWorkedThread.h \
-	QBtWorkspace.h
+	QBtWorkspace.h \
+        3rdprty/dircompleter.h
 RESOURCES =  bsc.qrc
 APP_SCPT_FILES.files = scripts/openTerminal.scpt \
 	scripts/openFinder.scpt 

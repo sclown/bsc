@@ -34,6 +34,7 @@
 #include "QBtSettings.h"
 #include "QBtWorkspace.h"
 #include "QBtTabBar.h"
+#include "3rdprty/dircompleter.h"
 #include <QStackedWidget>
 #include <QComboBox>
 #include <QVBoxLayout>
@@ -95,10 +96,7 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    path_->setEditable( true );
    path_->setDuplicatesEnabled( false );
    path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
-   QCompleter *completer = new QCompleter(this);
-   QDirModel *model = new QDirModel(completer);
-   model->setFilter(QDir::AllEntries | QDir::Hidden );
-   completer->setModel(model);
+   DirCompleter *completer = new DirCompleter(this);
    completer->setCompletionMode(QCompleter::InlineCompletion);
    path_->setCompleter(completer);
    fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
@@ -221,6 +219,17 @@ void QBtPanel::keyPressEvent( QKeyEvent* in_event )
             path_->setFocus();
             break;
       }
+
+   }
+   else if (!in_event->modifiers()) {
+       switch( in_event->key() ) {
+          case Qt::Key_Escape:
+            if (path_->hasFocus()) {
+             in_event->accept();
+             edit_finished();
+            }
+            break;
+       }
 
    }
    QWidget::keyPressEvent( in_event );
@@ -398,7 +407,18 @@ void QBtPanel::restore()
       }
    }
 }
+
 // end of restore
+
+void QBtPanel::reset_path()
+{
+    path_->disconnect();
+    path_->setCurrentIndex( 0 );
+
+    connect( path_, SIGNAL( activated   ( const QString& ) ),
+             this , SLOT  ( path_changed( const QString& ) ) );
+
+}
 
 //*******************************************************************
 // new_tab_request                                           PRIVATE
@@ -462,7 +482,11 @@ qint32 QBtPanel::new_tab( const QString& in_path )
 //*******************************************************************
 void QBtPanel::current_path( const QString& in_path )
 {
-   if( in_path.isEmpty() ) return;
+   QDir dir( in_path );
+   if( in_path.isEmpty() || !dir.exists() || !dir.isReadable() ) {
+       reset_path();
+       return;
+   }
 
    path_->disconnect();
    
@@ -538,10 +562,13 @@ void QBtPanel::update_selected_count( const qint32 in_count )
 //*******************************************************************
 void QBtPanel::path_changed( const QString& in_text )
 {
-    int indx = path_->currentIndex();
-   current_path( in_text );
-   QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-   view->update( in_text );
+    QString absPath = in_text;
+    if(absPath.startsWith("~"))
+    {
+        absPath = QString(absPath).replace(0, 1, QDir::homePath());
+    }
+    current_path( absPath );
+    current_view()->update( absPath );
 }
 // end of path_changed
 
@@ -561,7 +588,7 @@ void QBtPanel::fstab_changed( const QString& in_path )
 //*******************************************************************
 void QBtPanel::edit_finished()
 {
-   QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-   view->setFocus( Qt::OtherFocusReason );
+    reset_path();
+    current_view()->setFocus( Qt::OtherFocusReason );
 }
 // end of edit_finished

@@ -87,6 +87,7 @@ private:
    void           update_fstab          ();
    void           save                  ();
    void           restore               ();
+   void           reset_path            ();
 private slots:
    void           tab_mouse_event       ();
    void           tab_bar_changed       ( int );
