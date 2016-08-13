@@ -67,8 +67,9 @@ private:
 
 //******* METHODS *******
 private:
-   void copy_next  ( const QString&, const QString& );
+   void copy_next  (const QString&, const QString& in_dst_path);
    void copy_file  ( const QString&, const QString& );
+   void copy_link  ( const QString&, const QString& );
    void copy_dir   ( const QString&, const QString& );
    bool can_update ( const QString&, const QString& ) const;
    void remove_dir ( const QString& );

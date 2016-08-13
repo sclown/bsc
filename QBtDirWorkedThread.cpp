@@ -66,8 +66,8 @@ void QBtDirWorkedThread::run()
   //-------------------------------
   const quint32 filter_state =
      QBtConfig::instance()->filter()
-     ? ( QDir::AllDirs | QDir::Files )
-     : ( QDir::AllDirs | QDir::Files | QDir::Hidden );
+     ? ( QDir::AllDirs | QDir::Files | QDir::System )
+     : ( QDir::AllDirs | QDir::Files | QDir::System | QDir::Hidden );
   dir.setFilter( static_cast< QDir::Filters >( filter_state | QDir::NoDotAndDotDot ) );
   dir.setSorting( QDir::Name | QDir::DirsFirst | QDir::IgnoreCase );
   const QFileInfoList data = dir.entryInfoList();

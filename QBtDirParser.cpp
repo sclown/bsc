@@ -95,7 +95,7 @@ void QBtDirParser::parse_dir( const QString& in_dir_path )
    if( break_ ) return;
 
    QDir dir( in_dir_path );
-   QDir::Filters filter = QDir::AllDirs | QDir::Files | QDir::NoSymLinks;
+   QDir::Filters filter = QDir::AllDirs | QDir::Files | QDir::System /*| QDir::NoSymLinks*/;
    if( !file_filter_ ) filter |= QDir::Hidden;
    dir.setFilter ( filter );
    dir.setNameFilters( fname_muster_.split( ';', QString::SkipEmptyParts ) );

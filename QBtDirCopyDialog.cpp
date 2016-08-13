@@ -106,26 +106,30 @@ void QBtDirCopyDialog::start()
 //*******************************************************************
 // copy_next                                                 PRIVATE
 //*******************************************************************
-void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_dst_dir )
+void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_dst_path )
 {
    QBtShared::idle();
    if( break_ ) return;
 
-   QFileInfo fi( in_src_path );
-   QString   file_path = fi.absoluteFilePath();
-   QString   file_name = fi.fileName();
+   QFileInfo src( in_src_path );
+   QString   src_path = src.absoluteFilePath();
+   QString   src_name = src.fileName();
+
+   QFileInfo dst( in_dst_path );
+   QString   dst_path = dst.absoluteFilePath();
+   QString   dst_name = dst.fileName();
 
    // KATALOG ---------------------------------------------
-   if( fi.isDir() ) {
-      if( fi.isReadable() ) {
-         QDir dst_subdir( in_dst_dir );
-         dst_subdir.mkdir( file_name );
-         if( dst_subdir.cd( file_name ) ) {
-            copy_dir( file_path, dst_subdir.absolutePath() );
+   if( src.isDir() ) {
+      if( src.isReadable() ) {
+         QDir dst_subdir( in_dst_path );
+         dst_subdir.mkdir( src_name );
+         if( dst_subdir.cd( src_name ) ) {
+            copy_dir( src_path, dst_subdir.absolutePath() );
             if( do_remove() ) {
-               remove_dir( file_path );
+               remove_dir( src_path );
             }
-            QFileInfo sfi( file_path );
+            QFileInfo sfi( src_path );
             QFile dfi( dst_subdir.absolutePath() );
             if( do_permissions() ) {
                dfi.setPermissions( sfi.permissions() );
@@ -136,17 +140,19 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
          }
          else {
             //  Nie mozna utworzyc podkatalogu.
-            QMessageBox::critical( this, tr( CAPTION ), tr( MKDIR_ERROR ).arg( file_name ) );
+            QMessageBox::critical( this, tr( CAPTION ), tr( MKDIR_ERROR ).arg( src_name ) );
          }
       }
       else {
          // Brak praw dostepu. Nic nierob. Wracamy.
-         QMessageBox::warning( this, tr( CAPTION ), tr( DIR_NOT_READABLE ).arg( file_path ) );
+         QMessageBox::warning( this, tr( CAPTION ), tr( DIR_NOT_READABLE ).arg( src_path ) );
       }
    }
-   // NORMALNY PLIK ---------------------------------------
+   else if( src.isSymLink() ) {
+       copy_link(src_path, dst_path);
+   }
    else {
-      copy_file( file_path, in_dst_dir );
+      copy_file( src_path, dst_path );
    }
 }
 // end of copy_next
@@ -160,7 +166,7 @@ void QBtDirCopyDialog::copy_dir( const QString& in_src_dir, const QString& in_ds
    if( break_ ) return;
 
    QDir dir( in_src_dir );
-   dir.setFilter( QDir::AllDirs | QDir::Files );
+   dir.setFilter( QDir::AllDirs | QDir::Files | QDir::System );
    dir.setSorting( QDir::Name | QDir::DirsFirst | QDir::IgnoreCase );
 
    const QFileInfoList data = dir.entryInfoList();
@@ -178,7 +184,7 @@ void QBtDirCopyDialog::copy_dir( const QString& in_src_dir, const QString& in_ds
 //*******************************************************************
 // copy_file                                       PRIVATE inherited
 //*******************************************************************
-void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& in_dst_dir )
+void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& dst_path )
 {
    // Sprwadz czy czy plik jest do odczytu
    const QFileInfo fi( in_src_path );
@@ -186,10 +192,6 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& in_
       QMessageBox::critical( this, tr( CAPTION ), tr( FILE_NOT_READABLE ).arg( in_src_path ) );
       return;
    }
-
-   QString dst_path( in_dst_dir );
-   if( !dst_path.endsWith( '/' ) ) dst_path += "/";
-   dst_path += fi.fileName();
    
    display_paths( in_src_path, dst_path );
 
@@ -244,6 +246,13 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& in_
    }
 }
 // end of copy_file
+
+void QBtDirCopyDialog::copy_link( const QString& in_src_path, const QString& dst_path )
+{
+    const QFileInfo sourceInfo( in_src_path );
+    const QString target = QBtSystemCall::sys("readlink \"" + in_src_path + "\"").trimmed();
+    bool res = QFile::link(target, dst_path + "/" + sourceInfo.fileName());
+}
 
 //*******************************************************************
 // can_update                                      PRIVATE inherited
