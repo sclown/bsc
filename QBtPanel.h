@@ -79,6 +79,7 @@ public:
    QBtView* const current_view          () const;
    QHBoxLayout * const pathLineLayout();
 private:
+   bool           eventFilter           ( QObject*, QEvent* );
    void           keyPressEvent         ( QKeyEvent* );
    void           customEvent           ( QEvent* );
    void           new_tab_request       ();

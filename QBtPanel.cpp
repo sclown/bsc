@@ -99,6 +99,7 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    DirCompleter *completer = new DirCompleter(this);
    completer->setCompletionMode(QCompleter::InlineCompletion);
    path_->setCompleter(completer);
+   path_->installEventFilter(this);
    fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
    tbar_->setElideMode( Qt::ElideLeft );
 
@@ -198,6 +199,25 @@ void QBtPanel::tab_mouse_event()
 }
 // end of tab_mouse_event
 
+bool QBtPanel::eventFilter(QObject *obj, QEvent *event)
+{
+    if(obj == path_)
+    {
+        if(event->type() == QEvent::KeyPress)
+        {
+            QKeyEvent* key = static_cast<QKeyEvent*>(event);
+            if( key->key() == Qt::Key_Tab )
+            {
+                event->accept();
+                auto edit = path_->lineEdit();
+                edit->setSelection(edit->text().size(),0);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 //*******************************************************************
 // keyPressEvent                                   PRIVATE inherited
 //*******************************************************************
@@ -229,6 +249,11 @@ void QBtPanel::keyPressEvent( QKeyEvent* in_event )
              edit_finished();
             }
             break;
+           case Qt::Key_Tab:
+             if (path_->hasFocus()) {
+              in_event->accept();
+             }
+             break;
        }
 
    }
