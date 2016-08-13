@@ -741,8 +741,9 @@ void QBtWorkspace::open_oposite()
     QBtView* dst = 0;
     if( !src_and_dst_view( src, dst ) ) return;
     QString source_path = src->selected_file_path();
-    if( !QFileInfo( source_path ).isDir() ) {
+    if( QFileInfo( source_path ).isDir() ) {
+        dst->update(source_path);
         return;
     }
-    dst->update(source_path);
+    dst->update(src->current_path());
 }
