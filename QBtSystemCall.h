@@ -54,6 +54,9 @@ private:
 public:
    void    run   ( const QString& );
    QString result() const;
+
+public:
+   static QString sys( const QString& cmd );
 };
 
 #endif // INCLUDED_QBtSystemCall_h

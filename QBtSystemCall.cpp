@@ -38,9 +38,8 @@ void QBtSystemCall::run( const QString& in_cmd )
    buffer_.clear();
    QProcess process;
    process.start( in_cmd );
-   while( process.waitForReadyRead() ) {
-      buffer_ += process.readAll();
-   }
+   process.waitForFinished();
+   buffer_ = process.readAll();
 }
 // end of run
 
@@ -49,6 +48,15 @@ void QBtSystemCall::run( const QString& in_cmd )
 //*******************************************************************
 QString QBtSystemCall::result() const
 {
-   return QString::fromLocal8Bit( buffer_ );
+    return QString::fromLocal8Bit( buffer_ );
 }
+
 // end of result
+
+QString QBtSystemCall::sys(const QString &cmd)
+{
+    QProcess process;
+    process.start( cmd );
+    process.waitForFinished();
+    return process.readAll();
+}
