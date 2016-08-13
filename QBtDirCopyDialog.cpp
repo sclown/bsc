@@ -65,8 +65,25 @@ QBtDirCopyDialog::~QBtDirCopyDialog()
 void QBtDirCopyDialog::start()
 {
    destpath_ = dst_path_->text();
-   const QFileInfo fi( destpath_ );
-   if( !fi.isWritable() ) {
+   QFileInfo destInfo( destpath_ );
+   if( sources_.size() == 1) {
+       QFileInfo sourceInfo(*sources_.begin());
+       if(!sourceInfo.isDir()) {
+           if(destInfo.exists() && destInfo.isDir()) {
+               destInfo = QFileInfo( destpath_, sourceInfo.fileName());
+           }
+           if( !QFileInfo(destInfo.path()).isWritable() ) {
+              QMessageBox::critical( this, tr( CAPTION ), tr( DIR_NOT_WRITABLE ).arg( destpath_ ) );
+              finished();
+              return;
+           }
+           started();
+           copy_file( sourceInfo.absolutePath(), destInfo.absoluteFilePath() );
+           finished();
+           return;
+       }
+   }
+   if( !destInfo.isWritable() ) {
       QMessageBox::critical( this, tr( CAPTION ), tr( DIR_NOT_WRITABLE ).arg( destpath_ ) );
       finished();
       return;
@@ -77,7 +94,8 @@ void QBtDirCopyDialog::start()
    SelectionsSet::const_iterator it = sources_.begin();
    const SelectionsSet::const_iterator end = sources_.end();
    while( !break_ && ( it != end ) ) {
-      copy_next( *it, destpath_ );
+      QFileInfo src( *it );
+      copy_next( src.absoluteFilePath(), destInfo.absoluteFilePath() );
       ++it;
    }
    //--------------------------------------------

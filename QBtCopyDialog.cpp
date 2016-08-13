@@ -116,7 +116,7 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    progress_->setAlignment( Qt::AlignHCenter );
    progress_layout->addWidget( progress_ );
    
-   // Przyciski
+   // Buttons
    QVBoxLayout* const chk_layout = new QVBoxLayout;
    chk_layout->addWidget( remove_ );
    chk_layout->addWidget( datime_ );
@@ -281,7 +281,7 @@ bool QBtCopyDialog::do_datime() const
 //*******************************************************************
 // can_copy                                                PROTECTED
 //*******************************************************************
-bool QBtCopyDialog::can_copy( const QString& in_src_path, QString& in_dst_path )
+bool QBtCopyDialog::can_copy( const QString& in_src_path, const QString& in_dst_path )
 {
    bool retval = true;
    static qint32 answer = QBtCanOverwrite::OVERWRITE_FILE;
@@ -319,7 +319,7 @@ bool QBtCopyDialog::can_copy( const QString& in_src_path, QString& in_dst_path )
 //*******************************************************************
 // rename                                                    PRIVATE
 //*******************************************************************
-void QBtCopyDialog::rename( QString& inout_fpath )
+QString QBtCopyDialog::rename( const QString& inout_fpath )
 {
     QString fpath = inout_fpath;
     QBtShared::auto_rename( fpath );
@@ -327,13 +327,14 @@ void QBtCopyDialog::rename( QString& inout_fpath )
     const QFileInfo fi( fpath );
     const QString fname = fi.fileName();
 
-    bool ok;
+    bool ok = false;
     const QString new_fname = QInputDialog::getText( this, tr( RENAME ), tr( NEW_FILE_NAME ), QLineEdit::Normal, fname, &ok );
     if( ok && !new_fname.isEmpty() ) {
         QString fpath = fi.path();
         if( !fpath.endsWith( '/' )) fpath += '/';
-        inout_fpath = fpath + new_fname;
+        fpath += new_fname;
     }
+    return fpath;
 }
 // end of rename
 

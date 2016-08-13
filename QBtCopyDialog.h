@@ -113,7 +113,7 @@ protected:
    virtual void copy_dir   ( const QString&, const QString& ) = 0;
    virtual bool can_update ( const QString&, const QString& ) const = 0;
 
-   void rename         ( QString& );   
+   QString rename(const QString & );
    void started        ();
    void finished       ();
    void display_paths  ( const QString&, const QString& );
@@ -121,7 +121,7 @@ protected:
    bool do_owner       () const;
    bool do_permissions () const;
    bool do_datime      () const;
-   bool can_copy       ( const QString&, QString& );
+   bool can_copy       (const QString&, const QString & );
    void reset_progress ( qint32 = 0 );
    void set_progress   ( qint32 );
 

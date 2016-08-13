@@ -42,6 +42,7 @@
 #include "QBtFileEditor.h"
 #include "QBtAttrDialog.h"
 #include "QBtFinder.h"
+#include "QBtCanOverwrite.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -346,30 +347,40 @@ void QBtView::find()
 //*******************************************************************
 void QBtView::rename()
 {
-   if( QBtShared::is_regular_file( selected_file_full_name() ) ) {
-      const QString current_name = selected_file_full_name();
-      bool ok;
-      const QString fname = QInputDialog::getText(  this,
-                              tr( RENAME_CAPTION ),
-                              tr( RENAME_PROMPT  ),
-                              QLineEdit::Normal,
-                              current_name,
-                              &ok );
-                              
-      if( ok && !fname.isEmpty() ) {
-         if( fname != current_name ) {
-            QDir dir( current_path() );
-            if( dir.rename( current_name, fname ) ) {
-               refresh( fname );
-            }
-            else {
-               QMessageBox::critical(  this,
-                  tr( RENAME_CAPTION ),
-                  tr( RENAME_ERROR ).arg( current_name ).arg( fname ) );
-            }
-         }
-      }
-   }
+    if( !QBtShared::is_regular_file( selected_file_full_name() ) ) {
+        return;
+    }
+    const QString current_name = selected_file_full_name();
+    bool ok = false;
+    const QString fname = QInputDialog::getText(  this,
+                                                  tr( RENAME_CAPTION ),
+                                                  tr( RENAME_PROMPT  ),
+                                                  QLineEdit::Normal,
+                                                  current_name,
+                                                  &ok );
+
+    if( !ok || fname.isEmpty() || fname == current_name) {
+        return;
+    }
+    QDir dir( current_path() );
+    if( dir.exists( fname ) ) {
+        QBtCanOverwrite dialog( this, QFileInfo( dir, fname ).filePath() );
+        switch( dialog.exec() ) {
+        case QBtCanOverwrite::OVERWRITE_FILE:
+            dir.remove( fname );
+            break;
+        default:
+            return;
+        }
+    }
+    if( dir.rename( current_name, fname ) ) {
+        refresh( fname );
+    }
+    else {
+        QMessageBox::critical(  this,
+                                tr( RENAME_CAPTION ),
+                                tr( RENAME_ERROR ).arg( current_name ).arg( fname ) );
+    }
 }
 // end of rename
 
