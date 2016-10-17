@@ -78,7 +78,7 @@ void QBtDirCopyDialog::start()
               return;
            }
            started();
-           copy_file( sourceInfo.absolutePath(), destInfo.absoluteFilePath() );
+           copy_file( sourceInfo.absoluteFilePath(), destInfo.absoluteFilePath() );
            finished();
            return;
        }
@@ -147,13 +147,15 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
          // Brak praw dostepu. Nic nierob. Wracamy.
          QMessageBox::warning( this, tr( CAPTION ), tr( DIR_NOT_READABLE ).arg( src_path ) );
       }
+      return;
    }
-   else if( src.isSymLink() ) {
+
+   dst_path += "/" + src_name;
+   if( src.isSymLink() ) {
        copy_link(src_path, dst_path);
+       return;
    }
-   else {
-      copy_file( src_path, dst_path );
-   }
+   copy_file( src_path, dst_path );
 }
 // end of copy_next
 
@@ -198,60 +200,54 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& dst
    // Najpierw sprawdzamy czy w ogole mozemy kopiowac plik.
    // Jezeli sa jakiekolwiek watpliwosci (np. plik juz istnieje)
    // zgode na kopiowanie musi wydac uzytkownik.
-   if( can_copy( in_src_path, dst_path ) ) {
-      // Po uzyskaniu zgody na kopiowanie bierzemy sie do roboty.
-      QFile in( in_src_path );
-      QFile out( dst_path );
-      if( in.open( QIODevice::ReadOnly ) ) {
-         const quint32 nbytes = in.size(); // Liczba bajtow do przekopiowania.
-         quint32 copied = 0;               // Licznik juz przekopiowanych bajtow.
-         
-         if( out.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
-            reset_progress( nbytes );
-            QBtShared::idle();
-            // Petla kopiujaca.
-            while( !in.atEnd() ) {
-               const quint32 n = in.read( block_, BLOCK_SIZE );
-               out.write( block_, n );
-               set_progress( copied += n );
-               QBtShared::idle();
-            }
-            out.close();
-            in.close();
-            
-           // czynnosci po kopiowaniu
-            if( do_remove() ) {
-               if( !in.remove() ) {
-                  QMessageBox::warning( this, tr( CAPTION ), tr( CANT_DEL_FILE ).arg( in_src_path ) );
-               }
-            }
-            if( do_permissions() ) {
-               out.setPermissions( in.permissions() );
-            }
-            if( do_owner() ) {
-               sc_.run( CHOWN.arg( fi.owner() ).arg( fi.group() ).arg( dst_path ) );
-            }
-            if( do_datime() ) {
-               QBtShared::touch( in_src_path, dst_path );
-            }
-         }
-         else {
-            QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_WRITE_ERROR ).arg( dst_path ) );
-         }
-         in.close();
-      }
-      else {
-         QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_READ_ERROR ).arg( in_src_path ) );
-      }
+   if( !can_copy( in_src_path, dst_path ) ) {
+       return;
    }
+  // Po uzyskaniu zgody na kopiowanie bierzemy sie do roboty.
+  QFile in( in_src_path );
+  QFile out( dst_path );
+  if( in.open( QIODevice::ReadOnly ) ) {
+     const quint32 nbytes = in.size(); // Liczba bajtow do przekopiowania.
+     quint32 copied = 0;               // Licznik juz przekopiowanych bajtow.
+
+     if( out.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
+        reset_progress( nbytes );
+        QBtShared::idle();
+        // Petla kopiujaca.
+        while( !in.atEnd() ) {
+           const quint32 n = in.read( block_, BLOCK_SIZE );
+           out.write( block_, n );
+           set_progress( copied += n );
+           QBtShared::idle();
+        }
+        out.close();
+        in.close();
+
+       // czynnosci po kopiowaniu
+        if( do_remove() ) {
+           if( !in.remove() ) {
+              QMessageBox::warning( this, tr( CAPTION ), tr( CANT_DEL_FILE ).arg( in_src_path ) );
+           }
+        }
+        out.setPermissions( in.permissions() );
+        sc_.run( CHOWN.arg( fi.owner() ).arg( fi.group() ).arg( dst_path ) );
+        QBtShared::touch( in_src_path, dst_path );
+     }
+     else {
+        QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_WRITE_ERROR ).arg( dst_path ) );
+     }
+     in.close();
+  }
+  else {
+     QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_READ_ERROR ).arg( in_src_path ) );
+  }
 }
 // end of copy_file
 
 void QBtDirCopyDialog::copy_link( const QString& in_src_path, const QString& dst_path )
 {
-    const QFileInfo sourceInfo( in_src_path );
     const QString target = QBtSystemCall::sys("readlink \"" + in_src_path + "\"").trimmed();
-    bool res = QFile::link(target, dst_path + "/" + sourceInfo.fileName());
+    QFile::link(target, dst_path);
 }
 
 //*******************************************************************
