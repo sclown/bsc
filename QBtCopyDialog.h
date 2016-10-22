@@ -41,6 +41,7 @@ class QCheckBox;
 class QPushButton;
 class QLineEdit;
 class QBtInfoField;
+class QBtCanOverwrite;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -100,6 +101,7 @@ protected:
    QString             destpath_;
    QBtInfoField* const src_path_;
    QLineEdit*    const dst_path_;
+   QBtCanOverwrite*  const can_overwrite_;
 
 //******* METHODS *******
 public:

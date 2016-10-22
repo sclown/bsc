@@ -129,6 +129,7 @@ private slots:
    void    enter            ( const QModelIndex& );
    void    selectionChangedSlot( const QItemSelection & selected, const QItemSelection & deselected );
    void    request_finished();
+   void    sortChanged( int logicalIndex, Qt::SortOrder order );
 signals:
    void    dir_count        ( qint32 );
    void    file_count       ( qint32 );

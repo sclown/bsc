@@ -87,9 +87,10 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setVerticalScrollMode(ScrollPerItem);
 
    header()->setStretchLastSection( true );
-   header()->setSortIndicator( 0, Qt::DescendingOrder );
+   header()->setSortIndicator( 0, Qt::AscendingOrder );
    header()->setSortIndicatorShown( true );
    header()->setSectionsClickable( true );
+   connect( header(), SIGNAL( sortIndicatorChanged(int, Qt::SortOrder ) ), this, SLOT( sortChanged( int, Qt::SortOrder ) ) );
 
    settings();
 
@@ -364,14 +365,10 @@ void QBtView::rename()
     }
     QDir dir( current_path() );
     if( dir.exists( fname ) ) {
-        QBtCanOverwrite dialog( this, QFileInfo( dir, fname ).filePath() );
-        switch( dialog.exec() ) {
-        case QBtCanOverwrite::OVERWRITE_FILE:
-            dir.remove( fname );
-            break;
-        default:
+        if(!QBtCanOverwrite::canOverwrite(this)) {
             return;
         }
+        dir.remove( fname );
     }
     if( dir.rename( current_name, fname ) ) {
         refresh( fname );
@@ -819,6 +816,12 @@ void QBtView::request_finished()
    emit path_changed( model_->current_path() );
 }
 // end of request_finished
+
+
+void QBtView::sortChanged(int logicalIndex, Qt::SortOrder order)
+{
+   int a=0;
+}
 
 //*******************************************************************
 // resize_columns                                            PRIVATE

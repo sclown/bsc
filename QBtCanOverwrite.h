@@ -37,6 +37,7 @@
 class QLabel;
 class QCheckBox;
 class QPushButton;
+class QBtInfoField;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -46,7 +47,7 @@ class QBtCanOverwrite : public QDialog
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtCanOverwrite( QWidget*, const QString& );
+   QBtCanOverwrite( QWidget* );
 private:
    QBtCanOverwrite( const QBtCanOverwrite* );
    QBtCanOverwrite& operator=( const QBtCanOverwrite& );
@@ -68,7 +69,11 @@ public:
    static const char* const RENAME;
    static const char* const DONT_ASK_AGAIN;
    static const char* const CANCEL;
-   
+   static const char* const NEW_FILE_NAME;
+
+public:
+   static bool canOverwrite(QWidget * const in_parent);
+
 
 //******* MEMBERS *******
 private:
@@ -78,19 +83,24 @@ private:
    QPushButton* const update_;
    QPushButton* const rename_;
    QPushButton* const cancel_;
-   QLabel*      const path_;
+   QBtInfoField*      const path_label_;
+   qint32             result_;
+   QString            path_;
 
 //******* METHODS *******
 public:
+   quint32 ask( const QString& path );
    bool ask_again() const;
+   QString newPath() const;
 private:
    void showEvent( QShowEvent* );
+   QString inputNewName();
 private slots:
-   void skip     ();
-   void overwrite();
-   void update   ();
-   void rename   ();
-   void cancel   ();
+   void skip_slot     ();
+   void overwrite_slot();
+   void update_slot   ();
+   void rename_slot   ();
+   void cancel_slot   ();
 };
 
 #endif // INCLUDED_QBtCanOverwrite_h

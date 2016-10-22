@@ -91,6 +91,7 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , destpath_     ( QString() )
 , src_path_     ( new QBtInfoField )
 , dst_path_     ( new QLineEdit )
+, can_overwrite_ ( new QBtCanOverwrite(this) )
 {
    reset_progress( 1000 );
    
@@ -117,20 +118,21 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    progress_layout->addWidget( progress_ );
    
    // Buttons
-   QVBoxLayout* const chk_layout = new QVBoxLayout;
-   chk_layout->addWidget( remove_ );
-   chk_layout->addWidget( datime_ );
-   chk_layout->addWidget( owner_ );
-   chk_layout->addWidget( permissions_ );
-   chk_layout->addStretch( 100 );
+//   QVBoxLayout* const chk_layout = new QVBoxLayout;
+//   chk_layout->addWidget( remove_ );
+//   chk_layout->addWidget( datime_ );
+//   chk_layout->addWidget( owner_ );
+//   chk_layout->addWidget( permissions_ );
+//   chk_layout->addStretch( 100 );
    QVBoxLayout* const btn_layout = new QVBoxLayout;
    btn_layout->addWidget( exit_ );
    btn_layout->addWidget( start_ );
    btn_layout->addStretch( 100 );
    QHBoxLayout* const in_layout = new QHBoxLayout;
-   in_layout->addLayout( chk_layout );
-   in_layout->addStretch( 100 );
-   in_layout->addLayout( btn_layout );
+//   in_layout->addLayout( chk_layout );
+//   in_layout->addStretch( 100 );
+   in_layout->addWidget( start_ );
+   in_layout->addWidget( exit_ );
 
    // Main layout
    QVBoxLayout* const main_layout = new QVBoxLayout;
@@ -138,6 +140,14 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    main_layout->addWidget( progress_gbox );
    main_layout->addLayout( in_layout );
    setLayout( main_layout );
+
+   src_path_->setFocusPolicy(Qt::StrongFocus);
+   exit_->setFocusPolicy(Qt::StrongFocus);
+   start_->setFocusPolicy(Qt::StrongFocus);
+   setTabOrder(src_path_, dst_path_);
+   setTabOrder(dst_path_, start_);
+   setTabOrder(start_, exit_);
+   dst_path_->setFocus();
 
    connect( exit_ , SIGNAL( clicked() ), this, SLOT( reject() ) );
    connect( start_, SIGNAL( clicked() ), this, SLOT( start () ) );
@@ -288,11 +298,11 @@ bool QBtCopyDialog::can_copy( const QString& in_src_path, const QString& in_dst_
    
     if( ask_again_ ) {
         if( QFile::exists( in_dst_path ) ) {
-            QBtCanOverwrite dialog( this, in_dst_path );
-            answer = dialog.exec();
-            if( answer != QBtCanOverwrite::RENAME_FILE ) {
-               ask_again_ = dialog.ask_again();
-            }
+//            QBtCanOverwrite dialog( this, in_dst_path );
+//            answer = dialog.exec();
+//            if( answer != QBtCanOverwrite::RENAME_FILE ) {
+//               ask_again_ = dialog.ask_again();
+//            }
         }
     }
 

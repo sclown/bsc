@@ -28,6 +28,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtDirCopyDialog.h"
+#include "QBtCanOverwrite.h"
 #include "QBtDirParser.h"
 #include "QBtShared.h"
 #include <QDir>
@@ -71,6 +72,10 @@ void QBtDirCopyDialog::start()
        if(!sourceInfo.isDir()) {
            if(destInfo.exists() && destInfo.isDir()) {
                destInfo = QFileInfo( destpath_, sourceInfo.fileName());
+           }
+           if(destInfo.exists() && !QBtCanOverwrite::canOverwrite(this)) {
+               finished();
+               return;
            }
            if( !QFileInfo(destInfo.path()).isWritable() ) {
               QMessageBox::critical( this, tr( CAPTION ), tr( DIR_NOT_WRITABLE ).arg( destpath_ ) );
@@ -151,6 +156,27 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
    }
 
    dst_path += "/" + src_name;
+   display_paths( in_src_path, dst_path );
+   if( QFile::exists( dst_path ) ) {
+       qint32 action = can_overwrite_->ask(dst_path);
+       dst_path = can_overwrite_->newPath();
+       switch( action ) {
+       case QBtCanOverwrite::UPDATE_FILE:
+           if( !can_update(src_path, dst_path) ) {
+               return;
+           }
+           break;
+       case QBtCanOverwrite::CANCEL_FILE:
+           break_ = true;
+           return;
+           break;
+       case QBtCanOverwrite::SKIP_FILE:
+           return;
+           break;
+
+       }
+
+   }
    if( src.isSymLink() ) {
        copy_link(src_path, dst_path);
        return;
@@ -197,12 +223,6 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& dst
    
    display_paths( in_src_path, dst_path );
 
-   // Najpierw sprawdzamy czy w ogole mozemy kopiowac plik.
-   // Jezeli sa jakiekolwiek watpliwosci (np. plik juz istnieje)
-   // zgode na kopiowanie musi wydac uzytkownik.
-   if( !can_copy( in_src_path, dst_path ) ) {
-       return;
-   }
   // Po uzyskaniu zgody na kopiowanie bierzemy sie do roboty.
   QFile in( in_src_path );
   QFile out( dst_path );

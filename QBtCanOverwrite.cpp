@@ -28,6 +28,7 @@
 /*-------- include files:
 -------------------------------------------------------------------*/
 #include "QBtCanOverwrite.h"
+#include "QBtInfoField.h"
 #include "QBtShared.h"
 #include <QVBoxLayout>
 #include <QCheckBox>
@@ -35,30 +36,36 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QPalette>
+#include <QMessageBox>
+#include <QInputDialog>
+#include <QFileInfo>
 
 /*------- constants:
 -------------------------------------------------------------------*/
-const char* const QBtCanOverwrite::CAPTION        = QT_TR_NOOP( "Question about overwriting" );
-const char* const QBtCanOverwrite::MESSAGE        = QT_TR_NOOP( "Destination file already exists:" );
+const char* const QBtCanOverwrite::CAPTION        = QT_TR_NOOP( "File already exists" );
+const char* const QBtCanOverwrite::MESSAGE        = QT_TR_NOOP( "Overwrite?" );
 const char* const QBtCanOverwrite::SKIP           = QT_TR_NOOP( "&Skip" );
 const char* const QBtCanOverwrite::OVERWRITE      = QT_TR_NOOP( "&Overwrite" );
 const char* const QBtCanOverwrite::UPDATE         = QT_TR_NOOP( "&Update" );
 const char* const QBtCanOverwrite::RENAME         = QT_TR_NOOP( "&Rename" );
 const char* const QBtCanOverwrite::DONT_ASK_AGAIN = QT_TR_NOOP( "Don't ask again" );
 const char* const QBtCanOverwrite::CANCEL         = QT_TR_NOOP( "&Cancel" );
+const char* const QBtCanOverwrite::NEW_FILE_NAME    = QT_TR_NOOP( "New file name:" );
 
 
 //*******************************************************************
 // QBtCanOverwrite                                       CONSTRUCTOR
 //*******************************************************************
-QBtCanOverwrite::QBtCanOverwrite( QWidget* const in_parent, const QString& in_path ) : QDialog( in_parent )
+QBtCanOverwrite::QBtCanOverwrite( QWidget* const in_parent ) : QDialog( in_parent )
 , dont_ask_ ( new QCheckBox  ( tr( DONT_ASK_AGAIN ) ) )
 , skip_     ( new QPushButton( tr( SKIP           ) ) )
 , overwrite_( new QPushButton( tr( OVERWRITE      ) ) )
 , update_   ( new QPushButton( tr( UPDATE         ) ) )
 , rename_   ( new QPushButton( tr( RENAME         ) ) )
 , cancel_   ( new QPushButton( tr( CANCEL         ) ) )
-, path_     ( new QLabel         ( in_path        ) )
+, path_label_     ( new QBtInfoField         ( ) )
+, result_   ( OVERWRITE_FILE )
+, path_     ( )
 {
    setWindowTitle( tr( CAPTION ) );
 
@@ -69,10 +76,10 @@ QBtCanOverwrite::QBtCanOverwrite( QWidget* const in_parent, const QString& in_pa
    frame->setFrameShadow( QFrame::Sunken );
    QVBoxLayout* const frame_layout = new QVBoxLayout( frame );
    frame_layout->addWidget( new QLabel( tr( MESSAGE ) ) );
-   frame_layout->addWidget( path_ );
-   QPalette p = path_->palette();
-   p.setColor( path_->foregroundRole(), Qt::red );
-   path_->setPalette( p );
+   frame_layout->addWidget( path_label_ );
+   QPalette p = path_label_->palette();
+   p.setColor( path_label_->foregroundRole(), Qt::red );
+   path_label_->setPalette( p );
 
    // Dolna czesc dialogu z przyciskami.
    QVBoxLayout* const cbx_layout = new QVBoxLayout;
@@ -97,22 +104,47 @@ QBtCanOverwrite::QBtCanOverwrite( QWidget* const in_parent, const QString& in_pa
    main_layout->addLayout( btn_layout );
    setLayout( main_layout );
 
-   connect( skip_     , SIGNAL( clicked() ), this, SLOT( skip     () ) );
-   connect( overwrite_, SIGNAL( clicked() ), this, SLOT( overwrite() ) );
-   connect( update_   , SIGNAL( clicked() ), this, SLOT( update   () ) );
-   connect( rename_   , SIGNAL( clicked() ), this, SLOT( rename   () ) );
-   connect( cancel_   , SIGNAL( clicked() ), this, SLOT( cancel   () ) );
+   connect( skip_     , SIGNAL( clicked() ), this, SLOT( skip_slot     () ) );
+   connect( overwrite_, SIGNAL( clicked() ), this, SLOT( overwrite_slot() ) );
+   connect( update_   , SIGNAL( clicked() ), this, SLOT( update_slot   () ) );
+   connect( rename_   , SIGNAL( clicked() ), this, SLOT( rename_slot   () ) );
+   connect( cancel_   , SIGNAL( clicked() ), this, SLOT( cancel_slot   () ) );
 }
 // end of QBtCanOverwrite
+
+bool QBtCanOverwrite::canOverwrite(QWidget* const in_parent)
+{
+    return QMessageBox::question( in_parent,
+                                  tr( CAPTION ),
+                                  tr( MESSAGE ),
+                                  QMessageBox::StandardButtons(QMessageBox::Yes | QMessageBox::No),
+                                  QMessageBox::Yes ) == QMessageBox::Yes;
+}
+
+quint32 QBtCanOverwrite::ask(const QString &path)
+{
+    if( dont_ask_->isChecked() ) {
+        return result_;
+    }
+    result_ = OVERWRITE_FILE;
+    path_ = path;
+    path_label_->setText(path_);
+    return exec();
+}
 
 //*******************************************************************
 // ask_again                                                  PUBLIC
 //*******************************************************************
 bool QBtCanOverwrite::ask_again() const
 {
-   return !dont_ask_->isChecked();
+    return !dont_ask_->isChecked();
 }
 // end of ask_again
+
+QString QBtCanOverwrite::newPath() const
+{
+    return path_;
+}
 
 //*******************************************************************
 // showEvent                                       PRIVATE inherited
@@ -124,47 +156,80 @@ void QBtCanOverwrite::showEvent( QShowEvent* in_event )
 }
 // end of showEvent
 
+QString QBtCanOverwrite::inputNewName()
+{
+    QString fpath = path_;
+    QBtShared::auto_rename( fpath );
+
+    const QFileInfo fi( fpath );
+    const QString fname = fi.fileName();
+
+    bool ok = true;
+    const QString new_fname = QInputDialog::getText( this, tr( RENAME ), tr( NEW_FILE_NAME ), QLineEdit::Normal, fname, &ok );
+    if( !ok || new_fname.isEmpty() ) {
+        return path_;
+    }
+
+    fpath = fi.path();
+    if( !fpath.endsWith( '/' )) fpath += '/';
+    fpath += new_fname;
+
+    return fpath;
+
+}
+
 //*******************************************************************
 // skip                                                 PRIVATE slot
 //*******************************************************************
-void QBtCanOverwrite::skip()
+void QBtCanOverwrite::skip_slot()
 {
-   done( SKIP_FILE );
+   result_ = SKIP_FILE;
+   done( result_ );
 }
 // end of skip
 
 //*******************************************************************
 // overwrite                                            PRIVATE slot
 //*******************************************************************
-void QBtCanOverwrite::overwrite()
+void QBtCanOverwrite::overwrite_slot()
 {
-   done( OVERWRITE_FILE );
+   result_ = OVERWRITE_FILE;
+   done( result_ );
 }
 // end of overwrite
 
 //*******************************************************************
 // update                                               PRIVATE slot
 //*******************************************************************
-void QBtCanOverwrite::update()
+void QBtCanOverwrite::update_slot()
 {
-   done( UPDATE_FILE );
+   result_ = UPDATE_FILE;
+   done( result_ );
 }
 // end of update
 
 //*******************************************************************
 // rename                                               PRIVATE slot
 //*******************************************************************
-void QBtCanOverwrite::rename()
+void QBtCanOverwrite::rename_slot()
 {
-   done( RENAME_FILE );
+    dont_ask_->setChecked(false);
+    path_ = inputNewName();
+    path_label_->setText(path_);
+    result_ = RENAME_FILE;
+    if( QFile::exists( path_ ) ) {
+        return;
+    }
+    done( result_ );
 }
 // end of rename
 
 //*******************************************************************
 // cancel                                               PRIVATE slot
 //*******************************************************************
-void QBtCanOverwrite::cancel()
+void QBtCanOverwrite::cancel_slot()
 {
-   done( CANCEL_FILE );
+   result_ = CANCEL_FILE;
+   done( result_ );
 }
 // end of cancel
