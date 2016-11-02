@@ -50,10 +50,12 @@ private:
 //******* MEMBERS *******
 protected:
    QString path_;
+   int column_;
+   Qt::SortOrder order_;
 
 //******* METHODS *******
 public:
-   virtual void update( const QString& ) = 0;
+   virtual void update( const QString&, int column = 0 , Qt::SortOrder order = Qt::AscendingOrder ) = 0;
 protected:
    virtual void run() = 0;
 signals:

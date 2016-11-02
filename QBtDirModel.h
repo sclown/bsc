@@ -65,6 +65,7 @@ public:
    void cdup                ();
    bool removeRows          ( int row, int count, const QModelIndex &parent );
    bool setItemData         ( const QModelIndex &index, const QMap<int, QVariant> &roles );
+   virtual void sort        (int column, Qt::SortOrder order);
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
    QStringList mimeTypes() const;

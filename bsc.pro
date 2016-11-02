@@ -1,6 +1,7 @@
 TEMPLATE =  app
 CONFIG +=  qt thread warn_on x11
 QT += widgets
+QMAKE_MAC_SDK = macosx10.12
 #QMAKE_CXXFLAGS_DEBUG = -O0 -g
 #QMAKE_CXXFLAGS_RELEASE = -O3
 MOC_DIR =  ./tmp

@@ -150,6 +150,11 @@ bool QBtDirModel::setItemData(const QModelIndex &index, const QMap<int, QVariant
     return QBtViewModel::setItemData(index, roles);
 }
 
+void QBtDirModel::sort(int column, Qt::SortOrder order)
+{
+     thread_->update( current_path_, column, order);
+}
+
 //*******************************************************************
 // append_row                                                PRIVATE
 //*******************************************************************

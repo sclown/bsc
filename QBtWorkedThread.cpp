@@ -34,5 +34,7 @@
 //*******************************************************************
 QBtWorkedThread::QBtWorkedThread( QObject* in_parent ) : QThread( in_parent )
 , path_ ( QString() )
+, column_ ( 0 )
+, order_ ( Qt::AscendingOrder )
 {}
 // end of QBtWorkedThread

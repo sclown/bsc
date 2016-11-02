@@ -47,7 +47,7 @@ private:
 
 //******* METHODS *******
 public:
-   virtual void update( const QString& );
+   virtual void update(const QString&, int column , Qt::SortOrder order);
    virtual void run   ();
 };
 

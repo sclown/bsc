@@ -820,7 +820,7 @@ void QBtView::request_finished()
 
 void QBtView::sortChanged(int logicalIndex, Qt::SortOrder order)
 {
-   int a=0;
+   model_->sort(logicalIndex, order);
 }
 
 //*******************************************************************
