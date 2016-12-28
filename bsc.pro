@@ -4,6 +4,7 @@ QT += widgets
 QMAKE_MAC_SDK = macosx10.12
 #QMAKE_CXXFLAGS_DEBUG = -O0 -g
 #QMAKE_CXXFLAGS_RELEASE = -O3
+ICON = bsc.icns
 MOC_DIR =  ./tmp
 SOURCES =  \
         QBtAttrDialog.cpp \
@@ -52,7 +53,8 @@ SOURCES =  \
 	QBtWorkedThread.cpp \
 	QBtWorkspace.cpp \
 	bsc.cpp \
-        3rdprty/dircompleter.cpp
+        3rdprty/dircompleter.cpp \
+    QBtPathBox.cpp
 HEADERS =  \
 	BtTypes.h \
 	QBtAttrDialog.h \
@@ -106,7 +108,8 @@ HEADERS =  \
         QBtViewStandardItem.h \
 	QBtWorkedThread.h \
 	QBtWorkspace.h \
-        3rdprty/dircompleter.h
+        3rdprty/dircompleter.h \
+    QBtPathBox.h
 RESOURCES =  bsc.qrc
 APP_SCPT_FILES.files = scripts/openTerminal.scpt \
 	scripts/openFinder.scpt 
