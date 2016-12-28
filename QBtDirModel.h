@@ -56,7 +56,8 @@ private:
 
 //******* METHODS *******
 public:
-   void update              ( const QString& );
+   void setup              (const QString& , int, Qt::SortOrder);
+   void update              (const QString&);
    void update              ( const QModelIndex& );
    void refresh             ();
    bool is_dir              ( const QModelIndex& );

@@ -71,7 +71,7 @@ const char* const QBtView::MASK_DESELECTION_PROMPT= QT_TR_NOOP( "Enter deselecti
 //*******************************************************************
 // QBtView                                          CONSTRUCTOR
 //*******************************************************************
-QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
+QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrder, QWidget* const in_parent )
 : QTreeView ( in_parent )
 , model_    ( new QBtDirModel )
 , selectionModel_ ( 0 )
@@ -87,7 +87,7 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
    setVerticalScrollMode(ScrollPerItem);
 
    header()->setStretchLastSection( true );
-   header()->setSortIndicator( 0, Qt::AscendingOrder );
+   header()->setSortIndicator( sortColumn, sortOrder );
    header()->setSortIndicatorShown( true );
    header()->setSectionsClickable( true );
    connect( header(), SIGNAL( sortIndicatorChanged(int, Qt::SortOrder ) ), this, SLOT( sortChanged( int, Qt::SortOrder ) ) );
@@ -102,7 +102,7 @@ QBtView::QBtView( const QString& in_path, QWidget* const in_parent )
 
    requests_.push( RESIZE_COLUMNS );
    requests_.push( GOTO_TOP );
-   model_->update( in_path );
+   model_->setup( in_path, sortColumn, sortOrder );
 
    QBtEventsController* const ec = QBtEventsController::instance();
    ec->append( this, QBtEvent::F2_KEY );
@@ -777,6 +777,16 @@ void QBtView::unselect_all()
     emit select_count( selectionModel_->selection_count() );
 }
 // end of unselect_all
+
+int QBtView::sortColumn() const
+{
+    return model_->sortColumn();
+}
+
+Qt::SortOrder QBtView::sortOrder() const
+{
+    return model_->sortOrder();
+}
 
 void QBtView::startDrag(Qt::DropActions supportedActions)
 {

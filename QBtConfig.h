@@ -60,12 +60,13 @@ public:
    static const QString SPLITTER_KEY;
    static const QString LEFT_PANEL_GROUP;
    static const QString RIGHT_PANEL_GROUP;
-   static const QString CURR_LEFT_DIR_KEY;
+   static const QString CURR_DIR_KEY;
    static const QString CURR_RIGHT_DIR_KEY;
-   static const QString SELECTED_LEFT_KEY;
+   static const QString SELECTED_KEY;
    static const QString SELECTED_RIGHT_KEY;
-   static const QString FOLDERS_LEFT_KEY;
-   static const QString FOLDERS_RIGHT_KEY;
+   static const QString FOLDERS;
+   static const QString SORT_COLUMN;
+   static const QString SORT_ORDER;
    static const QString TERMINAL_GROUP;
    static const QString DIFF_GROUP;
    static const QString USE_DEFAULT_KEY;

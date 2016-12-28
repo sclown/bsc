@@ -81,10 +81,13 @@ protected:
    bool             busy_;
    QBtWorkedThread* thread_;
    SelectionsSet    selections_;
+   int              sortIndex_;
+   Qt::SortOrder    sortOrder_;
 
 //******* METHODS *******
 public:
-   virtual void   update      ( const QString&     ) = 0;
+   virtual void   setup      ( const QString&, int, Qt::SortOrder ) = 0;
+   virtual void   update      ( const QString& ) = 0;
    virtual void   update      ( const QModelIndex& ) = 0;
    virtual void   refresh     ()                     = 0;
    virtual bool   is_dir      ( const QModelIndex& ) = 0;
@@ -104,6 +107,8 @@ public:
    qint32                dir_count         () const { return dir_count_;         }
    qint32                file_count        () const { return file_count_;        }
    qint32                select_count      () const { return selections_.size(); }
+   int                   sortColumn        () const { return sortIndex_;         }
+   Qt::SortOrder         sortOrder         () const { return sortOrder_;         }
    bool                  busy              () const { return busy_;              }
 private:
    void                  select_this_item  ( bool, QBtViewItem* );

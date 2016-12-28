@@ -332,43 +332,26 @@ void QBtPanel::show_fstab()
 //*******************************************************************
 void QBtPanel::save()
 {
-   QBtSettings stt;
-   const QString group = ( QBtWorkspace::LEFT_PANEL_ID == idx_ )
-                         ? QBtConfig::LEFT_PANEL_GROUP
-                         : QBtConfig::RIGHT_PANEL_GROUP;
+    QBtSettings stt;
+    const QString group = ( QBtWorkspace::LEFT_PANEL_ID == idx_ )
+            ? QBtConfig::LEFT_PANEL_GROUP
+            : QBtConfig::RIGHT_PANEL_GROUP;
 
-   if( QBtWorkspace::LEFT_PANEL_ID == idx_ ) {
-      // aktualny katalog ------------------------------------
-      QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-      const QString current_path = ( view ) ?  view->current_path() : QString();
-      stt.save( group + QBtConfig::CURR_LEFT_DIR_KEY, current_path );
-      // aktualna pozycja
-      const QString current_file = view->selected_file_full_name();
-      stt.save( group + QBtConfig::SELECTED_LEFT_KEY, current_file );
-      // historia katalogow ----------------------------------
-      QStringList path_data = QStringList();
-      for( qint32 i = 1; i < path_->count(); ++i ) {
-         path_data << path_->itemText( i );
-      }
-      stt.save( group + QBtConfig::FOLDERS, path_data );
-   }
-   else {
-      // aktualny katalog ------------------------------------
-      QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-      const QString current_path = ( view ) ?  view->current_path() : QString();
-      stt.save( group + QBtConfig::CURR_RIGHT_DIR_KEY, current_path );
-      // aktualna pozycja
-      const QString current_file = view->selected_file_full_name();
-      stt.save( group + QBtConfig::SELECTED_RIGHT_KEY, current_file );
-      // historia katalogow ----------------------------------
-      QStringList path_data = QStringList();
-      for( qint32 i = 1; i < path_->count(); ++i ) {
-         path_data << path_->itemText( i );
-      }
-      stt.save( group + QBtConfig::FOLDERS, path_data );
-      stt.save( group + QBtConfig::SORT, view->header()->sortIndicatorSection());
-
-   }
+    // aktualny katalog ------------------------------------
+    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
+    const QString current_path = ( view ) ?  view->current_path() : QString();
+    stt.save( group + QBtConfig::CURR_DIR_KEY, current_path );
+    // aktualna pozycja
+    const QString current_file = view->selected_file_full_name();
+    stt.save( group + QBtConfig::SELECTED_KEY, current_file );
+    // historia katalogow ----------------------------------
+    QStringList path_data = QStringList();
+    for( qint32 i = 1; i < path_->count(); ++i ) {
+        path_data << path_->itemText( i );
+    }
+    stt.save( group + QBtConfig::FOLDERS, path_data );
+    stt.save( group + QBtConfig::SORT_COLUMN, view->sortColumn());
+    stt.save( group + QBtConfig::SORT_ORDER, (view->sortOrder()==Qt::DescendingOrder));
 }
 // end of save
 
@@ -377,60 +360,49 @@ void QBtPanel::save()
 //*******************************************************************
 void QBtPanel::restore()
 {
-   QBtSettings stt;
-   QVariant data;
-   const QString group = ( QBtWorkspace::LEFT_PANEL_ID == idx_ )
-                         ? QBtConfig::LEFT_PANEL_GROUP
-                         : QBtConfig::RIGHT_PANEL_GROUP;
+    QBtSettings stt;
+    QVariant data;
+    const QString group = ( QBtWorkspace::LEFT_PANEL_ID == idx_ )
+            ? QBtConfig::LEFT_PANEL_GROUP
+            : QBtConfig::RIGHT_PANEL_GROUP;
 
-   if( QBtWorkspace::LEFT_PANEL_ID == idx_ ) {
-      // aktualny katalog ------------------------------------
-      QString path = QString();
-      if( stt.read( group + QBtConfig::CURR_LEFT_DIR_KEY, data ) ) {
-         path = data.toString();
-      }
-      
-      QFileInfo finfo( path );
-      if( !finfo.exists() || !finfo.isExecutable() || !finfo.isReadable() ) {
-         path = QDir::homePath();
-      }
-      new_tab( path );
-      //-----------
-      QString current_file = QString();
-      if( stt.read( group + QBtConfig::SELECTED_LEFT_KEY, data ) ) {
-         current_file = data.toString();
-      }
-      QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-      if( view ) view->set_initial_file_request( current_file );
+    // aktualny katalog ------------------------------------
+    QString path = QString();
+    if( stt.read( group + QBtConfig::CURR_DIR_KEY, data ) ) {
+        path = data.toString();
+    }
 
-      // historia katalogow ----------------------------------
-      if( stt.read( group + QBtConfig::FOLDERS, data ) ) {
-         path_->addItems( data.toStringList() );
-      }
-   }
-   else {
-      // aktualny katalog ------------------------------------
-      QString path = QString();
-      if( stt.read( group + QBtConfig::CURR_RIGHT_DIR_KEY, data ) ) {
-         path = data.toString();
-      }
-      QFileInfo finfo( path );
-      if( !finfo.exists() || !finfo.isExecutable() || !finfo.isReadable() ) {
-         path = QDir::homePath();
-      }
-      new_tab( path );
-      //-----------
-      QString current_file = QString();
-      if( stt.read( group + QBtConfig::SELECTED_RIGHT_KEY, data ) ) {
-         current_file = data.toString();
-      }
-      QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-      if( view ) view->set_initial_file_request( current_file );
-      // historia katalogow ----------------------------------
-      if( stt.read( group + QBtConfig::FOLDERS, data ) ) {
-         path_->addItems( data.toStringList() );
-      }
-   }
+    QFileInfo finfo( path );
+    if( !finfo.exists() || !finfo.isExecutable() || !finfo.isReadable() ) {
+        path = QDir::homePath();
+    }
+
+    int sortIndex = 0;
+    if( stt.read( group + QBtConfig::SORT_COLUMN, data ) ) {
+        sortIndex = data.toInt();
+    }
+    Qt::SortOrder sortOrder = Qt::AscendingOrder;
+    if( stt.read( group + QBtConfig::SORT_ORDER, data ) ) {
+        sortOrder = (data.toBool()) ? Qt::DescendingOrder : Qt::AscendingOrder;
+    }
+    new_tab( path, sortIndex, sortOrder );
+    //-----------
+    QString current_file = QString();
+    if( stt.read( group + QBtConfig::SELECTED_KEY, data ) ) {
+        current_file = data.toString();
+    }
+
+    // historia katalogow ----------------------------------
+    if( stt.read( group + QBtConfig::FOLDERS, data ) ) {
+        path_->addItems( data.toStringList() );
+    }
+
+    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
+    if( view ) {
+        view->set_initial_file_request( current_file );
+    }
+
+
 }
 
 // end of restore
@@ -441,7 +413,7 @@ void QBtPanel::restore()
 void QBtPanel::new_tab_request()
 {
    const QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
-   const qint32 idx = new_tab( view->current_path() );
+   const qint32 idx = new_tab( view->current_path(), view->sortColumn(), view->sortOrder() );
    tbar_->setCurrentIndex( idx );
 }
 // end of new_tab_request
@@ -471,11 +443,11 @@ void QBtPanel::del_tab_request()
 //*******************************************************************
 // new_tab                                                   PRIVATE
 //*******************************************************************
-qint32 QBtPanel::new_tab( const QString& in_path )
+qint32 QBtPanel::new_tab(const QString& in_path , int sortColumn, Qt::SortOrder sortOrder)
 {
    qint32 idx = tbar_->addTab( in_path );
 
-   QBtView* const view = new QBtView( in_path );
+   QBtView* const view = new QBtView( in_path, sortColumn, sortOrder );
    view->setDragEnabled(true);
    view->setAcceptDrops(true);
    connect( view, SIGNAL( dir_count             ( qint32 ) ),

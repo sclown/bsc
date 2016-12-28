@@ -48,12 +48,13 @@ const QString QBtConfig::SPLITTER_KEY      = "splitter";
 //---------------------------
 const QString QBtConfig::LEFT_PANEL_GROUP   = "LeftPanel/";
 const QString QBtConfig::RIGHT_PANEL_GROUP  = "RightPanel/";
-const QString QBtConfig::CURR_LEFT_DIR_KEY  = "current_left_dir";
+const QString QBtConfig::CURR_DIR_KEY  = "current_dir";
 const QString QBtConfig::CURR_RIGHT_DIR_KEY = "current_right_dir";
-const QString QBtConfig::SELECTED_LEFT_KEY  = "selected_left_item";
+const QString QBtConfig::SELECTED_KEY  = "selected_item";
 const QString QBtConfig::SELECTED_RIGHT_KEY = "selected_right_item";
-const QString QBtConfig::FOLDERS_LEFT_KEY   = "folders_left";
-const QString QBtConfig::FOLDERS_RIGHT_KEY  = "folders_right";
+const QString QBtConfig::FOLDERS            = "folders";
+const QString QBtConfig::SORT_COLUMN               = "sort_column";
+const QString QBtConfig::SORT_ORDER               = "sort_order";
 //---------------------------
 const QString QBtConfig::TERMINAL_GROUP     = "Terminal/";
 const QString QBtConfig::DIFF_GROUP         = "Diff/";

@@ -73,20 +73,29 @@ QBtDirModel::~QBtDirModel()
 }
 // end of ~QBtDirModel
 
+void QBtDirModel::setup( const QString& in_path, int sortColumn, Qt::SortOrder sortOrder)
+{
+   sortIndex_ = sortColumn;
+   sortOrder_ = sortOrder;
+   update( in_path);
+}
+
+
 //*******************************************************************
 // update                                          PUBLIC inherited
 //*******************************************************************
-void QBtDirModel::update( const QString& in_path )
+void QBtDirModel::update( const QString& in_path)
 {
    watcher_.removePath( current_path_ );
-   thread_->update( in_path );
+   thread_->update( in_path, sortIndex_, sortOrder_ );
 }
+
 void QBtDirModel::update( const QModelIndex& in_index )
 {
    const QBtViewItem* const it = head_item( in_index );
    if( it ) {
       if( valid_dir_name( it->finfo().full_name() ) ) {
-         thread_->update( it->finfo().path() );
+         thread_->update( it->finfo().path(), sortIndex_, sortOrder_ );
       }
    }
 }
@@ -152,7 +161,9 @@ bool QBtDirModel::setItemData(const QModelIndex &index, const QMap<int, QVariant
 
 void QBtDirModel::sort(int column, Qt::SortOrder order)
 {
-     thread_->update( current_path_, column, order);
+    sortIndex_ = column;
+    sortOrder_ = order;
+    thread_->update( current_path_, sortIndex_, sortOrder_);
 }
 
 //*******************************************************************

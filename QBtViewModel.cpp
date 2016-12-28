@@ -64,6 +64,8 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
 , busy_         ( true            )
 , thread_       ( 0               )
 , selections_   ( SelectionsSet() )
+, sortIndex_    ( 0               )
+, sortOrder_    ( Qt::AscendingOrder)
 {
    QStringList hdrs;
    hdrs  << HDR_NAME

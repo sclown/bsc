@@ -60,7 +60,7 @@ private:
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtView( const QString&, QWidget* = 0 );
+   QBtView( const QString&, int, Qt::SortOrder, QWidget* = 0 );
    ~QBtView();
 private:
    QBtView( const QBtView& );
@@ -97,6 +97,8 @@ public:
    SelectionsSet  get_selected_items() const;
    void           refresh                  ( const QString& = QString());
    void           unselect_all             ();
+   int            sortColumn        () const;
+   Qt::SortOrder  sortOrder         () const;
 protected:
    virtual void startDrag(Qt::DropActions supportedActions);
    virtual void scrollContentsBy(int dx, int dy);

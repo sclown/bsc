@@ -85,7 +85,7 @@ private:
    void           customEvent           ( QEvent* );
    void           new_tab_request       ();
    void           del_tab_request       ();
-   qint32         new_tab               ( const QString& );
+   qint32         new_tab               ( const QString&, int, Qt::SortOrder );
    void           update_fstab          ();
    void           save                  ();
    void           restore               ();
