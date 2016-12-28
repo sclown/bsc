@@ -35,6 +35,7 @@
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QBtTabBar;
+class QBtPathBox;
 class QStackedWidget;
 class QLabel;
 class QComboBox;
@@ -64,7 +65,7 @@ private:
 //******* MEMBERS *******
 private:
    qint32                idx_;
-   QComboBox*      const path_;
+   QBtPathBox*      const path_;
    QComboBox*      const fstab_;
    QBtTabBar*      const tbar_;
    QStackedWidget* const wstack_;
@@ -88,7 +89,6 @@ private:
    void           update_fstab          ();
    void           save                  ();
    void           restore               ();
-   void           reset_path            ();
 private slots:
    void           tab_mouse_event       ();
    void           tab_bar_changed       ( int );

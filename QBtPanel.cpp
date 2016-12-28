@@ -34,7 +34,9 @@
 #include "QBtSettings.h"
 #include "QBtWorkspace.h"
 #include "QBtTabBar.h"
+#include "QBtPathBox.h"
 #include "3rdprty/dircompleter.h"
+#include <QHeaderView>
 #include <QStackedWidget>
 #include <QComboBox>
 #include <QVBoxLayout>
@@ -85,7 +87,7 @@ QHBoxLayout * const QBtPanel::pathLineLayout()
 
 QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( in_parent )
 , idx_      ( in_idx )
-, path_     ( new QComboBox )
+, path_     ( new QBtPathBox )
 , fstab_    ( new QComboBox )
 , tbar_     ( new QBtTabBar )
 , wstack_   ( new QStackedWidget )
@@ -93,12 +95,8 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 , files_    ( new QLabel )
 , selected_ ( new QLabel )
 {
-   path_->setEditable( true );
    path_->setDuplicatesEnabled( false );
    path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
-   DirCompleter *completer = new DirCompleter(this);
-   completer->setCompletionMode(QCompleter::InlineCompletion);
-   path_->setCompleter(completer);
    path_->installEventFilter(this);
    fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
    tbar_->setElideMode( Qt::ElideLeft );
@@ -352,7 +350,7 @@ void QBtPanel::save()
       for( qint32 i = 1; i < path_->count(); ++i ) {
          path_data << path_->itemText( i );
       }
-      stt.save( group + QBtConfig::FOLDERS_LEFT_KEY, path_data );
+      stt.save( group + QBtConfig::FOLDERS, path_data );
    }
    else {
       // aktualny katalog ------------------------------------
@@ -367,7 +365,9 @@ void QBtPanel::save()
       for( qint32 i = 1; i < path_->count(); ++i ) {
          path_data << path_->itemText( i );
       }
-      stt.save( group + QBtConfig::FOLDERS_RIGHT_KEY, path_data );
+      stt.save( group + QBtConfig::FOLDERS, path_data );
+      stt.save( group + QBtConfig::SORT, view->header()->sortIndicatorSection());
+
    }
 }
 // end of save
@@ -404,7 +404,7 @@ void QBtPanel::restore()
       if( view ) view->set_initial_file_request( current_file );
 
       // historia katalogow ----------------------------------
-      if( stt.read( group + QBtConfig::FOLDERS_LEFT_KEY, data ) ) {
+      if( stt.read( group + QBtConfig::FOLDERS, data ) ) {
          path_->addItems( data.toStringList() );
       }
    }
@@ -427,23 +427,13 @@ void QBtPanel::restore()
       QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
       if( view ) view->set_initial_file_request( current_file );
       // historia katalogow ----------------------------------
-      if( stt.read( group + QBtConfig::FOLDERS_RIGHT_KEY, data ) ) {
+      if( stt.read( group + QBtConfig::FOLDERS, data ) ) {
          path_->addItems( data.toStringList() );
       }
    }
 }
 
 // end of restore
-
-void QBtPanel::reset_path()
-{
-    path_->disconnect();
-    path_->setCurrentIndex( 0 );
-
-    connect( path_, SIGNAL( activated   ( const QString& ) ),
-             this , SLOT  ( path_changed( const QString& ) ) );
-
-}
 
 //*******************************************************************
 // new_tab_request                                           PRIVATE
@@ -507,24 +497,7 @@ qint32 QBtPanel::new_tab( const QString& in_path )
 //*******************************************************************
 void QBtPanel::current_path( const QString& in_path )
 {
-   QDir dir( in_path );
-   if( in_path.isEmpty() || !dir.exists() || !dir.isReadable() ) {
-       reset_path();
-       return;
-   }
-
-   path_->disconnect();
-   
-   const qint32 idx = path_->findText( in_path );
-   if( idx != -1 ) {
-      path_->removeItem( idx );
-   }
-   path_->insertItem( 0, in_path );
-   path_->setCurrentIndex( 0 );
-   
-   connect( path_, SIGNAL( activated   ( const QString& ) ),
-            this , SLOT  ( path_changed( const QString& ) ) );
-
+   path_->setPath(in_path);
    tbar_->setTabText( tbar_->currentIndex(), in_path );
 }
 // end of current_path
@@ -613,7 +586,7 @@ void QBtPanel::fstab_changed( const QString& in_path )
 //*******************************************************************
 void QBtPanel::edit_finished()
 {
-    reset_path();
+    path_->reset();
     current_view()->setFocus( Qt::OtherFocusReason );
 }
 // end of edit_finished
