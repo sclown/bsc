@@ -2,8 +2,13 @@ TEMPLATE =  app
 CONFIG +=  qt thread warn_on x11
 QT += widgets
 QMAKE_MAC_SDK = macosx10.12
-#QMAKE_CXXFLAGS_DEBUG = -O0 -g
+#QMAKE_CXXFLAGS_DEBUG = -O0
 #QMAKE_CXXFLAGS_RELEASE = -O3
+macx {
+    QMAKE_LFLAGS += -F /System/Library/Frameworks/CoreFoundation.framework/ \
+                    -F /System/Library/Frameworks/Cocoa.framework/
+    LIBS += -framework CoreFoundation -framework Cocoa
+}
 ICON = bsc.icns
 MOC_DIR =  ./tmp
 SOURCES =  \
@@ -111,10 +116,14 @@ HEADERS =  \
 	QBtWorkspace.h \
         QBtCommand.h \
         3rdprty/dircompleter.h \
-    QBtPathBox.h
+    QBtPathBox.h \
+    QBTMacTools.h
 RESOURCES =  bsc.qrc
     APP_SCPT_FILES.files = scripts/openTerminal.scpt \
                            scripts/openFinder.scpt \
                            scripts/openSublime.scpt
     APP_SCPT_FILES.path = Contents/Resources/scripts
 QMAKE_BUNDLE_DATA += APP_SCPT_FILES
+
+OBJECTIVE_SOURCES += \
+    QBTMacTools.mm

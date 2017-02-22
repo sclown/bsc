@@ -1,5 +1,6 @@
 #include "QBtPathBox.h"
 #include "3rdprty/dircompleter.h"
+#include "QBTMacTools.h"
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QMimeData>
@@ -27,6 +28,9 @@ void QBtPathBox::dropEvent(QDropEvent *event)
     QString path;
     foreach (QUrl url, urls) {
         if(url.scheme() == "file"){
+            if(isMacSpecialURL(url)) {
+                url = resolveMacSpecialURL(url);
+            }
             path = url.path();
             setPath(path);
             emit activated(path);
