@@ -52,7 +52,7 @@ class QBtFinder : public QDialog
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtFinder( QWidget* = 0 );
+   QBtFinder( QWidget* = 0, const QString &workDir="" );
 private:
    QBtFinder( const QBtFinder& );
    QBtFinder& operator=( const QBtFinder& );

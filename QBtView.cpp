@@ -327,7 +327,7 @@ void QBtView::find()
    QString file_path = QString();
 
    {
-      QBtFinder dialog( this );
+      QBtFinder dialog( this, current_path() );
       if( QDialog::Accepted == dialog.exec() ) {
          dialog.selected_file( file_path );
       }

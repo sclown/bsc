@@ -74,7 +74,7 @@ const char* const QBtFinder::FILE_PATH    = QT_TR_NOOP( "File path" );
 //*******************************************************************
 // QBtFinder                                             CONSTRUCTOR
 //*******************************************************************
-QBtFinder::QBtFinder( QWidget* const in_parent ) : QDialog( in_parent )
+QBtFinder::QBtFinder( QWidget* const in_parent, const QString &workDir ) : QDialog( in_parent )
 , settings_gbox_     ( new QGroupBox( tr( SETTINGS ) ) )
 , file_label_        ( new QLabel( tr( FILE ) ) )
 , from_label_        ( new QLabel( tr( FROM ) ) )
@@ -108,7 +108,7 @@ QBtFinder::QBtFinder( QWidget* const in_parent ) : QDialog( in_parent )
    run_->setDefault( true );
    break_->setEnabled( false );
    goto_->setEnabled( false );
-   from_->setText( QDir::homePath() );
+   from_->setText( workDir.length()? workDir : QDir::homePath() );
    
    fpath_->setFrame( false );
    fpath_->setReadOnly( true );
