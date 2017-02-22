@@ -631,7 +631,6 @@ void QBtView::enter( const QModelIndex& in_index )
             one_level_up();
         }
         else {
-            initial_file_stack_.push( fi.fileName() );
             requests_.push( GOTO_TOP );
             model_->update( fi.absoluteFilePath() );
         }
@@ -702,11 +701,9 @@ void QBtView::refresh( const QString& in_path )
 //*******************************************************************
 void QBtView::one_level_up()
 {
-    if( initial_file_stack_.empty() ) {
-        QFileInfo info(current_path());
-        if( !info.isRoot() ) {
-            initial_file_stack_.push( info.fileName() );
-        }
+    QFileInfo info(current_path());
+    if( !info.isRoot() ) {
+        initial_file_stack_.push( info.fileName() );
     }
     requests_.push( INITIAL_FILE_SELECT );
     model_->cdup();
