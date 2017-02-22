@@ -123,11 +123,11 @@ bool QBtCanOverwrite::canOverwrite(QWidget* const in_parent)
 
 quint32 QBtCanOverwrite::ask(const QString &path)
 {
+    path_ = path;
     if( dont_ask_->isChecked() ) {
         return result_;
     }
     result_ = OVERWRITE_FILE;
-    path_ = path;
     path_label_->setText(path_);
     return exec();
 }
