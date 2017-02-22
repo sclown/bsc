@@ -115,6 +115,8 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_SHELL );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_TERMINAL );
+    QBtEventsController::instance()->append( this, QBtEvent::OPEN_EDITOR );
+    QBtEventsController::instance()->append( this, QBtEvent::OPEN_DIR );
     QBtEventsController::instance()->append( this, QBtEvent::EXECUTE );
 }
 // end of QBtWorkspace
@@ -196,11 +198,17 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
     case QBtEvent::OPEN_OPOSITE:
         open_oposite();
         break;
+    case QBtEvent::OPEN_DIR:
+        open_dir( event->data(0).toString() );
+        break;
     case QBtEvent::OPEN_SHELL:
         open_shell();
         break;
     case QBtEvent::OPEN_TERMINAL:
         open_terminal();
+        break;
+    case QBtEvent::OPEN_EDITOR:
+        open_editor();
         break;
     case QBtEvent::EXECUTE:
         open( event->data(0).toString(), QStringList(), QString() );
@@ -701,6 +709,19 @@ void QBtWorkspace::open_terminal()
 
 }
 
+void QBtWorkspace::open_editor()
+{
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) {
+        return;
+    }
+
+    QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp();
+    open(dir.path() + "/Resources/scripts/openSublime.scpt", QStringList(src->selected_file_path()), src->current_path());
+}
+
 void QBtWorkspace::open( const QString &path, const QStringList &args, const QString &pwd )
 {
     const QFileInfo fileInfo(path);
@@ -746,4 +767,12 @@ void QBtWorkspace::open_oposite()
         return;
     }
     dst->update(src->current_path());
+}
+
+void QBtWorkspace::open_dir(const QString &path)
+{
+    QBtView* src = 0;
+    QBtView* dst = 0;
+    if( !src_and_dst_view( src, dst ) ) return;
+    src->update(path);
 }

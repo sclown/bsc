@@ -441,9 +441,7 @@ void QBtView::view()
 //*******************************************************************
 void QBtView::edit()
 {
-   QProcess::execute("/Applications/Sublime Text 2.app/Contents/SharedSupport/bin/subl", QStringList(selected_file_path()));
-//   QBtFileEditor dialog( this, selected_file_path() );
-//   dialog.exec();
+    QBtEventsController::instance()->send_event( QBtEvent::OPEN_EDITOR );
 }
 // end of edit
 

@@ -77,6 +77,8 @@ public:
       OPEN_OPOSITE,
       OPEN_SHELL,
       OPEN_TERMINAL,
+      OPEN_EDITOR,
+      OPEN_DIR,
       EXECUTE
    };
 

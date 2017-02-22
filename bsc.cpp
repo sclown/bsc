@@ -31,20 +31,27 @@
 #include "QBtShared.h"
 #include "QBtConfig.h"
 #include "QBtEventsController.h"
+#include "QBtCommand.h"
 #include <QVariant>
 #include <QApplication>
 #include <QIcon>
+
 
 //*******************************************************************
 // main
 //*******************************************************************
 int main( int in_argc, char** in_argv )
 {
+
    Q_INIT_RESOURCE( bsc );
 
    QCoreApplication::setOrganizationName  ( QBtShared::ORGANISATION );
    QCoreApplication::setOrganizationDomain( QBtShared::ORGANISATION );
    QCoreApplication::setApplicationName   ( QBtShared::PROGRAM_NAME );
+
+   if(isCommand(in_argc, in_argv)) {
+       return 0;
+   }
 
    QApplication bsc( in_argc, in_argv );
    bsc.setWindowIcon( QIcon( ":/img/bsc.png" ) );
@@ -53,7 +60,8 @@ int main( int in_argc, char** in_argv )
    QBtEventsController::instance();
    qRegisterMetaType<QVariant>( "QVariant" );
    
-   
+
+
    QBtMainWindow window;
    window.show();
    

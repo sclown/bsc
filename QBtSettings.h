@@ -36,7 +36,7 @@
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
-class QBtSettings : protected QSettings
+class QBtSettings : public QSettings
 {
    Q_OBJECT
 

@@ -52,7 +52,8 @@ SOURCES =  \
         QBtViewSelectionModel.cpp \
 	QBtWorkedThread.cpp \
 	QBtWorkspace.cpp \
-	bsc.cpp \
+        QBtCommand.cpp \
+        bsc.cpp \
         3rdprty/dircompleter.cpp \
     QBtPathBox.cpp
 HEADERS =  \
@@ -108,10 +109,12 @@ HEADERS =  \
         QBtViewStandardItem.h \
 	QBtWorkedThread.h \
 	QBtWorkspace.h \
+        QBtCommand.h \
         3rdprty/dircompleter.h \
     QBtPathBox.h
 RESOURCES =  bsc.qrc
-APP_SCPT_FILES.files = scripts/openTerminal.scpt \
-	scripts/openFinder.scpt 
-APP_SCPT_FILES.path = Contents/Resources/scripts
+    APP_SCPT_FILES.files = scripts/openTerminal.scpt \
+                           scripts/openFinder.scpt \
+                           scripts/openSublime.scpt
+    APP_SCPT_FILES.path = Contents/Resources/scripts
 QMAKE_BUNDLE_DATA += APP_SCPT_FILES

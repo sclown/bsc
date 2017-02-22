@@ -39,6 +39,7 @@
 #include "QBtConfigDialog.h"
 #include "QBtHelp.h"
 #include "QBtFinder.h"
+#include "QBtCommand.h"
 #include <QApplication>
 #include <QMenu>
 #include <QMenuBar>
@@ -270,6 +271,7 @@ void QBtMainWindow::showEvent( QShowEvent* const in_event )
    
    QBtShared::resize( this, 90, 90 );
    restore_settings();
+   handleCommand();
    QMainWindow::showEvent( in_event );
 }
 // end of showEvent
@@ -291,6 +293,15 @@ void QBtMainWindow::keyPressEvent( QKeyEvent* in_event )
    }
 }
 // end of keyPressEvent
+
+bool QBtMainWindow::event(QEvent *event)
+{
+    if (event->type() == QEvent::WindowActivate) {
+        handleCommand();
+        // window was activated
+    }
+    return QWidget::event(event);
+}
 
 //*******************************************************************
 // customEvent                                     PRIVATE inherited

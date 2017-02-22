@@ -188,6 +188,7 @@ private:
    void restore_settings ();
    void showEvent        ( QShowEvent* );
    void keyPressEvent    ( QKeyEvent* );
+   bool event            ( QEvent *event );
    void customEvent      ( QEvent* );
    void create_menu      ();
    void create_tool_bars ();
