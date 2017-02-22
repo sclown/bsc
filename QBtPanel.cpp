@@ -208,6 +208,9 @@ bool QBtPanel::eventFilter(QObject *obj, QEvent *event)
             {
                 event->accept();
                 auto edit = path_->lineEdit();
+                if( edit->hasSelectedText() && !edit->selectedText().endsWith("/") ) {
+                    edit->setText(edit->text() + "/");
+                }
                 edit->setSelection(edit->text().size(),0);
                 return true;
             }
