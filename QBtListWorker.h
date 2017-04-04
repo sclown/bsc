@@ -1,5 +1,4 @@
-#ifndef INCLUDED_QBtWorkedThred_h
-#define INCLUDED_QBtWorkedThred_h
+#pragma once
 
 /********************************************************************
  * Copyright (C) Piotr Pszczolkowski
@@ -28,41 +27,32 @@
  * Creation date: 31.08.2007
  *******************************************************************/
 
-/*------- include files:
--------------------------------------------------------------------*/
 #include <QThread>
 #include <QVariant>
 #include <QStringList>
 
+#include <memory>
+typedef std::shared_ptr<QIcon> QIconPtr;
+Q_DECLARE_METATYPE(QIconPtr)
+
 /*------- class declaration:
 -------------------------------------------------------------------*/
-class QBtWorkedThread : public QThread
+class QBtListWorker : public QObject
 {
    Q_OBJECT
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtWorkedThread( QObject* = 0 );
+   QBtListWorker(){}
 private:
-   QBtWorkedThread( const QBtWorkedThread& );
-   QBtWorkedThread& operator=( const QBtWorkedThread& );
+   QBtListWorker( const QBtListWorker& );
+   QBtListWorker& operator=( const QBtListWorker& );
 
-//******* MEMBERS *******
-protected:
-   QString path_;
-   int column_;
-   Qt::SortOrder order_;
-
-//******* METHODS *******
-public:
-   virtual void update( const QString&, int column = 0 , Qt::SortOrder order = Qt::AscendingOrder ) = 0;
-protected:
-   virtual void run() = 0;
 signals:
    void work_started  ();
    void items_count   ( qint32 );
    void item_info     ( qint32, QVariant, QStringList );
-   void work_finished ( const QString );   
+   void item_icon     ( qint32, QIconPtr );
+   void work_finished ( const QString& );
 };
 
-#endif // INCLUDED_QBtWorkedThred_h

@@ -33,7 +33,7 @@
 #include "QBtEventsController.h"
 #include "QBtViewItem.h"
 #include "QBtViewStandardItem.h"
-#include "QBtDirWorkedThread.h"
+#include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
 #include <QApplication>
 #include <QDateTime>
@@ -42,6 +42,7 @@
 #include <QMimeData>
 #include <QUrl>
 #include <QTimer>
+#include <QPainter>
 
 
 //*******************************************************************
@@ -49,15 +50,20 @@
 //*******************************************************************
 QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
 {
-   thread_ = new QBtDirWorkedThread( this );
-   connect( thread_, SIGNAL( work_started      () ),
-            this   , SLOT  ( work_started_slot () ) );
-   connect( thread_, SIGNAL( items_count       ( qint32 ) ),
-            this   , SLOT  ( items_count_slot  ( qint32 ) ) );
-   connect( thread_, SIGNAL( item_info         ( qint32, QVariant, QStringList ) ),
-            this   , SLOT  ( item_info_slot    ( qint32, QVariant, QStringList ) ) );
-   connect( thread_, SIGNAL( work_finished     ( const QString ) ),
-            this   , SLOT  ( work_finished_slot( const QString ) ) );
+
+   worker_ = new QBtDirListWorker;
+   worker_->moveToThread(&thread_);
+   connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
+   connect(this, &QBtDirModel::list, worker_, &QBtDirListWorker::list);
+   connect(this, &QBtDirModel::icon, worker_, &QBtDirListWorker::icon);
+   connect(worker_, &QBtDirListWorker::work_started, this, &QBtDirModel::work_started_slot);
+   connect(worker_, &QBtDirListWorker::items_count, this, &QBtDirModel::items_count_slot);
+   connect(worker_, &QBtDirListWorker::item_info, this, &QBtDirModel::item_info_slot);
+   connect(worker_, &QBtDirListWorker::item_icon, this, &QBtDirModel::item_icon_slot);
+   connect(worker_, &QBtDirListWorker::work_finished, this, &QBtDirModel::work_finished_slot);
+   thread_.start();
+
+
    connect( &watcher_, SIGNAL( directoryChanged      ( const QString & ) ),
             this    , SLOT  ( directory_changed_slot ( const QString ) ) );
 }
@@ -68,8 +74,8 @@ QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
 //*******************************************************************
 QBtDirModel::~QBtDirModel()
 {
-   delete dynamic_cast<QBtDirWorkedThread*>( thread_ );
-   thread_ = 0;
+    thread_.quit();
+    thread_.wait();
 }
 // end of ~QBtDirModel
 
@@ -87,7 +93,7 @@ void QBtDirModel::setup( const QString& in_path, int sortColumn, Qt::SortOrder s
 void QBtDirModel::update( const QString& in_path)
 {
    watcher_.removePath( current_path_ );
-   thread_->update( in_path, sortIndex_, sortOrder_ );
+   emit list( in_path, sortIndex_, sortOrder_ );
 }
 
 void QBtDirModel::update( const QModelIndex& in_index )
@@ -95,7 +101,7 @@ void QBtDirModel::update( const QModelIndex& in_index )
    const QBtViewItem* const it = head_item( in_index );
    if( it ) {
       if( valid_dir_name( it->finfo().full_name() ) ) {
-         thread_->update( it->finfo().path(), sortIndex_, sortOrder_ );
+         emit list( it->finfo().path(), sortIndex_, sortOrder_ );
       }
    }
 }
@@ -163,7 +169,7 @@ void QBtDirModel::sort(int column, Qt::SortOrder order)
 {
     sortIndex_ = column;
     sortOrder_ = order;
-    thread_->update( current_path_, sortIndex_, sortOrder_);
+    emit list( current_path_, sortIndex_, sortOrder_ );
 }
 
 //*******************************************************************
@@ -177,22 +183,19 @@ void QBtDirModel::append_row( const qint32 in_row,
    QStandardItem* const root_it = invisibleRootItem();
 
    {  // File name
-      QFileInfo info(in_finfo.path());
-      QFileIconProvider ip;
-      QIcon icon=ip.icon(info);
-      QBtViewItem* const it = new QBtViewItem;
-      it->setIcon( icon );
-
+       QBtViewItem* const it = new QBtViewItem;
+       QFileIconProvider ip;
 
       if( is_parent_dir ) {
+          it->setIcon(ip.icon(QFileIconProvider::Folder));
       }
       else {
          if( in_finfo.is_dir() ) {
-//            const QIcon icon = QIcon( in_finfo.is_readable() ? DIR_ICON : NOREADABLE_ICON );
-//            it->setIcon( icon );
+             it->setIcon(ip.icon(QFileIconProvider::Folder));
             ++dir_count_;
          }
          else {
+             it->setIcon(ip.icon(QFileIconProvider::File));
             ++file_count_;
          }
       }
@@ -332,9 +335,22 @@ void QBtDirModel::items_count_slot( const qint32 in_row_count )
 //*******************************************************************
 void QBtDirModel::item_info_slot( const qint32 in_row, QVariant in_fi, QStringList in_data )
 {
-   append_row( in_row, in_fi.value<QBtFileInfo>(), in_data );
+   QBtFileInfo info = in_fi.value<QBtFileInfo>();
+   append_row( in_row, info, in_data );
+   emit icon(in_row, info.path());
 }
 // end of item_info_slot
+
+
+
+void QBtDirModel::item_icon_slot(qint32 row, QIconPtr icon)
+{
+    auto item = head_item(row);
+    if( item ) {
+        item->setIcon(*icon.get());
+    }
+}
+
 
 //*******************************************************************
 // work_finished_slot                                   PRIVATE slot

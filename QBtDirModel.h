@@ -32,9 +32,14 @@
 -------------------------------------------------------------------*/
 #include "QBtViewModel.h"
 #include <QFileSystemWatcher>
+#include <QThread>
+#include <memory>
+
+typedef std::shared_ptr<QIcon> QIconPtr;
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
+class QBtDirListWorker;
 class QBtFileInfo;
 
 /*------- class declaration:
@@ -53,6 +58,8 @@ private:
 
    QVariant dropInfo_;
    QFileSystemWatcher watcher_;
+   QThread thread_;
+   QBtDirListWorker *worker_;
 
 //******* METHODS *******
 public:
@@ -78,10 +85,16 @@ private slots:
    void work_started_slot   ();
    void items_count_slot    ( qint32 );
    void item_info_slot      ( qint32, QVariant, QStringList );
+   void item_icon_slot      ( qint32, QIconPtr );
    void work_finished_slot  ( QString );
    void directory_changed_slot ( const QString& );
    void delayed_refresh     ();
    void notify_drop         ();
+
+signals:
+   void list( const QString &path, int column , quint8 order );
+   void icon( qint32 row, const QString &path );
+
 };
 
 #endif // INCLUDED_QBtDirModel_h

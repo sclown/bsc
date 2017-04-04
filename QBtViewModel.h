@@ -37,7 +37,6 @@
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QBtViewItem;
-class QBtWorkedThread;
 class QBtFileInfo;
 
 /*------- class declaration:
@@ -79,7 +78,6 @@ protected:
    qint32           file_count_;
    qint32           dir_count_;
    bool             busy_;
-   QBtWorkedThread* thread_;
    SelectionsSet    selections_;
    int              sortIndex_;
    Qt::SortOrder    sortOrder_;

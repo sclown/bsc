@@ -62,7 +62,6 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
 , file_count_   ( qint32()        )
 , dir_count_    ( qint32()        )
 , busy_         ( true            )
-, thread_       ( 0               )
 , selections_   ( SelectionsSet() )
 , sortIndex_    ( 0               )
 , sortOrder_    ( Qt::AscendingOrder)

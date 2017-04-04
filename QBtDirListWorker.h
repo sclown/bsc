@@ -1,5 +1,5 @@
-#ifndef INCLUDED_QBtWorkedThread_h
-#define INCLUDED_QBtWorkedThread_h
+#ifndef INCLUDED_QBtDirListWorker_h
+#define INCLUDED_QBtDirListWorker_h
 
 /********************************************************************
  * Copyright (C) Piotr Pszczolkowski
@@ -30,25 +30,25 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
-#include "QBtWorkedThread.h"
+#include "QBtListWorker.h"
+#include <QFileIconProvider>
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
-class QBtDirWorkedThread : public QBtWorkedThread
+class QBtDirListWorker : public QBtListWorker
 {
-   Q_OBJECT
+    Q_OBJECT
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtDirWorkedThread( QObject* = 0 );
-private:
-   QBtDirWorkedThread( const QBtDirWorkedThread& );
-   QBtDirWorkedThread& operator=( const QBtDirWorkedThread& );
+   QBtDirListWorker();
 
-//******* METHODS *******
-public:
-   virtual void update(const QString&, int column , Qt::SortOrder order);
-   virtual void run   ();
+private:
+    QFileIconProvider provider_;
+
+public slots:
+    void list(const QString &path, int column , quint8 order);
+    void icon(quint32 row, const QString &path);
 };
 
-#endif // INCLUDED_QBtDirWorkedThread_h
+#endif // INCLUDED_QBtDirListWorker_h
