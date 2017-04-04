@@ -26,5 +26,7 @@
         <file>img/noreadable.png</file>
         <file>img/find.png</file>
         <file>img/terminal.png</file>
+        <file>img/symlink.png</file>
+        <file>img/symlink@2x.png</file>
     </qresource>
 </RCC>
