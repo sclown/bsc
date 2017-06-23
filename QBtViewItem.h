@@ -66,10 +66,13 @@ public:
    void               selected ( const bool in_selected )      { selected_ = in_selected; }
    const QBtFileInfo& finfo    () const                        { return finfo_;           }
    void               finfo    ( const QBtFileInfo& in_finfo ) { finfo_ = in_finfo;       }
+   bool iconLoaded() const { return !icon_.isNull(); }
+   void updateIcon(QIcon icon) { icon_ = icon; QStandardItem::setIcon(icon);}
 //******* MEMBERS *******
 private:
    bool        selected_;
    QBtFileInfo finfo_;
+   QIcon    icon_;
 };
 
 #endif // INCLUDED_QBtViewItem_h

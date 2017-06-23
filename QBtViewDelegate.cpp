@@ -53,80 +53,90 @@ void QBtViewDelegate::paint(  QPainter*                   in_painter,
                               const QStyleOptionViewItem& in_options,
                               const QModelIndex&          in_index ) const
 {
-   const QBtViewModel* const model = dynamic_cast< QBtViewModel* >( view_->model() );
-   const QBtViewItem*  const   hit = model->head_item( in_index );
-   QStandardItem* const        cit = model->itemFromIndex( in_index );
-   QBtConfig* const            cfg = QBtConfig::instance();
-   
-   const bool current_row  = ( view_->currentIndex().row() == in_index.row() );
-   const bool selected     = ( hit ) ? hit->selected() : false;
-   const bool has_focus    = view_->hasFocus();
+    QItemDelegate::paint( in_painter, in_options, in_index );
+    if(in_index.column() == 0) {
+       QBtViewModel* model = dynamic_cast< QBtViewModel* >( view_->model() );
+       const QBtViewItem*  const   hit = model->head_item( in_index );
+       if(hit && !hit->iconLoaded()) {
+           model->queryIcon(in_index);
+       }
 
-   QStyleOptionViewItem options = in_options;
-   QPalette palette             = options.palette;
+    }
+
+//   const QBtViewModel* const model = dynamic_cast< QBtViewModel* >( view_->model() );
+//   const QBtViewItem*  const   hit = model->head_item( in_index );
+//   QStandardItem* const        cit = model->itemFromIndex( in_index );
+//   QBtConfig* const            cfg = QBtConfig::instance();
+   
+//   const bool current_row  = ( view_->currentIndex().row() == in_index.row() );
+//   const bool selected     = ( hit ) ? hit->selected() : false;
+//   const bool has_focus    = view_->hasFocus();
+
+//   QStyleOptionViewItem options = in_options;
+//   QPalette palette             = options.palette;
 
 
       
-   if( has_focus ) {
-      if( current_row ) {
-         if( selected ) {
-            palette.setColor( QPalette::Highlight      , cfg->bkg_f_c_s_color() );
-            palette.setColor( QPalette::HighlightedText, cfg->txt_f_c_s_color() );
-         }
-         else {
-            palette.setColor( QPalette::Highlight      , cfg->bkg_f_c_ns_color() );
-            palette.setColor( QPalette::HighlightedText, cfg->txt_f_c_ns_color() );
-         }
-      }
-      else {
-         if( selected ) {
-            cit->setBackground( cfg->bkg_f_nc_s_color() );
-            cit->setForeground( cfg->txt_f_nc_s_color() );
-         }
-         else {
-            cit->setBackground( cfg->bkg_f_nc_ns_color() );
-            cit->setForeground( cfg->txt_f_nc_ns_color() );
-         }
-      }
-   }
-   else {
-      if( current_row ) {
-         if( selected ) {
-            palette.setColor( QPalette::Highlight      , cfg->bkg_nf_c_s_color() );
-            palette.setColor( QPalette::HighlightedText, cfg->txt_nf_c_s_color() );
-         }
-         else {
-            palette.setColor( QPalette::Highlight      , cfg->bkg_nf_c_ns_color() );
-            palette.setColor( QPalette::HighlightedText, cfg->txt_nf_c_ns_color() );
-         }
-      }
-      else {
-         if( selected ) {
-            cit->setBackground( cfg->bkg_nf_nc_s_color() );
-            cit->setForeground( cfg->txt_nf_nc_s_color() );
-         }
-         else {
-            cit->setBackground( cfg->bkg_nf_nc_ns_color() );
-            cit->setForeground( cfg->txt_nf_nc_ns_color() );
-         }
-      }
-   }
-   options.palette = palette;
-   QItemDelegate::paint( in_painter, options, in_index );
-   if(has_focus && current_row)
-   {
-       in_painter->setPen( QPen( Qt::black, 1, Qt::DotLine ) );
-       QRect oRect = options.rect.adjusted( 0,1,0,0 );
-       in_painter->drawLine( oRect.topLeft(), oRect.topRight());
-       in_painter->drawLine( oRect.bottomLeft(), oRect.bottomRight());
-       if(in_index.column()==0) {
-           in_painter->drawLine( oRect.topLeft(), oRect.bottomLeft());
-       }
-       if(in_index.column()==model->columnCount()-1) {
-           in_painter->drawLine( oRect.topRight(), oRect.bottomRight());
-       }
+//   if( has_focus ) {
+//      if( current_row ) {
+//         if( selected ) {
+//            palette.setColor( QPalette::Highlight      , cfg->bkg_f_c_s_color() );
+//            palette.setColor( QPalette::HighlightedText, cfg->txt_f_c_s_color() );
+//         }
+//         else {
+//            palette.setColor( QPalette::Highlight      , cfg->bkg_f_c_ns_color() );
+//            palette.setColor( QPalette::HighlightedText, cfg->txt_f_c_ns_color() );
+//         }
+//      }
+//      else {
+//         if( selected ) {
+//            cit->setBackground( cfg->bkg_f_nc_s_color() );
+//            cit->setForeground( cfg->txt_f_nc_s_color() );
+//         }
+//         else {
+//            cit->setBackground( cfg->bkg_f_nc_ns_color() );
+//            cit->setForeground( cfg->txt_f_nc_ns_color() );
+//         }
+//      }
+//   }
+//   else {
+//      if( current_row ) {
+//         if( selected ) {
+//            palette.setColor( QPalette::Highlight      , cfg->bkg_nf_c_s_color() );
+//            palette.setColor( QPalette::HighlightedText, cfg->txt_nf_c_s_color() );
+//         }
+//         else {
+//            palette.setColor( QPalette::Highlight      , cfg->bkg_nf_c_ns_color() );
+//            palette.setColor( QPalette::HighlightedText, cfg->txt_nf_c_ns_color() );
+//         }
+//      }
+//      else {
+//         if( selected ) {
+//            cit->setBackground( cfg->bkg_nf_nc_s_color() );
+//            cit->setForeground( cfg->txt_nf_nc_s_color() );
+//         }
+//         else {
+//            cit->setBackground( cfg->bkg_nf_nc_ns_color() );
+//            cit->setForeground( cfg->txt_nf_nc_ns_color() );
+//         }
+//      }
+//   }
+//   options.palette = palette;
+//   QItemDelegate::paint( in_painter, options, in_index );
+//   if(has_focus && current_row)
+//   {
+//       in_painter->setPen( QPen( Qt::black, 1, Qt::DotLine ) );
+//       QRect oRect = options.rect.adjusted( 0,1,0,0 );
+//       in_painter->drawLine( oRect.topLeft(), oRect.topRight());
+//       in_painter->drawLine( oRect.bottomLeft(), oRect.bottomRight());
+//       if(in_index.column()==0) {
+//           in_painter->drawLine( oRect.topLeft(), oRect.bottomLeft());
+//       }
+//       if(in_index.column()==model->columnCount()-1) {
+//           in_painter->drawLine( oRect.topRight(), oRect.bottomRight());
+//       }
 
 
-   }
+//   }
 }
 // end of paint

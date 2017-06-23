@@ -42,8 +42,6 @@
 
 QBtDirListWorker::QBtDirListWorker()
 {
-   qRegisterMetaType<QIconPtr>("QIconPtr");
-
 }
 
 void QBtDirListWorker::list(const QString &path, int column, quint8 order)
@@ -109,21 +107,4 @@ void QBtDirListWorker::list(const QString &path, int column, quint8 order)
         emit item_info( 0, QVariant::fromValue( fi ), QStringList("..") );
     }
     emit work_finished( path );
-}
-
-void QBtDirListWorker::icon(quint32 row, const QString &path)
-{
-    auto info = QFileInfo(path);
-    auto icon = std::make_shared<QIcon>(provider_.icon(info));
-    if(info.isSymLink()) {
-        auto size = 16;
-        QIcon overlay(":/img/symlink.png");
-        auto pix = icon->pixmap(size);
-        QPainter painter(&pix);
-        painter.drawPixmap(QPoint(0,size/2), overlay.pixmap(size/2));
-        painter.end();
-        icon = std::make_shared<QIcon>(QIcon(pix));
-    }
-    emit item_icon(row, icon);
-
 }

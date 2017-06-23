@@ -43,12 +43,8 @@ class QBtDirListWorker : public QBtListWorker
 public:
    QBtDirListWorker();
 
-private:
-    QFileIconProvider provider_;
-
 public slots:
     void list(const QString &path, int column , quint8 order);
-    void icon(quint32 row, const QString &path);
 };
 
 #endif // INCLUDED_QBtDirListWorker_h

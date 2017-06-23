@@ -92,6 +92,7 @@ public:
    virtual bool   is_executable ( const QModelIndex& ) = 0;
    virtual bool   is_readable ( const QModelIndex& ) = 0;
    virtual void   cdup        ()                     = 0;
+   virtual void   queryIcon (const QModelIndex &index ) = 0;
    //--------------------------------------------
    const QString&        current_path      () const;
    QString               file_full_name    ( const QModelIndex& ) const;

@@ -36,7 +36,6 @@
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QBtViewItem;
-class QBtWorkedThread;
 class QBtFileInfo;
 class QBtViewModel;
 

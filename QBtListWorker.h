@@ -32,8 +32,6 @@
 #include <QStringList>
 
 #include <memory>
-typedef std::shared_ptr<QIcon> QIconPtr;
-Q_DECLARE_METATYPE(QIconPtr)
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -52,7 +50,6 @@ signals:
    void work_started  ();
    void items_count   ( qint32 );
    void item_info     ( qint32, QVariant, QStringList );
-   void item_icon     ( qint32, QIconPtr );
    void work_finished ( const QString& );
 };
 

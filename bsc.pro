@@ -1,7 +1,8 @@
 TEMPLATE =  app
-CONFIG +=  qt thread warn_on x11
+CONFIG +=  qt thread warn_on x11 c++11
 QT += widgets
 QMAKE_MAC_SDK = macosx10.12
+#QMAKE_CXXFLAGS += -std=c++1y
 #QMAKE_CXXFLAGS_DEBUG = -O0
 #QMAKE_CXXFLAGS_RELEASE = -O3
 macx {
@@ -31,7 +32,6 @@ SOURCES =  \
 	QBtDirModel.cpp \
 	QBtDirParser.cpp \
 	QBtDirSelector.cpp \
-	QBtDirWorkedThread.cpp \
 	QBtEditExtensions.cpp \
 	QBtEventsController.cpp \
 	QBtFileComparator.cpp \
@@ -55,12 +55,12 @@ SOURCES =  \
 	QBtViewDelegate.cpp \
 	QBtViewModel.cpp \
         QBtViewSelectionModel.cpp \
-	QBtWorkedThread.cpp \
 	QBtWorkspace.cpp \
         QBtCommand.cpp \
         bsc.cpp \
         3rdprty/dircompleter.cpp \
-    QBtPathBox.cpp
+    QBtPathBox.cpp \
+    QBtDirListWorker.cpp
 HEADERS =  \
 	BtTypes.h \
 	QBtAttrDialog.h \
@@ -82,7 +82,6 @@ HEADERS =  \
 	QBtDirModel.h \
 	QBtDirParser.h \
 	QBtDirSelector.h \
-	QBtDirWorkedThread.h \
 	QBtEditExtensions.h \
 	QBtEvent.h \
 	QBtEventsController.h \
@@ -112,12 +111,13 @@ HEADERS =  \
         QBtViewModel.h \
         QBtViewSelectionModel.h \
         QBtViewStandardItem.h \
-	QBtWorkedThread.h \
 	QBtWorkspace.h \
         QBtCommand.h \
         3rdprty/dircompleter.h \
     QBtPathBox.h \
-    QBTMacTools.h
+    QBtMacTools.h \
+    QBtListWorker.h \
+    QBtDirListWorker.h
 RESOURCES =  bsc.qrc
     APP_SCPT_FILES.files = scripts/openTerminal.scpt \
                            scripts/openFinder.scpt \
@@ -126,4 +126,4 @@ RESOURCES =  bsc.qrc
 QMAKE_BUNDLE_DATA += APP_SCPT_FILES
 
 OBJECTIVE_SOURCES += \
-    QBTMacTools.mm
+    QBtMacTools.mm

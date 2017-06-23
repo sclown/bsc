@@ -35,6 +35,7 @@
 #include "QBtViewStandardItem.h"
 #include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
+#include "QBtMacTools.h"
 #include <QApplication>
 #include <QDateTime>
 #include <QDir>
@@ -55,14 +56,11 @@ QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
    worker_->moveToThread(&thread_);
    connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
    connect(this, &QBtDirModel::list, worker_, &QBtDirListWorker::list);
-   connect(this, &QBtDirModel::icon, worker_, &QBtDirListWorker::icon);
    connect(worker_, &QBtDirListWorker::work_started, this, &QBtDirModel::work_started_slot);
    connect(worker_, &QBtDirListWorker::items_count, this, &QBtDirModel::items_count_slot);
    connect(worker_, &QBtDirListWorker::item_info, this, &QBtDirModel::item_info_slot);
-   connect(worker_, &QBtDirListWorker::item_icon, this, &QBtDirModel::item_icon_slot);
    connect(worker_, &QBtDirListWorker::work_finished, this, &QBtDirModel::work_finished_slot);
    thread_.start();
-
 
    connect( &watcher_, SIGNAL( directoryChanged      ( const QString & ) ),
             this    , SLOT  ( directory_changed_slot ( const QString ) ) );
@@ -155,6 +153,11 @@ void QBtDirModel::cdup()
 }
 // end of cdup
 
+void QBtDirModel::queryIcon(const QModelIndex &index)
+{
+    QApplication::postEvent(this, new QBtEvent(QBtEvent::User, index.row(), file_path(index)));
+}
+
 bool QBtDirModel::removeRows(int row, int count, const QModelIndex &parent)
 {
     return QBtViewModel::removeRows(row, count, parent);
@@ -170,6 +173,32 @@ void QBtDirModel::sort(int column, Qt::SortOrder order)
     sortIndex_ = column;
     sortOrder_ = order;
     emit list( current_path_, sortIndex_, sortOrder_ );
+}
+
+void QBtDirModel::customEvent(QEvent* const in_event)
+{
+    const QBtEvent* const event = dynamic_cast< QBtEvent* >( in_event );
+    const int type = static_cast<int>( event->type() );
+
+    auto info = QFileInfo(event->data(1).toString());
+    auto row = event->data(0).toInt();
+    item_icon_slot(row, loadIcon(info));
+}
+
+QIcon QBtDirModel::loadIcon(QFileInfo info)
+{
+    QFileIconProvider provider;
+    auto icon = provider.icon(info);
+    if(info.isSymLink()) {
+        auto size = 16;
+        QIcon overlay(":/img/symlink.png");
+        auto pix = icon.pixmap(size);
+        QPainter painter(&pix);
+        painter.drawPixmap(QPoint(0,size/2), overlay.pixmap(size/2));
+        painter.end();
+        icon = QIcon(pix);
+    }
+    return icon;
 }
 
 //*******************************************************************
@@ -288,6 +317,9 @@ bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int
     QList<QUrl> urls = data->urls();
     QStringList files;
     foreach (QUrl url, urls) {
+        if(isMacSpecialURL(url)) {
+            url = resolveMacSpecialURL(url);
+        }
         if(url.scheme() == "file"){
             files += url.path();
         }
@@ -337,17 +369,16 @@ void QBtDirModel::item_info_slot( const qint32 in_row, QVariant in_fi, QStringLi
 {
    QBtFileInfo info = in_fi.value<QBtFileInfo>();
    append_row( in_row, info, in_data );
-   emit icon(in_row, info.path());
 }
 // end of item_info_slot
 
 
 
-void QBtDirModel::item_icon_slot(qint32 row, QIconPtr icon)
+void QBtDirModel::item_icon_slot(qint32 row, QIcon icon)
 {
     auto item = head_item(row);
     if( item ) {
-        item->setIcon(*icon.get());
+        item->updateIcon(icon);
     }
 }
 

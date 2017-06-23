@@ -31,11 +31,10 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtViewModel.h"
+#include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QThread>
 #include <memory>
-
-typedef std::shared_ptr<QIcon> QIconPtr;
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -71,21 +70,25 @@ public:
    bool is_executable       ( const QModelIndex& );
    bool is_readable         ( const QModelIndex& );
    void cdup                ();
+   void queryIcon           (const QModelIndex &index );
    bool removeRows          ( int row, int count, const QModelIndex &parent );
    bool setItemData         ( const QModelIndex &index, const QMap<int, QVariant> &roles );
    virtual void sort        (int column, Qt::SortOrder order);
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
+   void customEvent     ( QEvent* );
    QStringList mimeTypes() const;
    Qt::ItemFlags flags(const QModelIndex &index) const;
    Qt::DropActions supportedDropActions() const;
    QMimeData* mimeData(const QModelIndexList &indexes) const;
    bool dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent);
+   QIcon loadIcon(QFileInfo info);
+   
 private slots:
    void work_started_slot   ();
    void items_count_slot    ( qint32 );
    void item_info_slot      ( qint32, QVariant, QStringList );
-   void item_icon_slot      ( qint32, QIconPtr );
+   void item_icon_slot      (qint32, QIcon );
    void work_finished_slot  ( QString );
    void directory_changed_slot ( const QString& );
    void delayed_refresh     ();
