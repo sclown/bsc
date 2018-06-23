@@ -287,11 +287,6 @@ bool QBtWorkspace::src_and_dst_view( QBtView*& out_src, QBtView*& out_dst ) cons
 bool QBtWorkspace::get_selections( QBtView* const in_view, SelectionsSet& out_data ) const
 {
     out_data = in_view->get_selected_items();
-    if( out_data.empty() ) {
-        if( QBtShared::is_regular_file( in_view->selected_file_full_name() ) ) {
-            out_data.insert( in_view->selected_file_path() );
-        }
-    }
     return !out_data.empty();
 }
 // end of get_selections

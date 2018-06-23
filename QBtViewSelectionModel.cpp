@@ -57,16 +57,19 @@ void QBtViewSelectionModel::setCurrentIndex(const QModelIndex &index, QItemSelec
 
 void QBtViewSelectionModel::select( const QModelIndex &index, QItemSelectionModel::SelectionFlags command )
 {
-    if(index.row()==0)
-    {
-        return;
-    }
+//    if(index.row()==0)
+//    {
+//        return;
+//    }
     QItemSelectionModel::select(index, command);
+//    if((command & (QItemSelectionModel::Current | QItemSelectionModel::ClearAndSelect))) {
+//        setCurrentIndex(index,command);
+//    }
 }
 
 void QBtViewSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags command)
 {
-    if(selection.contains(model_->index(0,0)))
+    if((selection.size()>1 || (selection.size() && selection.front().height()>1)) && selection.contains(model_->index(0,0)))
     {
         QItemSelection row(model_->index(0,0), model_->index(0, model_->columnCount()-1));
         QItemSelection sel_copy(selection);
@@ -94,17 +97,21 @@ void QBtViewSelectionModel::select_mask(QString mask, QItemSelectionModel::Selec
 
 SelectionsSet QBtViewSelectionModel::get_selected_items() const
 {
-   QModelIndexList selection = selectedIndexes();
-   SelectionsSet result;
-   for( int i=0; i< selection.size(); ++i)
-   {
-       QModelIndex index = selection[i];
-       if(index.column()==0)
-       {
-           result.insert(model_->file_path(index));
-       }
-   }
-   return result;
+    QModelIndexList selection = selectedIndexes();
+    SelectionsSet result;
+    for( int i=0; i< selection.size(); ++i)
+    {
+        QModelIndex index = selection[i];
+        if(index.row() ==0)
+        {
+            continue;
+        }
+        if(index.column()==0)
+        {
+            result.insert(model_->file_path(index));
+        }
+    }
+    return result;
 }
 
 int QBtViewSelectionModel::selection_count()
@@ -114,6 +121,10 @@ int QBtViewSelectionModel::selection_count()
     for( int i=0; i< selection.size(); ++i)
     {
         QModelIndex index = selection[i];
+        if(index.row() ==0)
+        {
+            continue;
+        }
         if(index.column()==0)
         {
             ++count;

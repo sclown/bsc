@@ -53,6 +53,7 @@
 #include <QMessageBox>
 #include <QDrag>
 #include <QDesktopServices>
+
 using namespace std;
 
 /*------- constants:
@@ -123,6 +124,8 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
             this, SLOT  ( enter         ( const QModelIndex& ) ) );
    connect( selectionModel_, SIGNAL( selectionChanged( const QItemSelection&, const QItemSelection& ) ),
             this, SLOT( selectionChangedSlot( const QItemSelection&, const QItemSelection& ) ) );
+   connect( selectionModel_, SIGNAL( currentRowChanged(QModelIndex,QModelIndex) ),
+            this, SLOT( rowChangedSlot( QModelIndex,QModelIndex ) ) );
 }
 // end of QBtView
 
@@ -131,9 +134,19 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
 //*******************************************************************
 QBtView::~QBtView()
 {
-   QBtEventsController::instance()->remove( this );
+    QBtEventsController::instance()->remove( this );
 }
 // end of ~QBtView
+
+
+void QBtView::keyboardSearch(const QString &search)
+{
+    auto mode = selectionMode();
+    setSelectionMode(SingleSelection);
+    QTreeView::keyboardSearch(search);
+    setSelectionMode(mode);
+
+}
 
 //*******************************************************************
 // setting                                                   PRIVATE
@@ -622,7 +635,7 @@ void QBtView::enter( const QModelIndex& in_index )
     const QString fpath = fi.absoluteFilePath();
     const QString dir = fi.absolutePath();
 
-    if( model_->is_executable(in_index) ) {
+    if( model_->is_executable(in_index) || !fi.isDir()) {
         QBtEventsController::instance()->send_event( QBtEvent::EXECUTE, model_->file_path( in_index ) );
         return;
     }
@@ -641,6 +654,13 @@ void QBtView::enter( const QModelIndex& in_index )
 void QBtView::selectionChangedSlot( const QItemSelection &selected, const QItemSelection &deselected )
 {
     emit select_count( selectionModel_->selection_count() );
+}
+
+void QBtView::rowChangedSlot(QModelIndex to, QModelIndex from)
+{
+    if(selectionMode() == SingleSelection ) {
+        setCurrentIndex(to);
+    }
 }
 
 //*******************************************************************

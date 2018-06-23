@@ -87,6 +87,7 @@ private:
 
 //******* METHODS *******
 public:
+   void keyboardSearch(const QString &search);
    QString  selected_file_full_name  () const;
    QString  selected_file_path       () const;
    void           set_initial_file_request ( const QString& );
@@ -130,6 +131,7 @@ private:
 private slots:
    void    enter            ( const QModelIndex& );
    void    selectionChangedSlot( const QItemSelection & selected, const QItemSelection & deselected );
+   void    rowChangedSlot( QModelIndex to, QModelIndex from );
    void    request_finished();
    void    sortChanged( int logicalIndex, Qt::SortOrder order );
 signals:
