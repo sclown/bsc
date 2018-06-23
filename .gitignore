@@ -1,0 +1,7 @@
+Makefile
+.settings
+.qmake*
+
+# osx noise
+.DS_Store
+
