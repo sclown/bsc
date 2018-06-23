@@ -31,6 +31,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include <QDialog>
+#include "QBtOverwriteAnswer.h"
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -70,6 +71,7 @@ public:
    static const char* const DONT_ASK_AGAIN;
    static const char* const CANCEL;
    static const char* const NEW_FILE_NAME;
+   static const char* const RENAME_TITLE;
 
 public:
    static bool canOverwrite(QWidget * const in_parent);
@@ -84,12 +86,12 @@ private:
    QPushButton* const rename_;
    QPushButton* const cancel_;
    QBtInfoField*      const path_label_;
-   qint32             result_;
+   QBtOverwriteAnswer::Action result_;
    QString            path_;
 
 //******* METHODS *******
 public:
-   quint32 ask( const QString& path );
+   QBtOverwriteAnswer ask( const QString& path );
    bool ask_again() const;
    QString newPath() const;
 private:

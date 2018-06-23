@@ -32,11 +32,14 @@
 -------------------------------------------------------------------*/
 #include "QBtCopyDialog.h"
 #include "QBtSystemCall.h"
+#include "QBtOverwriteAnswer.h"
+#include <QThread>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QFileInfo;
 class QBtDirParser;
+class QBtDirCopyWorker;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -55,7 +58,7 @@ private:
 //******* CONSTANTS *******
 private:
    enum {
-      BLOCK_SIZE = 8192
+      BLOCK_SIZE = 8192000
    };
    static const char* const CAPTION;
    static const QString     CHOWN;
@@ -64,6 +67,8 @@ private:
 private:
    char block_ [ BLOCK_SIZE ];
    QBtSystemCall sc_;
+   QThread thread_;
+   QBtDirCopyWorker *worker_;
 
 //******* METHODS *******
 private:
@@ -75,6 +80,15 @@ private:
    void remove_dir ( const QString& );
 private slots:
    void start();
+   void finish();
+   void reset_progress_slot(quint32);
+   void progress_slot(quint32);
+   void paths_slot(const QString&, const QString&);
+   void ask_overwrite(const QString&);
+
+signals:
+   void copy(QStringList, QString);
+   void resume(QBtOverwriteAnswer);
 };
 
 #endif // INCLUDED_QBtDirCopyDialog_h

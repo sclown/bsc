@@ -248,7 +248,7 @@ void QBtCopyDialog::display_paths( const QString& in_src_path, const QString& in
    src_path_->setText( in_src_path );
    dst_path_->setText( in_dst_path );
 
-   QBtShared::idle();
+//   QBtShared::idle();
 }
 // end of display_info
 

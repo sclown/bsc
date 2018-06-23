@@ -31,6 +31,7 @@
 #include "QBtCanOverwrite.h"
 #include "QBtDirParser.h"
 #include "QBtShared.h"
+#include "QBtDirCopyWorker.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -38,6 +39,9 @@
 #include <QMessageBox>
 #include <QLineEdit>
 #include <QtDebug>
+
+#include <unistd.h>
+#include <utime.h>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -51,13 +55,30 @@ const QString     QBtDirCopyDialog::CHOWN   = "chown %1:%2 %3";
 QBtDirCopyDialog::QBtDirCopyDialog( QWidget* const in_parent ) : QBtCopyDialog( in_parent )
 {
     setWindowTitle( tr( CAPTION ) );
+
+    worker_ = new QBtDirCopyWorker;
+    worker_->moveToThread(&thread_);
+    connect(&thread_, &QThread::finished, worker_, &QObject::deleteLater);
+    connect(this, &QBtDirCopyDialog::copy, worker_, &QBtDirCopyWorker::copy);
+    connect(this, &QBtDirCopyDialog::resume, worker_, &QBtDirCopyWorker::resume);
+    connect(worker_, &QBtDirCopyWorker::ask_overwrite, this, &QBtDirCopyDialog::ask_overwrite);
+    connect(worker_, &QBtDirCopyWorker::finished, this, &QBtDirCopyDialog::finish);
+    connect(worker_, &QBtDirCopyWorker::reset_progress, this, &QBtDirCopyDialog::reset_progress_slot);
+    connect(worker_, &QBtDirCopyWorker::progress, this, &QBtDirCopyDialog::progress_slot);
+    connect(worker_, &QBtDirCopyWorker::paths, this, &QBtDirCopyDialog::paths_slot);
+//    connect(worker_, &QBtDirListWorker::items_count, this, &QBtDirModel::items_count_slot);
+//    connect(worker_, &QBtDirListWorker::item_info, this, &QBtDirModel::item_info_slot);
+//    connect(worker_, &QBtDirListWorker::work_finished, this, &QBtDirModel::work_finished_slot);
+    thread_.start();
+
 }
 // end of QBtDirCopyDialog
 
 
 QBtDirCopyDialog::~QBtDirCopyDialog()
 {
-
+    thread_.quit();
+    thread_.wait();
 }
 
 //*******************************************************************
@@ -96,24 +117,62 @@ void QBtDirCopyDialog::start()
    
    started();
    //--------------------------------------------
-   SelectionsSet::const_iterator it = sources_.begin();
-   const SelectionsSet::const_iterator end = sources_.end();
-   while( !break_ && ( it != end ) ) {
-      QFileInfo src( *it );
-      copy_next( src.absoluteFilePath(), destInfo.absoluteFilePath() );
-      ++it;
+   QStringList sources_list;
+   sources_list.reserve(sources_.size());
+   for(auto source : sources_) {
+       sources_list << source;
    }
+   emit copy(sources_list, destInfo.absoluteFilePath());
+//   SelectionsSet::const_iterator it = sources_.begin();
+//   const SelectionsSet::const_iterator end = sources_.end();
+//   while( !break_ && ( it != end ) ) {
+//      QFileInfo src( *it );
+//      copy_next( src.absoluteFilePath(), destInfo.absoluteFilePath() );
+//      ++it;
+//   }
+
    //--------------------------------------------
-   finished();
+   //   finished();
 }
 // end of start
+
+
+void QBtDirCopyDialog::finish()
+{
+    finished();
+}
+
+void QBtDirCopyDialog::reset_progress_slot(quint32 range)
+{
+    reset_progress(range);
+}
+
+void QBtDirCopyDialog::progress_slot(quint32 state)
+{
+    set_progress(state);
+}
+
+void QBtDirCopyDialog::paths_slot(const QString& src, const QString& dst)
+{
+    display_paths(src, dst);
+}
+
+void QBtDirCopyDialog::ask_overwrite(const QString &dst_path)
+{
+    auto answer = can_overwrite_->ask(dst_path);
+    if(answer.action() == QBtOverwriteAnswer::CANCEL) {
+        finished();
+        return;
+    }
+    emit resume(answer);
+}
 
 //*******************************************************************
 // copy_next                                                 PRIVATE
 //*******************************************************************
 void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_dst_path )
 {
-   QBtShared::idle();
+//   QBtShared::idle();
    if( break_ ) return;
 
    QFileInfo src( in_src_path );
@@ -140,7 +199,8 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
                dfi.setPermissions( sfi.permissions() );
             }
             if( do_owner() ) {
-               sc_.run( CHOWN.arg( sfi.owner() ).arg( sfi.group() ).arg( dst_subdir.absolutePath() ) );
+                chown(dst_subdir.absolutePath().toUtf8(), sfi.ownerId(), sfi.groupId());
+//               sc_.run( CHOWN.arg( sfi.owner() ).arg( sfi.group() ).arg( dst_subdir.absolutePath() ) );
             }
          }
          else {
@@ -156,9 +216,9 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
    }
 
    dst_path += "/" + src_name;
-   display_paths( in_src_path, dst_path );
+//   display_paths( in_src_path, dst_path );
    if( QFile::exists( dst_path ) ) {
-       qint32 action = can_overwrite_->ask(dst_path);
+       qint32 action = 0;//can_overwrite_->ask(dst_path);
        dst_path = can_overwrite_->newPath();
        switch( action ) {
        case QBtCanOverwrite::UPDATE_FILE:
@@ -190,7 +250,7 @@ void QBtDirCopyDialog::copy_next( const QString& in_src_path, const QString& in_
 //*******************************************************************
 void QBtDirCopyDialog::copy_dir( const QString& in_src_dir, const QString& in_dst_dir )
 {
-   QBtShared::idle();
+//   QBtShared::idle();
    if( break_ ) return;
 
    QDir dir( in_src_dir );
@@ -221,7 +281,7 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& dst
       return;
    }
    
-   display_paths( in_src_path, dst_path );
+//   display_paths( in_src_path, dst_path );
 
   // Po uzyskaniu zgody na kopiowanie bierzemy sie do roboty.
   QFile in( in_src_path );
@@ -231,27 +291,32 @@ void QBtDirCopyDialog::copy_file( const QString& in_src_path, const QString& dst
      quint32 copied = 0;               // Licznik juz przekopiowanych bajtow.
 
      if( out.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
-        reset_progress( nbytes );
-        QBtShared::idle();
+//        reset_progress( nbytes );
+//        QBtShared::idle();
         // Petla kopiujaca.
         while( !in.atEnd() ) {
            const quint32 n = in.read( block_, BLOCK_SIZE );
            out.write( block_, n );
-           set_progress( copied += n );
-           QBtShared::idle();
+//           set_progress( copied += n );
+//           QBtShared::idle();
         }
         out.close();
         in.close();
 
        // czynnosci po kopiowaniu
-        if( do_remove() ) {
-           if( !in.remove() ) {
-              QMessageBox::warning( this, tr( CAPTION ), tr( CANT_DEL_FILE ).arg( in_src_path ) );
-           }
-        }
+//        if( do_remove() ) {
+//           if( !in.remove() ) {
+//              QMessageBox::warning( this, tr( CAPTION ), tr( CANT_DEL_FILE ).arg( in_src_path ) );
+//           }
+//        }
+        utimbuf timebuf;
+        timebuf.actime = fi.lastModified().toTime_t();
+        timebuf.modtime = fi.lastModified().toTime_t();
         out.setPermissions( in.permissions() );
-        sc_.run( CHOWN.arg( fi.owner() ).arg( fi.group() ).arg( dst_path ) );
-        QBtShared::touch( in_src_path, dst_path );
+        chown(dst_path.toUtf8(), fi.ownerId(), fi.groupId());
+        utime(dst_path.toUtf8(), &timebuf);
+//        sc_.run( CHOWN.arg( fi.owner() ).arg( fi.group() ).arg( dst_path ) );
+//        QBtShared::touch( in_src_path, dst_path );
      }
      else {
         QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_WRITE_ERROR ).arg( dst_path ) );

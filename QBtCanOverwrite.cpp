@@ -50,6 +50,7 @@ const char* const QBtCanOverwrite::UPDATE         = QT_TR_NOOP( "&Update" );
 const char* const QBtCanOverwrite::RENAME         = QT_TR_NOOP( "&Rename" );
 const char* const QBtCanOverwrite::DONT_ASK_AGAIN = QT_TR_NOOP( "Don't ask again" );
 const char* const QBtCanOverwrite::CANCEL         = QT_TR_NOOP( "&Cancel" );
+const char* const QBtCanOverwrite::RENAME_TITLE   = QT_TR_NOOP( "Rename" );
 const char* const QBtCanOverwrite::NEW_FILE_NAME    = QT_TR_NOOP( "New file name:" );
 
 
@@ -64,7 +65,7 @@ QBtCanOverwrite::QBtCanOverwrite( QWidget* const in_parent ) : QDialog( in_paren
 , rename_   ( new QPushButton( tr( RENAME         ) ) )
 , cancel_   ( new QPushButton( tr( CANCEL         ) ) )
 , path_label_     ( new QBtInfoField         ( ) )
-, result_   ( OVERWRITE_FILE )
+, result_   ( QBtOverwriteAnswer::OVERWRITE )
 , path_     ( )
 {
    setWindowTitle( tr( CAPTION ) );
@@ -121,15 +122,16 @@ bool QBtCanOverwrite::canOverwrite(QWidget* const in_parent)
                                   QMessageBox::Yes ) == QMessageBox::Yes;
 }
 
-quint32 QBtCanOverwrite::ask(const QString &path)
+QBtOverwriteAnswer QBtCanOverwrite::ask(const QString &path)
 {
     path_ = path;
     if( dont_ask_->isChecked() ) {
-        return result_;
+        return QBtOverwriteAnswer(!ask_again(), result_, "");
     }
-    result_ = OVERWRITE_FILE;
-    path_label_->setText(path_);
-    return exec();
+    result_ = QBtOverwriteAnswer::OVERWRITE;
+    path_label_->setText(path);
+    auto res = exec();
+    return QBtOverwriteAnswer(!ask_again(), result_, newPath());
 }
 
 //*******************************************************************
@@ -143,6 +145,9 @@ bool QBtCanOverwrite::ask_again() const
 
 QString QBtCanOverwrite::newPath() const
 {
+    if(result_ != QBtOverwriteAnswer::RENAME) {
+        return "";
+    }
     return path_;
 }
 
@@ -165,7 +170,7 @@ QString QBtCanOverwrite::inputNewName()
     const QString fname = fi.fileName();
 
     bool ok = true;
-    const QString new_fname = QInputDialog::getText( this, tr( RENAME ), tr( NEW_FILE_NAME ), QLineEdit::Normal, fname, &ok );
+    const QString new_fname = QInputDialog::getText( this, tr( RENAME_TITLE ), tr( NEW_FILE_NAME ), QLineEdit::Normal, fname, &ok );
     if( !ok || new_fname.isEmpty() ) {
         return path_;
     }
@@ -183,8 +188,8 @@ QString QBtCanOverwrite::inputNewName()
 //*******************************************************************
 void QBtCanOverwrite::skip_slot()
 {
-   result_ = SKIP_FILE;
-   done( result_ );
+   result_ = QBtOverwriteAnswer::SKIP;
+   done( Accepted );
 }
 // end of skip
 
@@ -193,8 +198,8 @@ void QBtCanOverwrite::skip_slot()
 //*******************************************************************
 void QBtCanOverwrite::overwrite_slot()
 {
-   result_ = OVERWRITE_FILE;
-   done( result_ );
+   result_ = QBtOverwriteAnswer::OVERWRITE;
+   done( Accepted );
 }
 // end of overwrite
 
@@ -203,8 +208,8 @@ void QBtCanOverwrite::overwrite_slot()
 //*******************************************************************
 void QBtCanOverwrite::update_slot()
 {
-   result_ = UPDATE_FILE;
-   done( result_ );
+   result_ = QBtOverwriteAnswer::UPDATE;
+   done( Accepted );
 }
 // end of update
 
@@ -216,11 +221,11 @@ void QBtCanOverwrite::rename_slot()
     dont_ask_->setChecked(false);
     path_ = inputNewName();
     path_label_->setText(path_);
-    result_ = RENAME_FILE;
+    result_ = QBtOverwriteAnswer::RENAME;
     if( QFile::exists( path_ ) ) {
         return;
     }
-    done( result_ );
+    done( Accepted );
 }
 // end of rename
 
@@ -229,7 +234,7 @@ void QBtCanOverwrite::rename_slot()
 //*******************************************************************
 void QBtCanOverwrite::cancel_slot()
 {
-   result_ = CANCEL_FILE;
-   done( result_ );
+   result_ = QBtOverwriteAnswer::CANCEL;
+   done( Rejected );
 }
 // end of cancel

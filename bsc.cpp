@@ -32,6 +32,7 @@
 #include "QBtConfig.h"
 #include "QBtEventsController.h"
 #include "QBtCommand.h"
+#include "QBtOverwriteAnswer.h"
 #include <QVariant>
 #include <QApplication>
 #include <QIcon>
@@ -60,6 +61,7 @@ int main( int in_argc, char** in_argv )
    QBtConfig::instance();
    QBtEventsController::instance();
    qRegisterMetaType<QVariant>( "QVariant" );
+   qRegisterMetaType<QBtOverwriteAnswer>( "QBtOverwriteAnswer" );
    
 
 

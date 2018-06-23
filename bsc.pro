@@ -1,7 +1,7 @@
 TEMPLATE =  app
-CONFIG +=  qt thread warn_on x11 c++11
+CONFIG +=  qt thread warn_on c++11
 QT += widgets
-QMAKE_MAC_SDK = macosx10.12
+QMAKE_MAC_SDK = macosx10.13
 #QMAKE_CXXFLAGS += -std=c++1y
 #QMAKE_CXXFLAGS_DEBUG = -O0
 #QMAKE_CXXFLAGS_RELEASE = -O3
@@ -60,7 +60,8 @@ SOURCES =  \
         bsc.cpp \
         3rdprty/dircompleter.cpp \
     QBtPathBox.cpp \
-    QBtDirListWorker.cpp
+    QBtDirListWorker.cpp \
+    QBtDirCopyWorker.cpp
 HEADERS =  \
 	BtTypes.h \
 	QBtAttrDialog.h \
@@ -117,7 +118,9 @@ HEADERS =  \
     QBtPathBox.h \
     QBtMacTools.h \
     QBtListWorker.h \
-    QBtDirListWorker.h
+    QBtDirListWorker.h \
+    QBtDirCopyWorker.h \
+    QBtOverwriteAnswer.h
 RESOURCES =  bsc.qrc
     APP_SCPT_FILES.files = scripts/openTerminal.scpt \
                            scripts/openFinder.scpt \
