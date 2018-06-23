@@ -1,4 +1,4 @@
-#include "QBTMacTools.h"
+#include "QBtMacTools.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/NSArray.h>
 #include <Cocoa/Cocoa.h>
@@ -45,4 +45,11 @@ void activateAnotherInstance()
             [app activateWithOptions: NSApplicationActivateIgnoringOtherApps];
         }
     }
+}
+
+void moveToTrash(QString path)
+{
+    NSString *objcPath = [NSString stringWithCString:path.toUtf8() encoding:NSUTF8StringEncoding];
+    NSError * error = nil;
+    [[NSFileManager defaultManager] trashItemAtURL:[NSURL fileURLWithPath:objcPath] resultingItemURL:nil error:&error];
 }

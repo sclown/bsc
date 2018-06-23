@@ -37,6 +37,7 @@
 #include <QFrame>
 #include <QMessageBox>
 #include <QApplication>
+#include <QTimer>
 #include <QtDebug>
 
 /*------- constants:
@@ -108,6 +109,7 @@ void QBtDeleter::showEvent( QShowEvent* const in_event )
    QBtShared::resize_width( this, 40 );
    QDialog::showEvent( in_event );
    run_->setDefault( true );
+   QTimer::singleShot( 100, this, SLOT( run() ) );
 }
 // end of showEvent
 
