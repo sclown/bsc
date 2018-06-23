@@ -483,7 +483,7 @@ void QBtPanel::current_path( const QString& in_path )
 void QBtPanel::update_fstab()
 {
    QStringList args;
-   args << "-h" << "-T";
+   args << "-h" << "-T nonfs";
    
    QProcess sc;
    sc.start( "df", args );
