@@ -87,6 +87,7 @@ void QBtFileViewer::keyPressEvent( QKeyEvent *event )
     {
         search_edit_->setFocus();
     }
+    QDialog::keyPressEvent(event);
 }
 
 //*******************************************************************
