@@ -91,10 +91,11 @@ private:
 
 //******* METHODS *******
 public:
-   QBtOverwriteAnswer ask( const QString& path );
+   QBtOverwriteAnswer ask( const QString& path, QBtOverwriteAnswer::ErrorType error_type );
    bool ask_again() const;
    QString newPath() const;
 private:
+   QBtOverwriteAnswer::Action defaultAction(QBtOverwriteAnswer::ErrorType error_type);
    void showEvent( QShowEvent* );
    QString inputNewName();
 private slots:

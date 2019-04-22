@@ -62,7 +62,8 @@ int main( int in_argc, char** in_argv )
    QBtEventsController::instance();
    qRegisterMetaType<QVariant>( "QVariant" );
    qRegisterMetaType<QBtOverwriteAnswer>( "QBtOverwriteAnswer" );
-   
+   qRegisterMetaType<QBtOverwriteAnswer::ErrorType>( "QBtOverwriteAnswer::ErrorType" );
+
 
 
    QBtMainWindow window;

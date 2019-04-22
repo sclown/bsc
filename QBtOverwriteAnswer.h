@@ -1,9 +1,16 @@
 #ifndef QBTOVERWRITEANSWER_H
 #define QBTOVERWRITEANSWER_H
 
+
 class QBtOverwriteAnswer
 {
 public:
+    enum ErrorType {
+        EXIST,
+        READ_ERROR,
+        WRITE_ERROR
+    };
+
     enum Action {
         ASK = 0,
         CANCEL,

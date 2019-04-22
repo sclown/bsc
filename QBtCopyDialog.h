@@ -95,7 +95,6 @@ private:
    QPushButton*  const exit_;
    bool                started_;
 protected:
-   bool                break_;
    bool                ask_again_;
    SelectionsSet       sources_;
    QString             destpath_;
@@ -111,8 +110,7 @@ private:
    void     showEvent           ( QShowEvent* );
    QString  sourceInitialText   ();
 protected:
-   virtual void copy_file  ( const QString&, const QString& ) = 0;
-   virtual void copy_dir   ( const QString&, const QString& ) = 0;
+   virtual void stop() = 0;
    virtual bool can_update ( const QString&, const QString& ) const = 0;
 
    QString rename(const QString & );
@@ -124,8 +122,8 @@ protected:
    bool do_permissions () const;
    bool do_datime      () const;
    bool can_copy       (const QString&, const QString & );
-   void reset_progress ( qint32 = 0 );
-   void set_progress   ( qint32 );
+   void reset_progress (const qint64 = 0 );
+   void set_progress   (const qint64 );
 
 private slots:
    virtual void start  () = 0;

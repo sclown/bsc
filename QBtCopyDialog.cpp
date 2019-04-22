@@ -85,7 +85,6 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , start_        ( new QPushButton( tr( START     ) ) )
 , exit_         ( new QPushButton( tr( EXIT      ) ) )
 , started_      ( false )
-, break_        ( false )
 , ask_again_    ( true )
 , sources_      ( SelectionsSet() )
 , destpath_     ( QString() )
@@ -218,7 +217,7 @@ void QBtCopyDialog::finished()
 void QBtCopyDialog::reject()
 {
    if( !started_ ) QDialog::reject();
-   break_ = true;
+   stop();
 }
 // end of reject
 
@@ -314,8 +313,9 @@ bool QBtCopyDialog::can_copy( const QString& in_src_path, const QString& in_dst_
             break;
         case QBtCanOverwrite::CANCEL_FILE:
             retval = false;
-            break_ = true;
-      case QBtCanOverwrite::SKIP_FILE:
+            stop();
+            break;
+        case QBtCanOverwrite::SKIP_FILE:
             retval = false;
             break;
         case QBtCanOverwrite::UPDATE_FILE:
@@ -351,7 +351,7 @@ QString QBtCopyDialog::rename( const QString& inout_fpath )
 //*******************************************************************
 // reset_progress                                          PROTECTED
 //*******************************************************************
-void QBtCopyDialog:: reset_progress( const qint32 in_maximum )
+void QBtCopyDialog:: reset_progress( const qint64 in_maximum )
 {
    progress_->setRange( 0, in_maximum );
    progress_->setValue( 0 );
@@ -361,7 +361,7 @@ void QBtCopyDialog:: reset_progress( const qint32 in_maximum )
 //*******************************************************************
 // set_progress                                            PROTECTED
 //*******************************************************************
-void QBtCopyDialog::set_progress( const qint32 in_value )
+void QBtCopyDialog::set_progress( const qint64 in_value )
 {
    progress_->setValue( in_value );
 }

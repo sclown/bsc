@@ -72,19 +72,14 @@ private:
 
 //******* METHODS *******
 private:
-   void copy_next  (const QString&, const QString& in_dst_path);
-   void copy_file  ( const QString&, const QString& );
-   void copy_link  ( const QString&, const QString& );
-   void copy_dir   ( const QString&, const QString& );
+   void stop();
    bool can_update ( const QString&, const QString& ) const;
-   void remove_dir ( const QString& );
 private slots:
    void start();
    void finish();
-   void reset_progress_slot(quint32);
-   void progress_slot(quint32);
-   void paths_slot(const QString&, const QString&);
-   void ask_overwrite(const QString&);
+   void progress_slot(qint64);
+   void item_info_slot(const QString&, const QString&, const qint64);
+   void ask_overwrite(const QString&, QBtOverwriteAnswer::ErrorType);
 
 signals:
    void copy(QStringList, QString);

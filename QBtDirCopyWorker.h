@@ -13,7 +13,7 @@ class QBtDirCopyWorker : public QObject
     {
     public:
             QFileInfoList items;
-            quint64 index;
+            int index;
             QString dest;
 
             QBtCopyState() : index(0) {
@@ -25,17 +25,16 @@ class QBtDirCopyWorker : public QObject
     typedef QList<QBtCopyState> QBtCopyList;
 
 public:
-
-
-
-public:
     explicit QBtDirCopyWorker(QObject *parent = nullptr);
+    void stop();
+
 private:
+    bool isStopped();
     void copy_list();
     void copy_next(const QString &in_src_path, const QString &in_dst_path);
     void copy_dir(const QString &in_src_dir, const QString &in_dst_dir);
-    void copy_file(const QString &in_src_path, const QString &dst_path);
     void copy_link(const QString &in_src_path, const QString &dst_path);
+    bool copy_file(const QString &in_src_path, const QString &dst_path);
     bool can_update(const QString &in_src_path, const QString &in_dst_path) const;
 
 private:
@@ -44,16 +43,16 @@ private:
     };
     bool break_;
     char block_ [ BLOCK_SIZE ];
+    QMutex mutex_;
     QBtCopyList list_;
     QBtCopyState invalidSate_;
     QBtCopyState *currentState_;
     QBtOverwriteAnswer answer_;
 
 signals:
-   void ask_overwrite (const QString&);
-   void paths  (const QString&, const QString&);
-   void reset_progress ( quint32 );
-   void progress ( quint32 );
+   void ask_overwrite (const QString&, QBtOverwriteAnswer::ErrorType);
+   void item_info (const QString&, const QString&, const qint64);
+   void progress ( qint64 );
    void failure ();
    void finished ();
 

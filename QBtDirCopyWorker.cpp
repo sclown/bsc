@@ -11,16 +11,48 @@
 
 
 QBtDirCopyWorker::QBtDirCopyWorker(QObject *parent) :
+    QObject(parent),
     break_(false),
-    currentState_(nullptr),
-    QObject(parent)
+    currentState_(nullptr)
 {
 
 }
 
+void QBtDirCopyWorker::stop()
+{
+   QMutexLocker locker(&mutex_);
+   break_ = true;
+}
+
+bool QBtDirCopyWorker::isStopped()
+{
+    QMutexLocker locker(&mutex_);
+    return break_;
+}
+
 void QBtDirCopyWorker::copy_list()
 {
-    while( !break_ && list_.size() ) {
+    qDebug() << "copy_list START";
+    if(currentState_->items.size() == 1) {
+        auto srcInfo = currentState_->items.front();
+        if(!srcInfo.isDir()) {
+            auto destInfo = QFileInfo(currentState_->dest);
+            if(destInfo.exists() && destInfo.isDir()) {
+                destInfo = QFileInfo( currentState_->dest, srcInfo.fileName());
+            }
+            if(destInfo.exists() && !answer_.valid()) {
+                emit ask_overwrite(destInfo.absoluteFilePath(), QBtOverwriteAnswer::EXIST);
+                stop();
+                return;
+            }
+            emit item_info( srcInfo.absoluteFilePath(), destInfo.absoluteFilePath(), srcInfo.size() );
+            if (!copy_file(srcInfo.absoluteFilePath(), destInfo.absoluteFilePath())){
+                stop();
+                return;
+            }
+        }
+    }
+    while( !isStopped() && list_.size() ) {
         if( currentState_->index < currentState_->items.size() ) {
             copy_next( currentState_->items[currentState_->index].absoluteFilePath(), currentState_->dest );
         }
@@ -34,16 +66,17 @@ void QBtDirCopyWorker::copy_list()
             }
         }
     }
-    if(!break_) {
+    if(!isStopped()) {
         emit finished();
+        qDebug() << "copy_list finished";
     }
-
+    qDebug() << "copy_list END";
 }
 
 void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_dst_path )
 {
 //   QBtShared::idle();
-   if( break_ ) return;
+   if( isStopped() ) return;
 
    QFileInfo src( in_src_path );
    QString   src_path = src.absoluteFilePath();
@@ -60,11 +93,11 @@ void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_
    }
 
    dst_path += "/" + src_name;
-   emit paths( in_src_path, dst_path );
+   emit item_info( in_src_path, dst_path, src.size() );
    if( QFile::exists( dst_path ) ) {
        if(!answer_.valid()) {
-           emit ask_overwrite(dst_path);
-           break_ = true;
+           emit ask_overwrite(dst_path, QBtOverwriteAnswer::EXIST);
+           stop();
            return;
        }
    }
@@ -81,8 +114,8 @@ void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_
            break;
        case QBtOverwriteAnswer::SKIP:
            return;
+       default:
            break;
-
        }
 
    }
@@ -90,7 +123,10 @@ void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_
        copy_link(src_path, dst_path);
        return;
    }
-   copy_file( src_path, dst_path );
+   if (!copy_file( src_path, dst_path )) {
+       stop();
+       return;
+   }
 }
 // end of copy_next
 
@@ -99,7 +135,7 @@ void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_
 //*******************************************************************
 void QBtDirCopyWorker::copy_dir( const QString& in_src_dir, const QString& in_dst_dir )
 {
-   if( break_ ) return;
+   if( isStopped() ) return;
    QFileInfo src( in_src_dir );
    QString   src_name = src.fileName();
    if( !src.isReadable() ) {
@@ -110,16 +146,9 @@ void QBtDirCopyWorker::copy_dir( const QString& in_src_dir, const QString& in_ds
     if( !dst_subdir.cd( src_name ) ) {
         return;
     }
-    //    if( do_remove() ) {
-    //       remove_dir( src_path );
-    //    }
-        QFile dfi( dst_subdir.absolutePath() );
-    //    if( do_permissions() ) {
-        dfi.setPermissions( src.permissions() );
-    //    }
-    //    if( do_owner() ) {
-        chown(dst_subdir.absolutePath().toUtf8(), src.ownerId(), src.groupId());
-    //    }
+    QFile dfi( dst_subdir.absolutePath() );
+    dfi.setPermissions( src.permissions() );
+    chown(dst_subdir.absolutePath().toUtf8(), src.ownerId(), src.groupId());
 
 
    ++currentState_->index;
@@ -135,45 +164,27 @@ void QBtDirCopyWorker::copy_dir( const QString& in_src_dir, const QString& in_ds
 
 }
 
-void QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst_path )
+bool QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst_path )
 {
-   // Sprwadz czy czy plik jest do odczytu
    const QFileInfo fi( in_src_path );
    if( !fi.isReadable() ) {
-//      QMessageBox::critical( this, tr( CAPTION ), tr( FILE_NOT_READABLE ).arg( in_src_path ) );
-      return;
+       emit ask_overwrite(dst_path, QBtOverwriteAnswer::READ_ERROR);
+       return false;
    }
 
-  emit paths( in_src_path, dst_path );
-
-  // Po uzyskaniu zgody na kopiowanie bierzemy sie do roboty.
   QFile in( in_src_path );
   QFile out( dst_path );
   if( in.open( QIODevice::ReadOnly ) ) {
-     const quint32 nbytes = in.size(); // Liczba bajtow do przekopiowania.
-     quint32 copied = 0;               // Licznik juz przekopiowanych bajtow.
-
      if( out.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
-        emit reset_progress( nbytes );
-//        reset_progress( nbytes );
-//        QBtShared::idle();
-        // Petla kopiujaca.
+        qint64 nbytes = 0;
         while( !in.atEnd() ) {
-           const quint32 n = in.read( block_, BLOCK_SIZE );
+           const qint64 n = in.read( block_, BLOCK_SIZE );
            out.write( block_, n );
-           emit progress( nbytes );
-//           set_progress( copied += n );
-//           QBtShared::idle();
+           nbytes += n;
+           if (nbytes > BLOCK_SIZE) {
+               emit progress( nbytes );
+           }
         }
-        out.close();
-        in.close();
-
-       // czynnosci po kopiowaniu
-//        if( do_remove() ) {
-//           if( !in.remove() ) {
-//              QMessageBox::warning( this, tr( CAPTION ), tr( CANT_DEL_FILE ).arg( in_src_path ) );
-//           }
-//        }
         utimbuf timebuf;
         timebuf.actime = fi.lastModified().toTime_t();
         timebuf.modtime = fi.lastModified().toTime_t();
@@ -182,21 +193,27 @@ void QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst
         utime(dst_path.toUtf8(), &timebuf);
      }
      else {
-//        QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_WRITE_ERROR ).arg( dst_path ) );
+         emit ask_overwrite(dst_path, QBtOverwriteAnswer::WRITE_ERROR);
+         return false;
      }
-     in.close();
   }
   else {
-//     QMessageBox::critical( this, tr( CAPTION ), tr( OPEN_READ_ERROR ).arg( in_src_path ) );
+      emit ask_overwrite(dst_path, QBtOverwriteAnswer::READ_ERROR);
+      return false;
   }
   ++currentState_->index;
+  return true;
 
 }
 
 void QBtDirCopyWorker::copy_link( const QString& in_src_path, const QString& dst_path )
 {
-    const QString target = QBtSystemCall::sys("readlink \"" + in_src_path + "\"").trimmed();
+    QByteArray buf(1024, 0);
+    uint size = static_cast<uint>(readlink(in_src_path.toUtf8(), buf.data(), static_cast<size_t>(buf.size())));
+    buf[size] = 0;
+    QString target = QString(buf);
     QFile::link(target, dst_path);
+    ++currentState_->index;
 }
 
 void QBtDirCopyWorker::copy(QStringList sources, QString dest)
@@ -212,8 +229,11 @@ void QBtDirCopyWorker::copy(QStringList sources, QString dest)
 
 void QBtDirCopyWorker::resume(QBtOverwriteAnswer answer)
 {
+   {
+        QMutexLocker locker(&mutex_);
+        break_ = false;
+   }
    answer_ = answer;
-   break_ = false;
    copy_list();
 }
 

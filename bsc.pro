@@ -1,7 +1,7 @@
 TEMPLATE =  app
 CONFIG +=  qt thread warn_on c++11
 QT += widgets
-QMAKE_MAC_SDK = macosx10.13
+QMAKE_MAC_SDK = macosx10.14
 #QMAKE_CXXFLAGS += -std=c++1y
 #QMAKE_CXXFLAGS_DEBUG = -O0
 #QMAKE_CXXFLAGS_RELEASE = -O3

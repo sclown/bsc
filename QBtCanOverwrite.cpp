@@ -122,14 +122,18 @@ bool QBtCanOverwrite::canOverwrite(QWidget* const in_parent)
                                   QMessageBox::Yes ) == QMessageBox::Yes;
 }
 
-QBtOverwriteAnswer QBtCanOverwrite::ask(const QString &path)
+QBtOverwriteAnswer QBtCanOverwrite::ask(const QString &path, QBtOverwriteAnswer::ErrorType error_type)
 {
     path_ = path;
     if( dont_ask_->isChecked() ) {
         return QBtOverwriteAnswer(!ask_again(), result_, "");
     }
-    result_ = QBtOverwriteAnswer::OVERWRITE;
+    bool can_overwrite = (error_type == QBtOverwriteAnswer::EXIST);
+    result_ = defaultAction(error_type);
     path_label_->setText(path);
+    overwrite_->setEnabled(can_overwrite);
+    update_->setEnabled(can_overwrite);
+    rename_->setEnabled(can_overwrite);
     auto res = exec();
     return QBtOverwriteAnswer(!ask_again(), result_, newPath());
 }
@@ -149,6 +153,15 @@ QString QBtCanOverwrite::newPath() const
         return "";
     }
     return path_;
+}
+
+QBtOverwriteAnswer::Action QBtCanOverwrite::defaultAction(QBtOverwriteAnswer::ErrorType error_type)
+{
+    switch(error_type) {
+        case QBtOverwriteAnswer::EXIST: return QBtOverwriteAnswer::OVERWRITE;
+        case QBtOverwriteAnswer::READ_ERROR: return QBtOverwriteAnswer::SKIP;
+        case QBtOverwriteAnswer::WRITE_ERROR: return QBtOverwriteAnswer::RENAME;
+    }
 }
 
 //*******************************************************************
