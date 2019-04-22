@@ -55,7 +55,9 @@ int main( int in_argc, char** in_argv )
    }
 
    QApplication bsc( in_argc, in_argv );
-   bsc.setWindowIcon( QIcon( ":/img/bsc.png" ) );
+   #if defined(Q_OS_WIN)
+       bsc.setWindowIcon( QIcon( ":/img/bsc.png" ) );
+   #endif
    bsc.setAttribute(Qt::AA_UseHighDpiPixmaps);
 
    QBtConfig::instance();
