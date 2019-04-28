@@ -92,6 +92,7 @@ public:
    QString  selected_file_path       () const;
    void           set_initial_file_request ( const QString& );
    void           set_initial_file         ();
+   bool           selectFile               ( const QString& fileName);
    void           update                   ( const QString& );
    const QString& current_path             () const;
    void           goto_top                 ();
@@ -123,6 +124,8 @@ private:
    void    rename            ();
    void    view              ();
    void    edit              ();
+   void    toClipboard        ();
+   void    paste             ();
    void    console_start     () const;
    void    open_oposite      () const;
    void    open_in_shell     () const;

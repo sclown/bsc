@@ -43,6 +43,7 @@
 #include "QBtAttrDialog.h"
 #include "QBtFinder.h"
 #include "QBtCanOverwrite.h"
+#include "QBTMacTools.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QKeyEvent>
@@ -53,6 +54,10 @@
 #include <QMessageBox>
 #include <QDrag>
 #include <QDesktopServices>
+#include <QApplication>>
+#include <QClipboard>
+#include <QMimeData>
+#include <QUrl>
 
 using namespace std;
 
@@ -172,6 +177,15 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
       return;
    }
 
+   if( in_event == QKeySequence::Copy ) {
+       toClipboard();
+       return;
+   }
+   if( in_event == QKeySequence::Paste ) {
+       paste();
+       return;
+   }
+
    if( in_event->modifiers() & Qt::AltModifier ) {
       switch( in_event->key() ) {
          case Qt::Key_Return:
@@ -197,20 +211,22 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
             remove_selected();
             break;
          case Qt::Key_A:
+            toClipboard();
             select_all();
             break;
          case Qt::Key_R:
             refresh();
             break;
+         case Qt::Key_O:
          case Qt::Key_K:
             console_start();
             break;
-      case Qt::Key_Left:
-      case Qt::Key_Right:
+         case Qt::Key_Left:
+         case Qt::Key_Right:
             open_oposite();
             break;
-      case Qt::Key_Up:
-      case Qt::Key_Down:
+         case Qt::Key_Up:
+         case Qt::Key_Down:
             open_in_shell();
             break;
       }
@@ -576,6 +592,46 @@ void QBtView::select()
 }
 // end of select
 
+
+void QBtView::toClipboard()
+{
+    auto selection = selectionModel_->selectedIndexes();
+    auto clipboard = QApplication::clipboard();
+    auto files = model_->mimeData(selection);
+    if( files ) {
+        clipboard->setMimeData(files);
+    }
+}
+
+//*******************************************************************
+// paste                                             PRIVATE
+//*******************************************************************
+void QBtView::paste()
+{
+    QClipboard *clipboard = QApplication::clipboard();
+    auto mimeData = clipboard->mimeData();
+    if( !mimeData ) {
+        return;
+    }
+    QList<QUrl> urls = mimeData->urls();
+    QStringList files;
+    for(QUrl url: urls) {
+        if(url.scheme() == "file"){
+            if(isMacSpecialURL(url)) {
+                url = resolveMacSpecialURL(url);
+            }
+            files += url.path();
+        }
+    }
+    if( files.empty() ) {
+        return;
+    }
+    QMap<QString, QVariant> userInfo;
+    userInfo["files"] = QVariant(files);
+    userInfo["drop_target"] = model_->current_path();
+    QBtEventsController::instance()->send_event( QBtEvent::DROP_FILES, QVariant(userInfo) );
+}
+
 //*******************************************************************
 // console_start                                             PRIVATE
 //*******************************************************************
@@ -886,13 +942,21 @@ void QBtView::set_initial_file()
    const QString full_name = initial_file_stack_.top();
    initial_file_stack_.pop();
    
-   const QModelIndex index = model_->search_file( full_name );
-   if( index.isValid() ) {
-      setCurrentIndex( index );
-      scrollTo( index, PositionAtCenter );
-   }
-   else {
-      goto_top();
+   if( !selectFile( full_name ) ) {
+       goto_top();
    }
 }
-// end of set_current_file
+// end of set_current_fil
+
+
+bool QBtView::selectFile(const QString &fileName)
+{
+    const QModelIndex index = model_->search_file( fileName );
+    if( !index.isValid() ) {
+        return false;
+    }
+    setCurrentIndex( index );
+    scrollTo( index, PositionAtCenter );
+    return true;
+}
+

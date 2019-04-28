@@ -97,6 +97,7 @@ private slots:
    void           update_files_count    ( qint32 );
    void           update_selected_count ( qint32 );
    void           path_changed          ( const QString& );
+   void           item_changed          ( const QString& );
    void           fstab_changed         ( const QString& );
    void           edit_finished         ();
 };

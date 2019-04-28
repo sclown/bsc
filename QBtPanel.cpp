@@ -155,6 +155,8 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 
    connect( path_            , SIGNAL( activated      ( const QString& ) ),
             this             , SLOT  ( path_changed   ( const QString& ) ) );
+   connect( path_            , SIGNAL( selectFile     ( const QString& ) ),
+            this             , SLOT  ( item_changed   ( const QString& ) ) );
    connect( fstab_           , SIGNAL( activated      ( const QString& ) ),
             this             , SLOT  ( fstab_changed  ( const QString& ) ) );
    connect( path_->lineEdit(), SIGNAL( editingFinished()                 ),
@@ -544,6 +546,11 @@ void QBtPanel::path_changed( const QString& in_text )
     current_view()->update( absPath );
 }
 // end of path_changed
+
+void QBtPanel::item_changed( const QString& in_text )
+{
+    current_view()->set_initial_file_request(in_text);
+}
 
 //*******************************************************************
 // fstab_changed                                        PRIVATE slot

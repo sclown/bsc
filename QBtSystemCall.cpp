@@ -57,6 +57,11 @@ QString QBtSystemCall::sys(const QString &cmd)
 {
     QProcess process;
     process.start( cmd );
-    process.waitForFinished();
-    return process.readAll();
+    process.waitForStarted();
+    QString result;
+    do {
+        result += process.readAllStandardOutput();
+        result += process.readAllStandardError();
+    } while (!process.waitForFinished(100));
+    return result;
 }

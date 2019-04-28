@@ -300,11 +300,12 @@ Qt::DropActions QBtDirModel::supportedDropActions() const
 
 QMimeData *QBtDirModel::mimeData(const QModelIndexList &indexes) const
 {
-    QMimeData *mimeData = new QMimeData();
+    QMimeData *mimeData = new QMimeData();    
+    QStringList texts;
     QList<QUrl> urls;
     foreach (const QModelIndex &index, indexes) {
         if (index.isValid() && index.column()==0) {
-            urls.append(QUrl("file://" + file_path(index)));
+            urls.append(QUrl::fromLocalFile(file_path(index)));
         }
     }
     mimeData->setUrls(urls);
@@ -314,15 +315,9 @@ QMimeData *QBtDirModel::mimeData(const QModelIndexList &indexes) const
 
 bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int row, int column, const QModelIndex &parent)
 {
-    QList<QUrl> urls = data->urls();
-    QStringList files;
-    foreach (QUrl url, urls) {
-        if(isMacSpecialURL(url)) {
-            url = resolveMacSpecialURL(url);
-        }
-        if(url.scheme() == "file"){
-            files += url.path();
-        }
+    QStringList files = QBtShared::urlsToPathes(data->urls());
+    if(files.empty()) {
+        return false;
     }
     QMap<QString, QVariant> userInfo;
     userInfo["action"] = QVariant(action);
@@ -330,7 +325,7 @@ bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int
     userInfo["drop_target"] = current_path();
     dropInfo_ = userInfo;
     QTimer::singleShot( 100, this, SLOT( notify_drop() ) );
-    return !files.empty();
+    return true;
 }
 
 //###################################################################

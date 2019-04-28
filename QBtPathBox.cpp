@@ -1,10 +1,12 @@
 #include "QBtPathBox.h"
 #include "3rdprty/dircompleter.h"
 #include "QBTMacTools.h"
+#include "QBtShared.h"
 #include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QMimeData>
 #include <QDir>
+#include <QLineEdit>
 
 QBtPathBox::QBtPathBox()
 {
@@ -13,7 +15,7 @@ QBtPathBox::QBtPathBox()
     DirCompleter *completer = new DirCompleter(this);
     completer->setCompletionMode(QCompleter::InlineCompletion);
     setCompleter(completer);
-
+    lineEdit()->setAcceptDrops(false);
 }
 
 void QBtPathBox::dragEnterEvent(QDragEnterEvent *event)
@@ -24,29 +26,15 @@ void QBtPathBox::dragEnterEvent(QDragEnterEvent *event)
 
 void QBtPathBox::dropEvent(QDropEvent *event)
 {
-    QList<QUrl> urls = event->mimeData()->urls();
-    QString path;
-    foreach (QUrl url, urls) {
-        if(url.scheme() == "file"){
-            if(isMacSpecialURL(url)) {
-                url = resolveMacSpecialURL(url);
-            }
-            path = url.path();
-            setPath(path);
-            emit activated(path);
-            break;
-        }
+    auto files = QBtShared::urlsToPathes(event->mimeData()->urls());
+    if( !files.empty() ) {
+        handleDrop(files.front());
     }
     event->acceptProposedAction();
 }
 
 void QBtPathBox::setPath( const QString& in_path )
 {
-   QDir dir( in_path );
-   if( in_path.isEmpty() || !dir.exists() || !dir.isReadable() ) {
-       reset();
-       return;
-   }
    bool oldState = blockSignals(true);
 
    const qint32 idx = findText( in_path );
@@ -66,4 +54,19 @@ void QBtPathBox::reset()
 
 }
 
-
+void QBtPathBox::handleDrop(const QString &path)
+{
+    if( path.isEmpty() ) {
+        return;
+    }
+    QFileInfo pathInfo(path);
+    QFileInfo folderInfo = QBtShared::pathFromFSItem(pathInfo);
+    if(!folderInfo.isReadable()) {
+        return;
+    }
+    setPath(folderInfo.absoluteFilePath());
+    emit activated(folderInfo.absoluteFilePath());
+    if( pathInfo.isFile() ) {
+        emit selectFile(pathInfo.fileName());
+    }
+}

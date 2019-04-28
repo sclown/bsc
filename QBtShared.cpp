@@ -29,6 +29,7 @@
 -------------------------------------------------------------------*/
 #include "QBtShared.h"
 #include "QBtFileInfo.h"
+#include "QBTMacTools.h"
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QFontMetrics>
@@ -36,6 +37,7 @@
 #include <QProcess>
 #include <QWidget>
 #include <QDir>
+#include <QUrl>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -368,3 +370,22 @@ void QBtShared::touch( const QString& in_muster_fpath, const QString& in_dst_fpa
    process.startDetached( cmd );
 }
 // end of touch
+
+QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
+{
+    QStringList pathes;
+    for(QUrl url: urls) {
+        if(isMacSpecialURL(url)) {
+            url = resolveMacSpecialURL(url);
+        }
+        if(url.scheme() == "file"){
+            pathes += url.path();
+        }
+    }
+    return pathes;
+}
+
+QFileInfo QBtShared::pathFromFSItem(const QFileInfo &info)
+{
+    return info.isDir()? info : info.absolutePath();
+}

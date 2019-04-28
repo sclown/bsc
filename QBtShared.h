@@ -33,6 +33,7 @@
 #include <QObject>
 #include <QString>
 #include <QFile>
+#include <QFileInfo>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -88,6 +89,8 @@ public:
    static QString        slashed_dir    ( const QString& );
    static QString        quoted_fpath   ( const QString& );
    static void           touch          ( const QString&, const QString& );
+   static QStringList urlsToPathes (const QList<QUrl>& urls);
+   static QFileInfo pathFromFSItem (const QFileInfo& info);
 };
 
 #endif // INCLUDED_QBtShared_h
