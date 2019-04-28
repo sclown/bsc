@@ -31,6 +31,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
+#include "QBtOverwriteAnswer.h"
 #include <QDialog>
 #include <QFontMetrics>
 
@@ -87,10 +88,6 @@ protected:
 private:
    QFontMetrics  const font_metrics_;
    QProgressBar* const progress_;
-   QCheckBox*    const remove_;
-   QCheckBox*    const owner_;
-   QCheckBox*    const permissions_;
-   QCheckBox*    const datime_;
    QPushButton*  const start_;
    QPushButton*  const exit_;
    bool                started_;
@@ -101,11 +98,11 @@ protected:
    QBtInfoField* const src_path_;
    QLineEdit*    const dst_path_;
    QBtCanOverwrite*  const can_overwrite_;
+   QBtOverwriteAnswer::Action command_;
 
 //******* METHODS *******
 public:
-   void set_source     ( const SelectionsSet& );
-   void set_destination( const QString& );
+   int executeCopy( const SelectionsSet&, const QString&, const QBtOverwriteAnswer::Action);
 private:
    void     showEvent           ( QShowEvent* );
    QString  sourceInitialText   ();
@@ -117,11 +114,6 @@ protected:
    void started        ();
    void finished       ();
    void display_paths  ( const QString&, const QString& );
-   bool do_remove      () const;
-   bool do_owner       () const;
-   bool do_permissions () const;
-   bool do_datime      () const;
-   bool can_copy       (const QString&, const QString & );
    void reset_progress (const qint64 = 0 );
    void set_progress   (const qint64 );
 

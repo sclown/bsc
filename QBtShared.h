@@ -79,7 +79,7 @@ public:
    static QString        access         ( const QBtFileInfo& );
    static void           idle           ();
    static void           elide          ( const QFontMetrics&, qint32, QString& );
-   static void           auto_rename    ( QString& );
+   static QString        auto_rename    ( const QString& );
    static bool           is_regular_file( const QString& );
    static bool           is_binary_file ( const QString& );
    static bool           is_gnome       ();

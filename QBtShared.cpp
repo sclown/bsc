@@ -252,20 +252,18 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
 //*******************************************************************
 // auto_rename
 //*******************************************************************
-void QBtShared::auto_rename( QString& inout_path )
+QString QBtShared::auto_rename( const QString& path )
 {
-   const QFileInfo fi( inout_path );
+   const QFileInfo fi( path );
    const QString base_name = fi.baseName();
    const QString full_ext = fi.completeSuffix();
    
    QString dir = fi.path();
    if( !dir.endsWith( '/' ) ) dir += '/';
 
-   qint32 i = 1;
-   bool found = false;
    QString new_name = QString();
    
-   while( i < 10000 ) {
+   for(int i = 1; i < 10000; ++i ) {
       new_name  = dir;
       new_name += base_name;
       new_name += ".";
@@ -275,12 +273,10 @@ void QBtShared::auto_rename( QString& inout_path )
          new_name += full_ext;
       }
       if( !QFile::exists( new_name ) ) {
-         found = true;
-         break;
+         return new_name;
       }
    }
-
-   if( found ) inout_path = new_name;
+   return path;
 }
 // end of auto_rename
 

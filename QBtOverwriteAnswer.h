@@ -1,6 +1,7 @@
 #ifndef QBTOVERWRITEANSWER_H
 #define QBTOVERWRITEANSWER_H
 
+#include <QString>
 
 class QBtOverwriteAnswer
 {
@@ -17,7 +18,8 @@ public:
        SKIP,
        OVERWRITE,
        UPDATE,
-       RENAME
+       RENAME,
+       AUTORENAME
     };
 
     QBtOverwriteAnswer() :

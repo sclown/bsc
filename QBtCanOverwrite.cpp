@@ -176,8 +176,7 @@ void QBtCanOverwrite::showEvent( QShowEvent* in_event )
 
 QString QBtCanOverwrite::inputNewName()
 {
-    QString fpath = path_;
-    QBtShared::auto_rename( fpath );
+    QString fpath = QBtShared::auto_rename(path_);
 
     const QFileInfo fi( fpath );
     const QString fname = fi.fileName();

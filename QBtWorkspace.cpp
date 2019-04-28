@@ -27,6 +27,7 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
+#include "QBtOverwriteAnswer.h"
 #include "QBtWorkspace.h"
 #include "QBtPanel.h"
 #include "QBtSettings.h"
@@ -308,9 +309,7 @@ void QBtWorkspace::copy()
     }
 
     QBtDirCopyDialog dialog( this );
-    dialog.set_source( data );
-    dialog.set_destination( dst->current_path() );
-    if( dialog.exec() != QDialog::Accepted ) return;
+    if( dialog.executeCopy(data, dst->current_path(), QBtOverwriteAnswer::ASK) != QDialog::Accepted ) return;
 
     src->unselect_all();
     src->refresh();
@@ -741,12 +740,13 @@ void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
     foreach (QString file, files) {
         dropedFiles.insert(file);
     }
-
+    auto command = QBtOverwriteAnswer::ASK;
+    if(!userInfo.contains("action")) {
+        command = QBtOverwriteAnswer::AUTORENAME;
+    }
 
     QBtDirCopyDialog dialog( this );
-    dialog.set_source( dropedFiles );
-    dialog.set_destination( dropPath );
-    if( dialog.exec() != QDialog::Accepted ) return;
+    if( dialog.executeCopy(dropedFiles, dropPath, command) != QDialog::Accepted ) return;
     left_panel_->current_view()->refresh();
     right_panel_->current_view()->refresh();
 }

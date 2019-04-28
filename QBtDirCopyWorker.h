@@ -36,6 +36,8 @@ private:
     void copy_link(const QString &in_src_path, const QString &dst_path);
     bool copy_file(const QString &in_src_path, const QString &dst_path);
     bool can_update(const QString &in_src_path, const QString &in_dst_path) const;
+    bool applyUserCommand(const QString& source, QString &destination);
+    void copyItem(const QFileInfo& sourceInfo, const QFileInfo& destinationInfo);
 
 private:
     enum {

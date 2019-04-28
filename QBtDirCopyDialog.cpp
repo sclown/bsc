@@ -89,14 +89,7 @@ void QBtDirCopyDialog::start()
 {
    destpath_ = dst_path_->text();
    QFileInfo destInfo( destpath_ );
-   if( !destInfo.isWritable() ) {
-      QMessageBox::critical( this, tr( CAPTION ), tr( DIR_NOT_WRITABLE ).arg( destpath_ ) );
-      finished();
-      return;
-   }
-   
    started();
-   //--------------------------------------------
    QStringList sources_list;
    sources_list.reserve(sources_.size());
    for(auto source : sources_) {

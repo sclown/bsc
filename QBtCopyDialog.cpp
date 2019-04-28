@@ -78,10 +78,6 @@ const char* const QBtCopyDialog::SRC_ITEMS_COUNT_TEXT    = QT_TR_NOOP( "%1 items
 QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , font_metrics_ ( font() )
 , progress_     ( new QProgressBar )
-, remove_       ( new QCheckBox( tr( REMOVE      ) ) )
-, owner_        ( new QCheckBox( tr( OWNER       ) ) )
-, permissions_  ( new QCheckBox( tr( PERMISSIONS ) ) )
-, datime_       ( new QCheckBox( tr( DATIME      ) ) )
 , start_        ( new QPushButton( tr( START     ) ) )
 , exit_         ( new QPushButton( tr( EXIT      ) ) )
 , started_      ( false )
@@ -117,19 +113,11 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    progress_layout->addWidget( progress_ );
    
    // Buttons
-//   QVBoxLayout* const chk_layout = new QVBoxLayout;
-//   chk_layout->addWidget( remove_ );
-//   chk_layout->addWidget( datime_ );
-//   chk_layout->addWidget( owner_ );
-//   chk_layout->addWidget( permissions_ );
-//   chk_layout->addStretch( 100 );
    QVBoxLayout* const btn_layout = new QVBoxLayout;
    btn_layout->addWidget( exit_ );
    btn_layout->addWidget( start_ );
    btn_layout->addStretch( 100 );
    QHBoxLayout* const in_layout = new QHBoxLayout;
-//   in_layout->addLayout( chk_layout );
-//   in_layout->addStretch( 100 );
    in_layout->addWidget( start_ );
    in_layout->addWidget( exit_ );
 
@@ -170,11 +158,19 @@ void QBtCopyDialog::showEvent( QShowEvent* const in_event )
       p.setColor( dst_path_->foregroundRole(), palette().color( foregroundRole() ) );
       dst_path_->setPalette( p );
    }
-   
+   if(sources_.size() == 1) {
+       QFileInfo srcInfo(*sources_.begin());
+       if(!srcInfo.isDir()) {
+           destpath_ += QDir::separator() + srcInfo.fileName();
+       }
+   }
    display_paths(sourceInitialText(), destpath_);
    QBtShared::resize_width( this, 40 );
    start_->setDefault( true );
    QDialog::showEvent( in_event );
+   if(command_ == QBtOverwriteAnswer::AUTORENAME) {
+       start();
+   }
 }
 // end of showEvent
 
@@ -192,10 +188,6 @@ QString QBtCopyDialog::sourceInitialText()
 //*******************************************************************
 void QBtCopyDialog::started()
 {
-   remove_->setEnabled( false );
-   owner_->setEnabled( false );
-   permissions_->setEnabled( false );
-   datime_->setEnabled( false );
    start_->setVisible( false );
    exit_->setText( tr( BREAK ) );
    started_ = true;
@@ -221,23 +213,13 @@ void QBtCopyDialog::reject()
 }
 // end of reject
 
-//*******************************************************************
-// set_source                                                 PUBLIC
-//*******************************************************************
-void QBtCopyDialog::set_source( const SelectionsSet& in_data )
+int QBtCopyDialog::executeCopy(const SelectionsSet &sources, const QString &destination, const QBtOverwriteAnswer::Action command)
 {
-   sources_ = in_data;
+    sources_ = sources;
+    destpath_ = destination;
+    command_ = command;
+    return exec();
 }
-// end of set_sources
-
-//*******************************************************************
-// set_destination                                            PUBLIC
-//*******************************************************************
-void QBtCopyDialog::set_destination( const QString& in_data )
-{
-   destpath_ = in_data;
-}
-// end of set_destination
 
 //*******************************************************************
 // display_info                                            PROTECTED
@@ -252,87 +234,11 @@ void QBtCopyDialog::display_paths( const QString& in_src_path, const QString& in
 // end of display_info
 
 //*******************************************************************
-// do_remove                                               PROTECTED
-//*******************************************************************
-bool QBtCopyDialog::do_remove() const
-{
-   return remove_->isChecked();
-}
-// end of do_remove
-
-//*******************************************************************
-// do_owner                                                PROTECTED
-//*******************************************************************
-bool QBtCopyDialog::do_owner() const
-{
-   return owner_->isChecked();
-}
-// end of do_owner
-
-//*******************************************************************
-// do_permissions                                          PROTECTED
-//*******************************************************************
-bool QBtCopyDialog::do_permissions() const
-{
-   return permissions_->isChecked();
-}
-// end of do_permissions
-
-//*******************************************************************
-// do_datime                                               PROTECTED
-//*******************************************************************
-bool QBtCopyDialog::do_datime() const
-{
-   return datime_->isChecked();
-}
-// end of do_datime
-
-//*******************************************************************
-// can_copy                                                PROTECTED
-//*******************************************************************
-bool QBtCopyDialog::can_copy( const QString& in_src_path, const QString& in_dst_path )
-{
-   bool retval = true;
-   static qint32 answer = QBtCanOverwrite::OVERWRITE_FILE;
-   
-    if( ask_again_ ) {
-        if( QFile::exists( in_dst_path ) ) {
-//            QBtCanOverwrite dialog( this, in_dst_path );
-//            answer = dialog.exec();
-//            if( answer != QBtCanOverwrite::RENAME_FILE ) {
-//               ask_again_ = dialog.ask_again();
-//            }
-        }
-    }
-
-    switch( answer ) {
-        case QBtCanOverwrite::RENAME_FILE:
-            rename( in_dst_path );
-            break;
-        case QBtCanOverwrite::OVERWRITE_FILE:
-            break;
-        case QBtCanOverwrite::CANCEL_FILE:
-            retval = false;
-            stop();
-            break;
-        case QBtCanOverwrite::SKIP_FILE:
-            retval = false;
-            break;
-        case QBtCanOverwrite::UPDATE_FILE:
-            retval = can_update( in_src_path, in_dst_path );
-            break;
-    }
-    return retval;
-}
-// end of can_copy
-
-//*******************************************************************
 // rename                                                    PRIVATE
 //*******************************************************************
 QString QBtCopyDialog::rename( const QString& inout_fpath )
 {
-    QString fpath = inout_fpath;
-    QBtShared::auto_rename( fpath );
+    QString fpath = QBtShared::auto_rename(inout_fpath);
    
     const QFileInfo fi( fpath );
     const QString fname = fi.fileName();

@@ -1,4 +1,5 @@
 #include "QBtDirCopyWorker.h"
+#include "QBtShared.h"
 #include "QBtSystemCall.h"
 #include <QDir>
 #include <QFile>
@@ -32,7 +33,6 @@ bool QBtDirCopyWorker::isStopped()
 
 void QBtDirCopyWorker::copy_list()
 {
-    qDebug() << "copy_list START";
     if(currentState_->items.size() == 1) {
         auto srcInfo = currentState_->items.front();
         if(!srcInfo.isDir()) {
@@ -40,16 +40,7 @@ void QBtDirCopyWorker::copy_list()
             if(destInfo.exists() && destInfo.isDir()) {
                 destInfo = QFileInfo( currentState_->dest, srcInfo.fileName());
             }
-            if(destInfo.exists() && !answer_.valid()) {
-                emit ask_overwrite(destInfo.absoluteFilePath(), QBtOverwriteAnswer::EXIST);
-                stop();
-                return;
-            }
-            emit item_info( srcInfo.absoluteFilePath(), destInfo.absoluteFilePath(), srcInfo.size() );
-            if (!copy_file(srcInfo.absoluteFilePath(), destInfo.absoluteFilePath())){
-                stop();
-                return;
-            }
+            copyItem(srcInfo, destInfo);
         }
     }
     while( !isStopped() && list_.size() ) {
@@ -68,14 +59,11 @@ void QBtDirCopyWorker::copy_list()
     }
     if(!isStopped()) {
         emit finished();
-        qDebug() << "copy_list finished";
     }
-    qDebug() << "copy_list END";
 }
 
 void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_dst_path )
 {
-//   QBtShared::idle();
    if( isStopped() ) return;
 
    QFileInfo src( in_src_path );
@@ -92,41 +80,8 @@ void QBtDirCopyWorker::copy_next( const QString& in_src_path, const QString& in_
       return;
    }
 
-   dst_path += "/" + src_name;
-   emit item_info( in_src_path, dst_path, src.size() );
-   if( QFile::exists( dst_path ) ) {
-       if(!answer_.valid()) {
-           emit ask_overwrite(dst_path, QBtOverwriteAnswer::EXIST);
-           stop();
-           return;
-       }
-   }
-   if(answer_.hasNewName()) {
-       dst_path = answer_.newName();
-   }
-   if(answer_.valid()) {
-       answer_.reset();
-       switch( answer_.action() ) {
-       case QBtOverwriteAnswer::UPDATE:
-           if( !can_update(src_path, dst_path) ) {
-               return;
-           }
-           break;
-       case QBtOverwriteAnswer::SKIP:
-           return;
-       default:
-           break;
-       }
-
-   }
-   if( src.isSymLink() ) {
-       copy_link(src_path, dst_path);
-       return;
-   }
-   if (!copy_file( src_path, dst_path )) {
-       stop();
-       return;
-   }
+   dst_path += QDir::separator() + src_name;
+   copyItem(src, QFileInfo(dst_path));
 }
 // end of copy_next
 
@@ -242,6 +197,54 @@ bool QBtDirCopyWorker::can_update( const QString& in_src_path, const QString& in
    const QFileInfo src_fi( in_src_path );
    const QFileInfo dst_fi( in_dst_path );
    return ( src_fi.lastModified() > dst_fi.lastModified() );
+}
+
+bool QBtDirCopyWorker::applyUserCommand(const QString& source, QString &destination)
+{
+    if(answer_.hasNewName()) {
+        destination = answer_.newName();
+    }
+    if(answer_.valid()) {
+        answer_.reset();
+        switch( answer_.action() ) {
+        case QBtOverwriteAnswer::UPDATE:
+            if( !can_update(source, destination) ) {
+                return true;
+            }
+            break;
+        case QBtOverwriteAnswer::SKIP:
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+
+}
+
+void QBtDirCopyWorker::copyItem(const QFileInfo &sourceInfo, const QFileInfo &destinationInfo)
+{
+    const QString source = sourceInfo.absoluteFilePath();
+    QString finalDestination = destinationInfo.absoluteFilePath();
+    if(source == finalDestination) {
+        finalDestination = QBtShared::auto_rename( finalDestination );
+    }
+    if( QFile::exists( finalDestination ) && !answer_.valid()) {
+        emit ask_overwrite(finalDestination, QBtOverwriteAnswer::EXIST);
+        stop();
+        return;
+    }
+    if(applyUserCommand(source, finalDestination)) {
+        return;
+    }
+    emit item_info( source, finalDestination, source.size() );
+    if( sourceInfo.isSymLink() ) {
+        copy_link(source, finalDestination);
+        return;
+    }
+    if (!copy_file( source, finalDestination )) {
+        stop();
+    }
 }
 
 
