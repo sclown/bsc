@@ -195,7 +195,7 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
    operations_tbar_->setObjectName( "OPERATIONS_TBAR" );
    
    create_menu();
-   create_tool_bars();
+//   create_tool_bars();
    update_action();
 
    QFrame* const frame = new QFrame( this );
