@@ -692,7 +692,8 @@ void QBtWorkspace::open_terminal()
     QDir dir(QCoreApplication::applicationDirPath());
     dir.cdUp();
     QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
-    terminalEmulator = script;
+    terminalEmulator = "open";
+    args << "-a" << "/Applications/Utilities/Terminal.app";
     args << src->current_path();
 #else
 //        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));

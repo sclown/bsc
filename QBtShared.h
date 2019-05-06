@@ -93,4 +93,11 @@ public:
    static QFileInfo pathFromFSItem (const QFileInfo& info);
 };
 
+namespace BtShared {
+
+void openTerminal(const QString& path);
+void open(const QString &path, const QStringList &args, const QString &pwd);
+
+}
+
 #endif // INCLUDED_QBtShared_h

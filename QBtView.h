@@ -126,7 +126,7 @@ private:
    void    edit              ();
    void    toClipboard        ();
    void    paste             ();
-   void    console_start     () const;
+   void    console_start     (bool inSelection) const;
    void    open_oposite      () const;
    void    open_in_shell     () const;
    bool    is_ext_declared   ( const QString&, QString&, QString& ) const;

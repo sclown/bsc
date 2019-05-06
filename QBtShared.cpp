@@ -25,6 +25,7 @@
  * Creation date: 24.08.2007
  *******************************************************************/
 
+
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtShared.h"
@@ -38,6 +39,7 @@
 #include <QWidget>
 #include <QDir>
 #include <QUrl>
+#include <QDesktopServices>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -388,4 +390,40 @@ QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
 QFileInfo QBtShared::pathFromFSItem(const QFileInfo &info)
 {
     return info.isDir()? info : info.absolutePath();
+}
+
+void BtShared::openTerminal(const QString &path) {
+    QString terminalEmulator;
+    QStringList args;
+#if defined(Q_OS_WIN)
+    terminalEmulator = "cmd.exe";
+#elif defined(Q_OS_MAC)
+    QDir dir(QCoreApplication::applicationDirPath());
+    dir.cdUp();
+    QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
+    terminalEmulator = "open";
+    args << "-a" << "/Applications/Utilities/Terminal.app";
+    args << path;
+#else
+    //        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));
+    //        terminalEmulator = args.takeFirst();
+    //        args.append(QString::fromLocal8Bit(qgetenv("SHELL")));
+#endif
+    open(terminalEmulator, args, path);
+}
+
+void BtShared::open(const QString &path, const QStringList &args, const QString &pwd)
+{
+    const QFileInfo fileInfo(path);
+    if(!args.isEmpty()) {
+#if defined(Q_OS_MAC)
+        if(!fileInfo.isExecutable() || fileInfo.isDir()) {
+            QProcess::startDetached(QLatin1String("open"), QStringList() << "-a" << path << args);
+            return;
+        }
+#endif
+        QProcess::startDetached(path, args, pwd);
+        return;
+    }
+    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }

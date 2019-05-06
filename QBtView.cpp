@@ -219,7 +219,7 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
             break;
          case Qt::Key_O:
          case Qt::Key_K:
-            console_start();
+            console_start(in_event->modifiers() & Qt::ShiftModifier);
             break;
          case Qt::Key_Left:
          case Qt::Key_Right:
@@ -635,38 +635,15 @@ void QBtView::paste()
 //*******************************************************************
 // console_start                                             PRIVATE
 //*******************************************************************
-void QBtView::console_start() const
+void QBtView::console_start(bool inSelection) const
 {
-   const QString path = model_->current_path();
-   
-   if( !path.isEmpty() ) {
-      QBtSettings stt;
-      QVariant data;
-      bool use_default = true;
-
-      if( stt.read( QBtConfig::TERMINAL_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
-         use_default = data.toBool();
-      }
-      if( use_default ) {
-         static const QString GNOME = "gnome-terminal --working-directory=%1 &";
-         static const QString KDE   = "konsole --workdir %1 &";
-         const QString cmd = QBtShared::is_gnome() ? GNOME : KDE;
-         system( cmd.arg( path ).toLatin1() );
-      }
-      else {
-         QString command = QString();
-         if( stt.read( QBtConfig::TERMINAL_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
-            command = data.toString().trimmed();
-         }
-         if( !command.isEmpty() ) {
-            if( command.contains( "$dir" ) ) {
-               command.replace( "$dir", path );
-            }
-            command += " &";
-            system( command.toLatin1() );
-         }
-      }
+   if (!inSelection) {
+       BtShared::openTerminal(model_->current_path());
+       return;
    }
+   const QFileInfo selection(selected_file_path());
+   const QFileInfo path = QBtShared::pathFromFSItem(selection);
+   BtShared::openTerminal(path.absoluteFilePath());
 }
 // end of console_start
 
