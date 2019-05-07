@@ -47,7 +47,7 @@ const QChar       QBtShared::DIGIT_SEPARATOR = ',';
 const QString     QBtShared::PARENT_DIR      = "..";
 const QString     QBtShared::THIS_DIR        = ".";
 const QString QBtShared::ORGANISATION    = "beesoft.org";
-const QString QBtShared::VERSION         = "4.1.2";
+const QString QBtShared::VERSION         = "4.1.3";
 const QString QBtShared::PROGRAM_NAME    = "Beesoft Commander";
 
 /*------- variables:
