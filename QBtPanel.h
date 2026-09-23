@@ -78,7 +78,7 @@ public:
    void           show_fstab            ();
    void           set_tab_id            ( qint32 );
    QBtView* const current_view          () const;
-   QHBoxLayout * const pathLineLayout();
+   QHBoxLayout*   pathLineLayout        ();
 private:
    bool           eventFilter           ( QObject*, QEvent* );
    void           keyPressEvent         ( QKeyEvent* );
@@ -87,6 +87,7 @@ private:
    void           del_tab_request       ();
    qint32         new_tab               ( const QString&, int, Qt::SortOrder );
    void           update_fstab          ();
+   void           select_volume         ( const QString& );
    void           save                  ();
    void           restore               ();
 private slots:
@@ -98,7 +99,7 @@ private slots:
    void           update_selected_count ( qint32 );
    void           path_changed          ( const QString& );
    void           item_changed          ( const QString& );
-   void           fstab_changed         ( const QString& );
+   void           fstab_changed         ( int );
    void           edit_finished         ();
 };
 

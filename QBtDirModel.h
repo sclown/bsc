@@ -34,6 +34,7 @@
 #include <QFileInfo>
 #include <QFileSystemWatcher>
 #include <QThread>
+#include <QTimer>
 #include <memory>
 
 /*------- forward declarations:
@@ -57,6 +58,7 @@ private:
 
    QVariant dropInfo_;
    QFileSystemWatcher watcher_;
+   QTimer refresh_timer_;
    QThread thread_;
    QBtDirListWorker *worker_;
 
@@ -76,6 +78,7 @@ public:
    virtual void sort        (int column, Qt::SortOrder order);
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
+   void watch               ( const QString& );
    void customEvent     ( QEvent* );
    QStringList mimeTypes() const;
    Qt::ItemFlags flags(const QModelIndex &index) const;

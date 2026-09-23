@@ -62,8 +62,12 @@ QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
    connect(worker_, &QBtDirListWorker::work_finished, this, &QBtDirModel::work_finished_slot);
    thread_.start();
 
-   connect( &watcher_, SIGNAL( directoryChanged      ( const QString & ) ),
-            this    , SLOT  ( directory_changed_slot ( const QString ) ) );
+   // Coalesce bursts of change notifications into a single refresh.
+   refresh_timer_.setSingleShot( true );
+   refresh_timer_.setInterval( 250 );
+   connect( &refresh_timer_, &QTimer::timeout, this, &QBtDirModel::delayed_refresh );
+   connect( &watcher_, &QFileSystemWatcher::directoryChanged,
+            this, &QBtDirModel::directory_changed_slot );
 }
 // end of QBtDirModel
 
@@ -90,7 +94,6 @@ void QBtDirModel::setup( const QString& in_path, int sortColumn, Qt::SortOrder s
 //*******************************************************************
 void QBtDirModel::update( const QString& in_path)
 {
-   watcher_.removePath( current_path_ );
    emit list( in_path, sortIndex_, sortOrder_ );
 }
 
@@ -386,18 +389,39 @@ void QBtDirModel::work_finished_slot( const QString in_path )
    current_path_ = in_path;
    QApplication::restoreOverrideCursor();
    emit update_finished();
-   watcher_.addPath( current_path_ );
+   watch( current_path_ );
    busy_ = false;
 }
 // end of work_finished_slot
 
+//*******************************************************************
+// watch                                                     PRIVATE
+//*******************************************************************
+// Re-adding a path makes the macOS watcher report a change right away,
+// so the watch is only replaced when the directory actually changes.
+void QBtDirModel::watch( const QString& in_path )
+{
+   const QStringList watched = watcher_.directories();
+   if( watched.size() == 1 && watched.first() == in_path ) return;
+
+   if( !watched.isEmpty() ) watcher_.removePaths( watched );
+   watcher_.addPath( in_path );
+}
+// end of watch
+
 void QBtDirModel::directory_changed_slot( const QString &in_path )
 {
-    QTimer::singleShot( 100, this, SLOT( delayed_refresh() ) );
+    if( in_path == current_path_ ) {
+        refresh_timer_.start();
+    }
 }
 
 void QBtDirModel::delayed_refresh()
 {
+    if( busy_ ) {
+        refresh_timer_.start();
+        return;
+    }
     refresh();
 }
 

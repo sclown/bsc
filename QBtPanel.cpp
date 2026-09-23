@@ -44,7 +44,8 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QDir>
-#include <QProcess>
+#include <QFileIconProvider>
+#include <QStorageInfo>
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QCompleter>
@@ -60,27 +61,15 @@ const char* const QBtPanel::SELECTED = QT_TR_NOOP( "Selected:" );
 //*******************************************************************
 // QBtPanel                                          CONSTRUCTOR
 //*******************************************************************
-QHBoxLayout * const QBtPanel::pathLineLayout()
+// Volume selector on the left (sized to its content), path field taking
+// the rest of the row.
+QHBoxLayout* QBtPanel::pathLineLayout()
 {
     QHBoxLayout* const hb_top = new QHBoxLayout;
     hb_top->setContentsMargins( 0, 0, 0, 0 );
-
-#if defined(Q_OS_MAC) //layout hack for os x
-    path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
-    QHBoxLayout* const hb_combofix = new QHBoxLayout;
-    hb_combofix->setContentsMargins(0,8,0,0);
-    hb_combofix->addWidget( path_ );
-    hb_top->addLayout( hb_combofix );
+    hb_top->setSpacing( 6 );
     hb_top->addWidget( fstab_ );
-    hb_top->setStretchFactor( hb_combofix, 8 );
-    hb_top->setStretchFactor( fstab_, 2 );
-#else
-    hb_top->addWidget( path_ );
-    hb_top->addWidget( fstab_ );
-    hb_top->setStretchFactor( path_, 8 );
-    hb_top->setStretchFactor( fstab_, 2 );
-#endif
-
+    hb_top->addWidget( path_, 1 );
     return hb_top;
 }
 
@@ -95,10 +84,20 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 , selected_ ( new QLabel )
 {
    path_->setDuplicatesEnabled( false );
-   path_->setMinimumWidth( 5 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
+   path_->setMinimumWidth( 10 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
    path_->installEventFilter(this);
-   fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
-   tbar_->setElideMode( Qt::ElideLeft );
+   path_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
+   fstab_->setSizeAdjustPolicy( QComboBox::AdjustToContents );
+   fstab_->setSizePolicy( QSizePolicy::Maximum, QSizePolicy::Fixed );
+   fstab_->setToolTip( tr( "Volumes" ) );
+
+   // Tabs are named after the folder (full path in the tooltip) and only
+   // shown once a second tab is opened.
+   tbar_->setDocumentMode( true );
+   tbar_->setExpanding( false );
+   tbar_->setAutoHide( true );
+   tbar_->setUsesScrollButtons( true );
+   tbar_->setElideMode( Qt::ElideMiddle );
 
 
    //===== zaden z ponizszych elementow nie reaguje na tab =====
@@ -156,8 +155,8 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
             this             , SLOT  ( path_changed   ( const QString& ) ) );
    connect( path_            , SIGNAL( selectFile     ( const QString& ) ),
             this             , SLOT  ( item_changed   ( const QString& ) ) );
-   connect( fstab_           , SIGNAL( textActivated  ( const QString& ) ),
-            this             , SLOT  ( fstab_changed  ( const QString& ) ) );
+   connect( fstab_           , SIGNAL( activated      ( int )            ),
+            this             , SLOT  ( fstab_changed  ( int )            ) );
    connect( path_->lineEdit(), SIGNAL( editingFinished()                 ),
             this             , SLOT  ( edit_finished  ()                 ) );
    connect( tbar_            , SIGNAL( currentChanged ( int )            ),
@@ -200,24 +199,7 @@ void QBtPanel::tab_mouse_event()
 
 bool QBtPanel::eventFilter(QObject *obj, QEvent *event)
 {
-    if(obj == path_)
-    {
-        if(event->type() == QEvent::KeyPress)
-        {
-            QKeyEvent* key = static_cast<QKeyEvent*>(event);
-            if( key->key() == Qt::Key_Tab )
-            {
-                event->accept();
-                auto edit = path_->lineEdit();
-                if( edit->hasSelectedText() && !edit->selectedText().endsWith("/") ) {
-                    edit->setText(edit->text() + "/");
-                }
-                edit->setSelection(edit->text().size(),0);
-                return true;
-            }
-        }
-    }
-    return false;
+    return QWidget::eventFilter(obj, event);
 }
 
 //*******************************************************************
@@ -449,7 +431,9 @@ void QBtPanel::del_tab_request()
 //*******************************************************************
 qint32 QBtPanel::new_tab(const QString& in_path , int sortColumn, Qt::SortOrder sortOrder)
 {
-   qint32 idx = tbar_->addTab( in_path );
+   const QString name = QFileInfo( in_path ).fileName();
+   const qint32 idx = tbar_->addTab( name.isEmpty() ? in_path : name );
+   tbar_->setTabToolTip( idx, in_path );
 
    QBtView* const view = new QBtView( in_path, sortColumn, sortOrder );
    view->setDragEnabled(true);
@@ -474,7 +458,11 @@ qint32 QBtPanel::new_tab(const QString& in_path , int sortColumn, Qt::SortOrder 
 void QBtPanel::current_path( const QString& in_path )
 {
    path_->setPath(in_path);
-   tbar_->setTabText( tbar_->currentIndex(), in_path );
+   const QString name = QFileInfo( in_path ).fileName();
+   const qint32 idx = tbar_->currentIndex();
+   tbar_->setTabText( idx, name.isEmpty() ? in_path : name );
+   tbar_->setTabToolTip( idx, in_path );
+   select_volume( in_path );
 }
 // end of current_path
 
@@ -483,24 +471,30 @@ void QBtPanel::current_path( const QString& in_path )
 //*******************************************************************
 void QBtPanel::update_fstab()
 {
-   QStringList args;
-   args << "-h" << "-T nonfs";
-   
-   QProcess sc;
-   sc.start( "df", args );
-
-   QByteArray data;
-   while( sc.waitForReadyRead() ) {
-      data += sc.readAll();
+   fstab_->clear();
+   QFileIconProvider icons;
+   const QList<QStorageInfo> volumes = QStorageInfo::mountedVolumes();
+   for( const QStorageInfo& volume : volumes ) {
+      if( !volume.isValid() || !volume.isReady() ) continue;
+      const QString root = volume.rootPath();
+#if defined(Q_OS_MAC)
+      // Hide the APFS system/data/VM helper volumes, keep "/" and /Volumes/*.
+      if( root != "/" && !root.startsWith( "/Volumes/" ) ) continue;
+#endif
+      QString name = volume.displayName();
+      if( name.isEmpty() || name == root ) name = root;
+      fstab_->addItem( icons.icon( QFileInfo( root ) ), name, root );
+      fstab_->setItemData( fstab_->count() - 1, root, Qt::ToolTipRole );
    }
+}
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
-   for( qint32 i = 1; i < text.size(); ++i ) {
-      const QStringList items = text[ i ].split( ' ', Qt::SkipEmptyParts );
-      if( items.first().startsWith( '/' ) && items.last().startsWith( '/' ) ) {
-         fstab_->addItem( items.last() );
-      }
-   }
+//*******************************************************************
+// select_volume                                             PRIVATE
+//*******************************************************************
+void QBtPanel::select_volume( const QString& in_path )
+{
+   const qint32 idx = fstab_->findData( QStorageInfo( in_path ).rootPath() );
+   if( idx != -1 ) fstab_->setCurrentIndex( idx );
 }
 // end of update_fstab
 
@@ -554,11 +548,13 @@ void QBtPanel::item_changed( const QString& in_text )
 //*******************************************************************
 // fstab_changed                                        PRIVATE slot
 //*******************************************************************
-void QBtPanel::fstab_changed( const QString& in_path )
+void QBtPanel::fstab_changed( const int in_idx )
 {
+   const QString path = fstab_->itemData( in_idx ).toString();
+   if( path.isEmpty() ) return;
    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
    view->setFocus( Qt::OtherFocusReason );
-   view->update( in_path );
+   view->update( path );
 }
 // end of fstab_activated
 
