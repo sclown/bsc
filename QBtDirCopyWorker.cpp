@@ -141,8 +141,8 @@ bool QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst
            }
         }
         utimbuf timebuf;
-        timebuf.actime = fi.lastModified().toTime_t();
-        timebuf.modtime = fi.lastModified().toTime_t();
+        timebuf.actime = fi.lastModified().toSecsSinceEpoch();
+        timebuf.modtime = fi.lastModified().toSecsSinceEpoch();
         out.setPermissions( in.permissions() );
         chown(dst_path.toUtf8(), fi.ownerId(), fi.groupId());
         utime(dst_path.toUtf8(), &timebuf);

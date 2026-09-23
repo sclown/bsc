@@ -161,9 +161,9 @@ void QBtSystemInfo::read_dsk_data()
       data += sc.readAll();
    }
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', QString::SkipEmptyParts );
+   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
    for( qint32 i = 1; i < text.size(); ++i ) {
-      add_dsk_item( text[ i ].split( ' ', QString::SkipEmptyParts ) );
+      add_dsk_item( text[ i ].split( ' ', Qt::SkipEmptyParts ) );
    }
    for( qint32 i = 0; i < DSK_COL_COUNT; ++i ) {
       disk_view_->resizeColumnToContents( i );
@@ -187,9 +187,9 @@ void QBtSystemInfo::read_mem_data()
       data += sc.readAll();
    }
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', QString::SkipEmptyParts );
+   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
    for( qint32 i = 1; i < text.size(); ++i ) {
-      add_mem_item( text[ i ].split( ' ', QString::SkipEmptyParts ) );
+      add_mem_item( text[ i ].split( ' ', Qt::SkipEmptyParts ) );
    }
    for( qint32 i = 0; i < MEM_COL_COUNT; ++i ) {
       memory_view_->resizeColumnToContents( i );

@@ -65,7 +65,7 @@ void QBtPathBox::handleDrop(const QString &path)
         return;
     }
     setPath(folderInfo.absoluteFilePath());
-    emit activated(folderInfo.absoluteFilePath());
+    emit textActivated(folderInfo.absoluteFilePath());
     if( pathInfo.isFile() ) {
         emit selectFile(pathInfo.fileName());
     }

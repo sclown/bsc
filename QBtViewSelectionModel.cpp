@@ -31,6 +31,7 @@
 #include "QBtViewItem.h"
 #include "QBtViewModel.h"
 #include <QtDebug>
+#include <QRegularExpression>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -136,14 +137,15 @@ int QBtViewSelectionModel::selection_count()
 QModelIndexList QBtViewSelectionModel::mask_items(const QString &mask) const
 {
     QModelIndexList result;
-    QRegExp exp( mask, Qt::CaseSensitive, QRegExp::Wildcard );
+    const QRegularExpression exp( QRegularExpression::wildcardToRegularExpression(
+        mask, QRegularExpression::UnanchoredWildcardConversion | QRegularExpression::NonPathWildcardConversion ) );
 
     const qint32 n = model_->rowCount();
     for( qint32 i = 0; i < n; ++i ) {
        QBtViewItem* it = model_->head_item( i );
        if( it ) {
           if( PARENT_DIR == it->text() ) continue;
-          if( exp.indexIn( it->finfo().full_name() ) != -1 ) {
+          if( exp.match( it->finfo().full_name() ).hasMatch() ) {
             result.append( model_->row_indexes(i) );
           }
        }

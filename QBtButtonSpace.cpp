@@ -57,10 +57,10 @@ const char* const QBtButtonSpace::LABEL[] = {
 QBtButtonSpace::QBtButtonSpace( QWidget* const in_parent ) : QWidget( in_parent )
 {
    QSignalMapper* const mapper = new QSignalMapper( this );
-   connect( mapper, SIGNAL( mapped( int ) ), this, SLOT( clicked( int ) ) );
+   connect( mapper, SIGNAL( mappedInt( int ) ), this, SLOT( clicked( int ) ) );
 
    QHBoxLayout* const hbt = new QHBoxLayout( this );
-   hbt->setMargin( 0 );
+   hbt->setContentsMargins( 0, 0, 0, 0 );
 
    for( qint32 i = F1; i < BUTTONS_COUNT; ++i ) {
       button_[ i ] = new QPushButton;

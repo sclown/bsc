@@ -31,7 +31,6 @@
 #include "QBtViewItem.h"
 #include "QBtEventsController.h"
 #include <QInputDialog>
-#include <QRegExp>
 #include <QDir>
 #include <QtDebug>
 

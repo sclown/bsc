@@ -372,7 +372,7 @@ void QBtCompareDirsDialog::compare_files( const FileMap& in_data1, const FileMap
       if( is1 ) row_data.set_lft( name, it1.value().absoluteFilePath() );
       if( is2 ) row_data.set_rgt( name, it2.value().absoluteFilePath() );
       if( is1 && is2 ) {
-         row_data.separator( check_files( row_data.path1(), row_data.path2() ) );
+         row_data.separator( check_files( QFileInfo( row_data.path1() ), QFileInfo( row_data.path2() ) ) );
       }
       add_row( row_data );
       ++it;

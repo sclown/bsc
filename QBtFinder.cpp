@@ -47,7 +47,7 @@
 #include <QMessageBox>
 #include <QFontMetrics>
 #include <QHeaderView>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QApplication>
 
 /*------- local constants:
@@ -279,8 +279,8 @@ void QBtFinder::parser_current_item( const QString& in_fpath )
    // W przypadku uzywania wyrazen regularnych w odniesieniu do
    // nazw plikow, sprawdzamy czy nazwa pliku jest zgodna ze wzorcem.
    if( file_regex_->isChecked() ) {
-      const QRegExp regex( file_->text() );
-      if( -1 == regex.indexIn( fi.fileName() ) ) return;
+      const QRegularExpression regex( file_->text() );
+      if( !regex.match( fi.fileName() ).hasMatch() ) return;
    }
 
    // W przypadku wyszukiwania wzorca zawartosci, sprawdzamy czy
@@ -343,8 +343,8 @@ bool QBtFinder::search_what( const QString& in_path ) const
       }
                
       if( what_regex_->isChecked() ) {
-         QRegExp regex( what_to_find );
-         if( regex.indexIn( text ) != -1 ) {
+         const QRegularExpression regex( what_to_find );
+         if( regex.match( text ).hasMatch() ) {
             return true;
          }
       }

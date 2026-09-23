@@ -1,4 +1,4 @@
-#include "QBtMacTools.h"
+#include "QBTMacTools.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/NSArray.h>
 #include <Cocoa/Cocoa.h>
@@ -42,7 +42,7 @@ void activateAnotherInstance()
         if (![app isActive])
         {
             // not active, activate it
-            [app activateWithOptions: NSApplicationActivateIgnoringOtherApps];
+            [app activateWithOptions: 0];
         }
     }
 }

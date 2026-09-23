@@ -32,7 +32,7 @@
 #include "QBtFileInfo.h"
 #include "QBTMacTools.h"
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QFontMetrics>
 #include <QDateTime>
 #include <QProcess>
@@ -73,8 +73,8 @@ const QString& QBtShared::program_name()
 //*******************************************************************
 void QBtShared::resize( QWidget* const in_widget, const qint32 in_width, const qint32 in_height )
 {
-   const qint32 screen_width = qApp->desktop()->availableGeometry().width();
-   const qint32 screen_height = qApp->desktop()->availableGeometry().height();
+   const qint32 screen_width = QGuiApplication::primaryScreen()->availableGeometry().width();
+   const qint32 screen_height = QGuiApplication::primaryScreen()->availableGeometry().height();
    const qreal  width_percent = static_cast<qreal>( in_width ) / 100.0;
    const qreal  height_percent = static_cast<qreal>( in_height ) / 100.0;    
    const qint32 dx = static_cast<qint32>( screen_width * width_percent );
@@ -84,8 +84,8 @@ void QBtShared::resize( QWidget* const in_widget, const qint32 in_width, const q
 }
 void QBtShared::resize( QWidget* const in_widget, const QSize& in_size )
 {
-    const qint32 screen_width  = qApp->desktop()->availableGeometry().width();
-    const qint32 screen_height = qApp->desktop()->availableGeometry().height();
+    const qint32 screen_width  = QGuiApplication::primaryScreen()->availableGeometry().width();
+    const qint32 screen_height = QGuiApplication::primaryScreen()->availableGeometry().height();
     const qint32 x  = ( screen_width  - in_size.width()  + 1 ) >> 1;
     const qint32 y  = ( screen_height - in_size.height() + 1 ) >>  1;
     
@@ -94,7 +94,7 @@ void QBtShared::resize( QWidget* const in_widget, const QSize& in_size )
 }
 void QBtShared::resize_width( QWidget* const in_widget, const qint32 in_width )
 {
-   const qint32 screen_width  = qApp->desktop()->screenGeometry( 0 ).width();
+   const qint32 screen_width  = QGuiApplication::primaryScreen()->geometry().width();
    const qreal  width_percent = ( static_cast<qreal>( in_width ) ) / 100.0;
    
    QSize s = in_widget->size();
@@ -216,8 +216,8 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
    static const QString SPACER = "/.../";
    static const QString SPACE  = " ";
    
-   if( in_fm.width( in_out_path ) > in_width ) {
-      const QStringList    WORDS  = in_out_path.split( SLASH, QString::SkipEmptyParts );
+   if( in_fm.horizontalAdvance( in_out_path ) > in_width ) {
+      const QStringList    WORDS  = in_out_path.split( SLASH, Qt::SkipEmptyParts );
 
       int     i        = 0;
       int     j        = WORDS.count() - 1;
@@ -231,7 +231,7 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
          lft_ok = false;
          if( i < j ) {
             tmp = lft_part + SLASH + WORDS[i];
-            if( in_fm.width( tmp + SPACER + rgt_part ) < in_width ) {
+            if( in_fm.horizontalAdvance( tmp + SPACER + rgt_part ) < in_width ) {
                lft_part = tmp;
                lft_ok = true;
                ++i;
@@ -241,7 +241,7 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
          rgt_ok = false;
          if( i < j ) {
             tmp = WORDS[j] + SLASH + rgt_part;
-            if( in_fm.width( lft_part + SPACER + tmp ) < in_width ) {
+            if( in_fm.horizontalAdvance( lft_part + SPACER + tmp ) < in_width ) {
                rgt_part = tmp;
                rgt_ok = true;
                --j;
@@ -389,7 +389,7 @@ QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
 
 QFileInfo QBtShared::pathFromFSItem(const QFileInfo &info)
 {
-    return info.isDir()? info : info.absolutePath();
+    return info.isDir() ? info : QFileInfo( info.absolutePath() );
 }
 
 void BtShared::openTerminal(const QString &path) {

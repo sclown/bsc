@@ -42,7 +42,7 @@
 #include <QInputDialog>
 #include <QFileInfo>
 #include <QProcess>
-#include <QDirModel>
+#include <QFileSystemModel>
 #include <QCompleter>
 #include <QtDebug>
 
@@ -94,7 +94,9 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    QGridLayout* const grid = new QGridLayout( src_dst_gbox );
 
    QCompleter *completer = new QCompleter(this);
-   completer->setModel(new QDirModel(completer));
+   QFileSystemModel* const completer_model = new QFileSystemModel(completer);
+   completer_model->setRootPath(QString());
+   completer->setModel(completer_model);
    dst_path_->setCompleter(completer);
 
    QLabel* const src_label = new QLabel( tr( SRC_LABEL ) );

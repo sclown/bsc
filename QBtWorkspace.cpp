@@ -95,7 +95,7 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
     splitter_->setOpaqueResize();
 
     QHBoxLayout* const hb = new QHBoxLayout( this );
-    hb->setMargin( 0 );
+    hb->setContentsMargins( 0, 0, 0, 0 );
     hb->setSpacing( 0 );
     hb->addWidget( splitter_ );
 

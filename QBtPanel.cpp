@@ -48,7 +48,6 @@
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QCompleter>
-#include <QDirModel>
 #include <QtDebug>
 
 /*------- constants:
@@ -64,7 +63,7 @@ const char* const QBtPanel::SELECTED = QT_TR_NOOP( "Selected:" );
 QHBoxLayout * const QBtPanel::pathLineLayout()
 {
     QHBoxLayout* const hb_top = new QHBoxLayout;
-    hb_top->setMargin( 0 );
+    hb_top->setContentsMargins( 0, 0, 0, 0 );
 
 #if defined(Q_OS_MAC) //layout hack for os x
     path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
@@ -96,9 +95,9 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 , selected_ ( new QLabel )
 {
    path_->setDuplicatesEnabled( false );
-   path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
+   path_->setMinimumWidth( 5 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
    path_->installEventFilter(this);
-   fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
+   fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
    tbar_->setElideMode( Qt::ElideLeft );
 
 
@@ -125,14 +124,14 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    hb_selected->addWidget( selected_ );
    hb_selected->setStretchFactor( selected_, 100 );
    QGridLayout* const grid = new QGridLayout;
-   grid->setMargin( 0 );
+   grid->setContentsMargins( 0, 0, 0, 0 );
    grid->addLayout( hb_dirs, 0, 0 );
    grid->addLayout( hb_files, 0, 1 );
    grid->addLayout( hb_selected, 0, 2 );
 
    // main layout -----------------------------------------   
    QVBoxLayout* const vb = new QVBoxLayout;
-   vb->setMargin( 4 );
+   vb->setContentsMargins( 4, 4, 4, 4 );
    vb->setSpacing( 4 );
    vb->addWidget( tbar_ );
    vb->addLayout( hb_top );
@@ -153,11 +152,11 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    QBtEventsController::instance()->append( this, QBtEvent::SHOW_LEFT_FSTAB   );
    QBtEventsController::instance()->append( this, QBtEvent::SHOW_RIGHT_FSTAB  );
 
-   connect( path_            , SIGNAL( activated      ( const QString& ) ),
+   connect( path_            , SIGNAL( textActivated  ( const QString& ) ),
             this             , SLOT  ( path_changed   ( const QString& ) ) );
    connect( path_            , SIGNAL( selectFile     ( const QString& ) ),
             this             , SLOT  ( item_changed   ( const QString& ) ) );
-   connect( fstab_           , SIGNAL( activated      ( const QString& ) ),
+   connect( fstab_           , SIGNAL( textActivated  ( const QString& ) ),
             this             , SLOT  ( fstab_changed  ( const QString& ) ) );
    connect( path_->lineEdit(), SIGNAL( editingFinished()                 ),
             this             , SLOT  ( edit_finished  ()                 ) );
@@ -495,9 +494,9 @@ void QBtPanel::update_fstab()
       data += sc.readAll();
    }
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', QString::SkipEmptyParts );
+   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
    for( qint32 i = 1; i < text.size(); ++i ) {
-      const QStringList items = text[ i ].split( ' ', QString::SkipEmptyParts );
+      const QStringList items = text[ i ].split( ' ', Qt::SkipEmptyParts );
       if( items.first().startsWith( '/' ) && items.last().startsWith( '/' ) ) {
          fstab_->addItem( items.last() );
       }

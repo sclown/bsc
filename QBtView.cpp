@@ -54,7 +54,7 @@
 #include <QMessageBox>
 #include <QDrag>
 #include <QDesktopServices>
-#include <QApplication>>
+#include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
 #include <QUrl>

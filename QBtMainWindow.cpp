@@ -202,7 +202,7 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
    setCentralWidget( frame );
 
    QVBoxLayout* vb = new QVBoxLayout;
-   vb->setMargin( 0 );
+   vb->setContentsMargins( 0, 0, 0, 0 );
    vb->setSpacing( 0 );
    vb->addWidget( workspace_ );
    vb->addWidget( buttons_   );

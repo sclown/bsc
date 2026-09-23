@@ -92,7 +92,7 @@ QBtPackDialog::QBtPackDialog( QWidget* const in_parent ) : QDialog( in_parent )
 
    QGroupBox* const src_dst_gbox = new QGroupBox( tr( SRC_AND_DST ) );
    QGridLayout* src_dst_layout = new QGridLayout( src_dst_gbox );
-   src_dst_layout->setMargin( 4 );
+   src_dst_layout->setContentsMargins( 4, 4, 4, 4 );
    src_dst_layout->setSpacing( 2 );
    src_dst_layout->addWidget( new QLabel( tr( SOURCE ) ), 0, 0, Qt::AlignRight );
    src_dst_layout->addWidget( new QLabel( tr( DESTINATION ) ), 1, 0, Qt::AlignRight );

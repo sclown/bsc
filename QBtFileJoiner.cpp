@@ -170,7 +170,7 @@ QBtFileJoiner::QBtFileJoiner( QWidget* const in_parent               ,
 
    connect( start_btn_ , SIGNAL( clicked      ()    ), this, SLOT( start_slot ()    ) );
    connect( cancel_btn_, SIGNAL( clicked      ()    ), this, SLOT( cancel_slot()    ) );
-   connect( btn_grp_1  , SIGNAL( buttonClicked(int) ), this, SLOT( mode_slot  (int) ) );
+   connect( btn_grp_1  , SIGNAL( idClicked(int) ), this, SLOT( mode_slot  (int) ) );
    connect( up_btn_    , SIGNAL( clicked      ()    ), this, SLOT( up_slot    ()    ) );
    connect( down_btn_  , SIGNAL( clicked      ()    ), this, SLOT( down_slot  ()    ) );
 }
@@ -398,8 +398,8 @@ bool QBtFileJoiner::append( QFile& out_dstf, const QString& in_fpath )
             return false;
          }
          
-         b += data.count();
-         n -= data.count();
+         b += data.size();
+         n -= data.size();
          progress_->setValue( b );
          QBtShared::idle();
       }

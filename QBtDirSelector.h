@@ -35,7 +35,7 @@
 -------------------------------------------------------------------*/
 class QTreeView;
 class QPushButton;
-class QDirModel;
+class QFileSystemModel;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
@@ -61,7 +61,7 @@ private:
    QTreeView*   const view_;
    QPushButton* const select_btn_;
    QPushButton* const cancel_btn_;
-   QDirModel*   const model_;
+   QFileSystemModel* const model_;
    QString            path_;
 
 //******* METHODS *******

@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QFileInfo>
+#include <QMutex>
 #include "QBtOverwriteAnswer.h"
 
 class QBtDirCopyWorker : public QObject
