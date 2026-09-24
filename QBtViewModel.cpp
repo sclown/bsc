@@ -75,6 +75,12 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
          << HDR_OWNER
          << HDR_GROUP;
    setHorizontalHeaderLabels ( hdrs );
+
+   // Header captions follow the alignment of their column values.
+   for( qint32 i = 0; i < hdrs.size(); ++i ) {
+      setHeaderData( i, Qt::Horizontal, int( Qt::AlignLeft | Qt::AlignVCenter ), Qt::TextAlignmentRole );
+   }
+   setHeaderData( 1, Qt::Horizontal, int( Qt::AlignRight | Qt::AlignVCenter ), Qt::TextAlignmentRole );
 }
 // end of QBtViewModel
 

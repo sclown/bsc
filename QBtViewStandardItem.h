@@ -16,7 +16,7 @@ class QBtViewStandardItem : public QStandardItem
 public:
    QBtViewStandardItem() : QStandardItem()
    {
-      setTextAlignment( Qt::AlignHCenter );
+      setTextAlignment( Qt::AlignLeft | Qt::AlignVCenter );
    }
 };
 

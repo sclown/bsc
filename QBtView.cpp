@@ -46,6 +46,7 @@
 #include "QBTMacTools.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
+#include <QStyleHints>
 #include <QKeyEvent>
 #include <QDir>
 #include <QInputDialog>
@@ -92,16 +93,22 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    setHorizontalScrollMode(ScrollPerItem);
    setVerticalScrollMode(ScrollPerItem);
 
-   header()->setStretchLastSection( true );
+   header()->setStretchLastSection( false );
+   header()->setHighlightSections( false );
+   header()->setMinimumSectionSize( 40 );
    header()->setSortIndicator( sortColumn, sortOrder );
    header()->setSortIndicatorShown( true );
    header()->setSectionsClickable( true );
    connect( header(), SIGNAL( sortIndicatorChanged(int, Qt::SortOrder ) ), this, SLOT( sortChanged( int, Qt::SortOrder ) ) );
 
    settings();
+   style_header();
+   connect( qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, &QBtView::style_header );
 
    connect( model_, SIGNAL( update_finished() ), this, SLOT( request_finished() ) );
    setModel( model_ );
+   // Name takes the remaining width; the other columns are sized to fit.
+   header()->setSectionResizeMode( 0, QHeaderView::Stretch );
    selectionModel_ = new QBtViewSelectionModel( model_ );
    setSelectionModel( selectionModel_ );
    setDragDropOverwriteMode(false);
@@ -886,10 +893,54 @@ void QBtView::sortChanged(int logicalIndex, Qt::SortOrder order)
 //*******************************************************************
 void QBtView::resize_columns()
 {
-   setColumnWidth(0, width()*0.55);
-   for( qint32 i = 1; i < model_->columnCount(); ++i ) {
-       setColumnWidth(i, width()*0.15);
+   // Fixed-format columns are sized from sample text (independent of the
+   // listing); owner/group from the current contents.
+   const QFontMetrics fm( font() );
+   const QFontMetrics hfm( header()->font() );
+   const qint32 pad = 16;   // cell margins + header padding
+   const auto fit = [&]( qint32 column, const QString& sample ) {
+      const QString caption = model_->headerData( column, Qt::Horizontal ).toString();
+      setColumnWidth( column, qMax( hfm.horizontalAdvance( caption ), fm.horizontalAdvance( sample ) ) + pad );
+   };
+   fit( 1, "999,999,999" );
+   fit( 2, "00-00-0000" );
+   fit( 3, "00:00:00" );
+   fit( 4, "drwxr-xr-x" );
+   for( qint32 i = 5; i < model_->columnCount(); ++i ) {
+      const QString caption = model_->headerData( i, Qt::Horizontal ).toString();
+      setColumnWidth( i, qMax( hfm.horizontalAdvance( caption ) + pad, sizeHintForColumn( i ) ) );
    }
+}
+
+//*******************************************************************
+// style_header                                              PRIVATE
+//*******************************************************************
+// Flat, Finder-like column header: secondary text colour, no raised
+// sections, hairline separators. Colours come from the palette so it
+// follows light/dark mode.
+void QBtView::style_header()
+{
+   const QPalette pal = palette();
+   const QColor base = pal.color( QPalette::Base );
+   const QColor text = pal.color( QPalette::Text );
+   const auto mix = [&]( qreal t ) {
+      return QColor::fromRgbF( base.redF()   + ( text.redF()   - base.redF()   ) * t,
+                               base.greenF() + ( text.greenF() - base.greenF() ) * t,
+                               base.blueF()  + ( text.blueF()  - base.blueF()  ) * t ).name();
+   };
+
+   QFont hf = font();
+   hf.setPointSizeF( hf.pointSizeF() * 0.92 );
+   hf.setWeight( QFont::DemiBold );
+   header()->setFont( hf );
+
+   header()->setStyleSheet( QString(
+      "QHeaderView { background: %1; border: none; border-bottom: 1px solid %2; }"
+      "QHeaderView::section { background: %1; color: %3; border: none;"
+      "  border-right: 1px solid %4; padding: 4px 6px; }"
+      "QHeaderView::section:last { border-right: none; }"
+      "QHeaderView::section:hover { color: %5; }" )
+      .arg( base.name(), mix( 0.15 ), mix( 0.55 ), mix( 0.10 ), text.name() ) );
 }
 // end of resize_columns
 

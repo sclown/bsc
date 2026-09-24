@@ -113,6 +113,7 @@ private:
    void    one_level_up      ();
    void    jump_to_home      ();
    void    resize_columns    ();
+   void    style_header      ();
    void    select            ();
    void    select_mask       ();
    void    deselect_mask     ();
