@@ -114,6 +114,7 @@ private:
 protected:
    bool                  valid_dir_name    ( const QString& );
 signals:
+   void                  update_started    ();
    void                  update_finished   ();
 };
 

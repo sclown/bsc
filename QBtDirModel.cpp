@@ -342,6 +342,7 @@ bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int
 void QBtDirModel::work_started_slot()
 {
    QApplication::setOverrideCursor( Qt::WaitCursor );      
+   emit update_started();
    busy_ = true;
    file_count_ = dir_count_ = qint32();
    selections_.clear();
@@ -405,11 +406,15 @@ void QBtDirModel::watch( const QString& in_path )
 
    if( !watched.isEmpty() ) watcher_.removePaths( watched );
    watcher_.addPath( in_path );
+   watch_age_.start();
 }
 // end of watch
 
 void QBtDirModel::directory_changed_slot( const QString &in_path )
 {
+    // The macOS watcher reports a change right after a path is added;
+    // ignore that one instead of re-listing the folder just loaded.
+    if( watch_age_.isValid() && watch_age_.elapsed() < 500 ) return;
     if( in_path == current_path_ ) {
         refresh_timer_.start();
     }

@@ -47,6 +47,7 @@
 #include <QVBoxLayout>
 #include <QHeaderView>
 #include <QStyleHints>
+#include <QScrollBar>
 #include <QKeyEvent>
 #include <QDir>
 #include <QInputDialog>
@@ -105,6 +106,7 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    style_header();
    connect( qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, &QBtView::style_header );
 
+   connect( model_, SIGNAL( update_started() ), this, SLOT( request_started() ) );
    connect( model_, SIGNAL( update_finished() ), this, SLOT( request_finished() ) );
    setModel( model_ );
    selectionModel_ = new QBtViewSelectionModel( model_ );
@@ -853,6 +855,24 @@ void QBtView::scrollContentsBy(int dx, int dy)
 }
 
 //*******************************************************************
+// request_started                                      PRIVATE slot
+//*******************************************************************
+// A listing the view did not ask for (e.g. the folder changed on disk)
+// must not lose the cursor: remember the current item and select it
+// again once the listing is done.
+void QBtView::request_started()
+{
+   if( requests_.empty() ) {
+      const QString current = selected_file_full_name();
+      if( !current.isEmpty() ) {
+         set_initial_file_request( current );
+         keep_scroll_ = verticalScrollBar()->value();
+      }
+   }
+}
+// end of request_started
+
+//*******************************************************************
 // request_finished                                     PRIVATE slot
 //*******************************************************************
 void QBtView::request_finished()
@@ -872,6 +892,10 @@ void QBtView::request_finished()
             goto_top();
             break;
       }
+   }
+   if( keep_scroll_ >= 0 ) {
+      verticalScrollBar()->setValue( keep_scroll_ );
+      keep_scroll_ = -1;
    }
    emit dir_count   ( model_->dir_count ()   );
    emit file_count  ( model_->file_count()   );

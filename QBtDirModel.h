@@ -35,6 +35,7 @@
 #include <QFileSystemWatcher>
 #include <QThread>
 #include <QTimer>
+#include <QElapsedTimer>
 #include <memory>
 
 /*------- forward declarations:
@@ -59,6 +60,7 @@ private:
    QVariant dropInfo_;
    QFileSystemWatcher watcher_;
    QTimer refresh_timer_;
+   QElapsedTimer watch_age_;
    QThread thread_;
    QBtDirListWorker *worker_;
 
