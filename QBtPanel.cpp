@@ -46,6 +46,9 @@
 #include <QDir>
 #include <QFileIconProvider>
 #include <QStorageInfo>
+#include <QToolButton>
+#include <QMenu>
+#include <QActionGroup>
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QCompleter>
@@ -67,8 +70,8 @@ QHBoxLayout* QBtPanel::pathLineLayout()
 {
     QHBoxLayout* const hb_top = new QHBoxLayout;
     hb_top->setContentsMargins( 0, 0, 0, 0 );
-    hb_top->setSpacing( 6 );
-    hb_top->addWidget( fstab_ );
+    hb_top->setSpacing( 4 );
+    hb_top->addWidget( fstab_, 0, Qt::AlignVCenter );
     hb_top->addWidget( path_, 1 );
     return hb_top;
 }
@@ -76,7 +79,7 @@ QHBoxLayout* QBtPanel::pathLineLayout()
 QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( in_parent )
 , idx_      ( in_idx )
 , path_     ( new QBtPathBox )
-, fstab_    ( new QComboBox )
+, fstab_    ( new QToolButton )
 , tbar_     ( new QBtTabBar )
 , wstack_   ( new QStackedWidget )
 , dirs_     ( new QLabel )
@@ -87,9 +90,20 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    path_->setMinimumWidth( 10 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
    path_->installEventFilter(this);
    path_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
-   fstab_->setSizeAdjustPolicy( QComboBox::AdjustToContents );
-   fstab_->setSizePolicy( QSizePolicy::Maximum, QSizePolicy::Fixed );
+   // Volume selector: icon-only button, names are listed in its menu.
+   fstab_->setMenu( new QMenu( fstab_ ) );
+   fstab_->setPopupMode( QToolButton::InstantPopup );
+   fstab_->setToolButtonStyle( Qt::ToolButtonIconOnly );
+   fstab_->setAutoRaise( true );
+   fstab_->setIconSize( QSize( 20, 20 ) );
+   fstab_->setCursor( Qt::PointingHandCursor );
+   fstab_->setStyleSheet( "QToolButton { border: none; border-radius: 5px; padding: 3px; }"
+                          "QToolButton:hover { background: palette(midlight); }"
+                          "QToolButton:pressed, QToolButton:open { background: palette(mid); }"
+                          "QToolButton::menu-indicator { image: none; width: 0; }" );
    fstab_->setToolTip( tr( "Volumes" ) );
+   connect( fstab_->menu(), &QMenu::aboutToShow, this, &QBtPanel::update_fstab );
+   connect( fstab_->menu(), &QMenu::triggered, this, &QBtPanel::fstab_changed );
 
    // Tabs are named after the folder (full path in the tooltip) and only
    // shown once a second tab is opened.
@@ -155,8 +169,6 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
             this             , SLOT  ( path_changed   ( const QString& ) ) );
    connect( path_            , SIGNAL( selectFile     ( const QString& ) ),
             this             , SLOT  ( item_changed   ( const QString& ) ) );
-   connect( fstab_           , SIGNAL( activated      ( int )            ),
-            this             , SLOT  ( fstab_changed  ( int )            ) );
    connect( path_->lineEdit(), SIGNAL( editingFinished()                 ),
             this             , SLOT  ( edit_finished  ()                 ) );
    connect( tbar_            , SIGNAL( currentChanged ( int )            ),
@@ -273,12 +285,12 @@ void QBtPanel::customEvent( QEvent* const in_event )
       switch( type ) {
          case QBtEvent::SHOW_LEFT_FSTAB:
             if( QBtWorkspace::LEFT_PANEL_ID == idx_ ) {
-               fstab_->showPopup();
+               fstab_->showMenu();
             }
             break;
          case QBtEvent::SHOW_RIGHT_FSTAB:
             if( QBtWorkspace::RIGHT_PANEL_ID == idx_ ) {
-               fstab_->showPopup();
+               fstab_->showMenu();
             }
             break;
       }
@@ -309,7 +321,7 @@ void QBtPanel::set_tab_id( const qint32 in_id )
 //*******************************************************************
 void QBtPanel::show_fstab()
 {
-   fstab_->showPopup();
+   fstab_->showMenu();
 }
 // end of show_fstab
 
@@ -469,9 +481,12 @@ void QBtPanel::current_path( const QString& in_path )
 //*******************************************************************
 // update_fstab                                              PRIVATE
 //*******************************************************************
+// Rebuilt every time the menu opens, so newly mounted volumes show up.
 void QBtPanel::update_fstab()
 {
-   fstab_->clear();
+   QMenu* const menu = fstab_->menu();
+   menu->clear();
+   QActionGroup* const group = new QActionGroup( menu );
    QFileIconProvider icons;
    const QList<QStorageInfo> volumes = QStorageInfo::mountedVolumes();
    for( const QStorageInfo& volume : volumes ) {
@@ -483,8 +498,12 @@ void QBtPanel::update_fstab()
 #endif
       QString name = volume.displayName();
       if( name.isEmpty() || name == root ) name = root;
-      fstab_->addItem( icons.icon( QFileInfo( root ) ), name, root );
-      fstab_->setItemData( fstab_->count() - 1, root, Qt::ToolTipRole );
+      QAction* const action = menu->addAction( icons.icon( QFileInfo( root ) ), name );
+      action->setData( root );
+      action->setToolTip( root );
+      action->setCheckable( true );
+      action->setChecked( root == volume_root_ );
+      group->addAction( action );
    }
 }
 
@@ -493,8 +512,14 @@ void QBtPanel::update_fstab()
 //*******************************************************************
 void QBtPanel::select_volume( const QString& in_path )
 {
-   const qint32 idx = fstab_->findData( QStorageInfo( in_path ).rootPath() );
-   if( idx != -1 ) fstab_->setCurrentIndex( idx );
+   const QStorageInfo volume( in_path );
+   const QString root = volume.rootPath();
+   if( root == volume_root_ ) return;
+
+   volume_root_ = root;
+   const QString name = volume.displayName().isEmpty() ? root : volume.displayName();
+   fstab_->setIcon( QFileIconProvider().icon( QFileInfo( root ) ) );
+   fstab_->setToolTip( tr( "Volume: %1 (%2)" ).arg( name, root ) );
 }
 // end of update_fstab
 
@@ -548,9 +573,9 @@ void QBtPanel::item_changed( const QString& in_text )
 //*******************************************************************
 // fstab_changed                                        PRIVATE slot
 //*******************************************************************
-void QBtPanel::fstab_changed( const int in_idx )
+void QBtPanel::fstab_changed( QAction* const in_action )
 {
-   const QString path = fstab_->itemData( in_idx ).toString();
+   const QString path = in_action->data().toString();
    if( path.isEmpty() ) return;
    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
    view->setFocus( Qt::OtherFocusReason );

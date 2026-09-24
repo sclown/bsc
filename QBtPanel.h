@@ -38,7 +38,8 @@ class QBtTabBar;
 class QBtPathBox;
 class QStackedWidget;
 class QLabel;
-class QComboBox;
+class QToolButton;
+class QAction;
 class QHBoxLayout;
 class QBtView;
 
@@ -66,7 +67,8 @@ private:
 private:
    qint32                idx_;
    QBtPathBox*      const path_;
-   QComboBox*      const fstab_;
+   QToolButton*    const fstab_;
+   QString               volume_root_;
    QBtTabBar*      const tbar_;
    QStackedWidget* const wstack_;
    QLabel*         const dirs_;
@@ -99,7 +101,7 @@ private slots:
    void           update_selected_count ( qint32 );
    void           path_changed          ( const QString& );
    void           item_changed          ( const QString& );
-   void           fstab_changed         ( int );
+   void           fstab_changed         ( QAction* );
    void           edit_finished         ();
 };
 
