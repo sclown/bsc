@@ -34,6 +34,7 @@
 #include <QPushButton>
 #include <QSignalMapper>
 #include <QHBoxLayout>
+#include <QKeySequence>
 #include <QtDebug>
 
 /*------- constants:
@@ -86,28 +87,27 @@ void QBtButtonSpace::retranslate()
       const QString label  = tr( LABEL[ i ] );
       QString text = "";
 
+      // Captions show the plain number: the button answers to both
+      // F<n> and Alt(Option)+<n> (Alt+0 for F10).
+      const QString digit = QString::number( ( i + 1 ) % 10 );
       switch( mode ) {
          case ONLY_FN:
-            text = "F" + number;
+            text = number;
             break;
          case ONLY_TEXT:
             text = label;
             break;
          case FULL_DESC:
-            text  = "F";
-            text += number;
-            text += ' ';
-            text += label;
+            text = number + ' ' + label;
             break;
          case TWO_LINES:
-            text  = "F";
-            text += number;
-            text += '\n';
-            text += label;
+            text = number + '\n' + label;
          break;
       }
       button_[ i ]->setFont( font );
       button_[ i ]->setText( text );
+      button_[ i ]->setToolTip( QString( "%1 (F%2, %3)" ).arg( label, number,
+         QKeySequence( Qt::ALT | ( Qt::Key_0 + digit.toInt() ) ).toString( QKeySequence::NativeText ) ) );
    }
 }
 // end of retranslate

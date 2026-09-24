@@ -189,6 +189,7 @@ private:
    void showEvent        ( QShowEvent* );
    void keyPressEvent    ( QKeyEvent* );
    bool event            ( QEvent *event );
+   bool eventFilter      ( QObject*, QEvent* ) override;
    void customEvent      ( QEvent* );
    void create_menu      ();
    void create_tool_bars ();

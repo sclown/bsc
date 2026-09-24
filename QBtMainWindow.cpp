@@ -51,6 +51,11 @@
 #include <QVBoxLayout>
 #include <QFrame>
 #include <QKeyEvent>
+#include <QLineEdit>
+#include <QTextEdit>
+#include <QPlainTextEdit>
+#include <QComboBox>
+#include <QAbstractSpinBox>
 #include <QtDebug>
 
 /*------- constants:
@@ -114,7 +119,7 @@ const char* const QBtMainWindow::DEL_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+W" );
 const char* const QBtMainWindow::SWITCH_TABS_ACCEL   = QT_TR_NOOP( "Ctrl+S");
 const char* const QBtMainWindow::FILE_JOIN_ACCEL     = QT_TR_NOOP( "Ctrl+J" );
 const char* const QBtMainWindow::MD5_CREATE_ACCEL    = QT_TR_NOOP( "Ctrl+5" );
-const char* const QBtMainWindow::MD5_CHECK_ACCEL     = QT_TR_NOOP( "Alt+5" );
+const char* const QBtMainWindow::MD5_CHECK_ACCEL     = QT_TR_NOOP( "Ctrl+Alt+5" ); // Alt+5 is Copy
 const char* const QBtMainWindow::FIND_ACCEL          = QT_TR_NOOP( "Ctrl+F7" );
 //------- Languages -------
 const char* const QBtMainWindow::CS_LANG = QT_TR_NOOP( "&Czech (cs)"   );
@@ -212,7 +217,63 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
    QBtEventsController::instance()->append( this, QBtEvent::F1_KEY         );
    QBtEventsController::instance()->append( this, QBtEvent::F10_KEY        );
    QBtEventsController::instance()->append( this, QBtEvent::CONFIG_CHANGED );
+
+   // Alt(Option)+1..0 act as F1..F10 (see eventFilter).
+   qApp->installEventFilter( this );
 }
+
+//*******************************************************************
+// eventFilter                                     PRIVATE inherited
+//*******************************************************************
+// Turns Alt(Option)+digit into the matching function key, so every
+// existing F-key handler also answers to it: Alt+1 -> F1 ... Alt+0 -> F10.
+// Text fields keep Alt+digit for typing special characters.
+bool QBtMainWindow::eventFilter( QObject* const in_obj, QEvent* const in_event )
+{
+   if( in_event->type() != QEvent::KeyPress ) return false;
+
+   QKeyEvent* const key = static_cast< QKeyEvent* >( in_event );
+   if( ( key->modifiers() & ~Qt::KeypadModifier ) != Qt::AltModifier ) return false;
+
+   // The app-wide filter sees the event once per widget it propagates to;
+   // act only on the first receiver, inside this window.
+   QWidget* const target = QApplication::focusWidget() ? QApplication::focusWidget() : this;
+   if( in_obj != target || target->window() != this ) return false;
+   const QComboBox* const combo = qobject_cast< QComboBox* >( target );
+   if( qobject_cast< QLineEdit* >( target ) || qobject_cast< QTextEdit* >( target )
+    || qobject_cast< QPlainTextEdit* >( target ) || qobject_cast< QAbstractSpinBox* >( target )
+    || ( combo && combo->isEditable() ) ) return false;
+
+   int digit = -1;
+   if( key->key() >= Qt::Key_0 && key->key() <= Qt::Key_9 ) {
+      digit = key->key() - Qt::Key_0;
+   }
+#if defined(Q_OS_MAC)
+   else {
+      // Option+digit may report the composed character (e.g. "∞"), so
+      // fall back to the physical key (kVK_ANSI_0..9).
+      switch( key->nativeVirtualKey() ) {
+         case 0x1D: digit = 0; break;
+         case 0x12: digit = 1; break;
+         case 0x13: digit = 2; break;
+         case 0x14: digit = 3; break;
+         case 0x15: digit = 4; break;
+         case 0x17: digit = 5; break;
+         case 0x16: digit = 6; break;
+         case 0x1A: digit = 7; break;
+         case 0x1C: digit = 8; break;
+         case 0x19: digit = 9; break;
+      }
+   }
+#endif
+   if( digit < 0 ) return false;
+
+   const int fkey = ( digit == 0 ) ? Qt::Key_F10 : Qt::Key_F1 + digit - 1;
+   QKeyEvent fn( QEvent::KeyPress, fkey, Qt::NoModifier );
+   QApplication::sendEvent( target, &fn );
+   return true;
+}
+// end of eventFilter
 // end of QBtMainWindow
 
 //*******************************************************************
