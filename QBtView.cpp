@@ -93,7 +93,7 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    setHorizontalScrollMode(ScrollPerItem);
    setVerticalScrollMode(ScrollPerItem);
 
-   header()->setStretchLastSection( false );
+   header()->setStretchLastSection( true );
    header()->setHighlightSections( false );
    header()->setMinimumSectionSize( 40 );
    header()->setSortIndicator( sortColumn, sortOrder );
@@ -107,8 +107,6 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
 
    connect( model_, SIGNAL( update_finished() ), this, SLOT( request_finished() ) );
    setModel( model_ );
-   // Name takes the remaining width; the other columns are sized to fit.
-   header()->setSectionResizeMode( 0, QHeaderView::Stretch );
    selectionModel_ = new QBtViewSelectionModel( model_ );
    setSelectionModel( selectionModel_ );
    setDragDropOverwriteMode(false);
@@ -893,24 +891,14 @@ void QBtView::sortChanged(int logicalIndex, Qt::SortOrder order)
 //*******************************************************************
 void QBtView::resize_columns()
 {
-   // Fixed-format columns are sized from sample text (independent of the
-   // listing); owner/group from the current contents.
-   const QFontMetrics fm( font() );
-   const QFontMetrics hfm( header()->font() );
-   const qint32 pad = 16;   // cell margins + header padding
-   const auto fit = [&]( qint32 column, const QString& sample ) {
-      const QString caption = model_->headerData( column, Qt::Horizontal ).toString();
-      setColumnWidth( column, qMax( hfm.horizontalAdvance( caption ), fm.horizontalAdvance( sample ) ) + pad );
-   };
-   fit( 1, "999,999,999" );
-   fit( 2, "00-00-0000" );
-   fit( 3, "00:00:00" );
-   fit( 4, "drwxr-xr-x" );
-   for( qint32 i = 5; i < model_->columnCount(); ++i ) {
-      const QString caption = model_->headerData( i, Qt::Horizontal ).toString();
-      setColumnWidth( i, qMax( hfm.horizontalAdvance( caption ) + pad, sizeHintForColumn( i ) ) );
+   // Name, Size, Date and Time fill the panel; the remaining columns
+   // (Access, Owner, Group) sit past the right edge.
+   setColumnWidth(0, width()*0.55);
+   for( qint32 i = 1; i < model_->columnCount(); ++i ) {
+       setColumnWidth(i, width()*0.15);
    }
 }
+// end of resize_columns
 
 //*******************************************************************
 // style_header                                              PRIVATE
@@ -942,7 +930,7 @@ void QBtView::style_header()
       "QHeaderView::section:hover { color: %5; }" )
       .arg( base.name(), mix( 0.15 ), mix( 0.55 ), mix( 0.10 ), text.name() ) );
 }
-// end of resize_columns
+// end of style_header
 
 //*******************************************************************
 // goto_top                                                   PUBLIC
