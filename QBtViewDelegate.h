@@ -48,12 +48,17 @@ private:
    QBtViewDelegate( const QBtViewDelegate& );
    QBtViewDelegate& operator=( const QBtViewDelegate& );
 
+//******* CONSTANTS *******
+private:
+   enum { ROW_PADDING = 2 };   // extra space above and below each row (px)
+
 //******* MEMBERS *******
 private:
    const QBtView* const view_;
 
 private:
-   void paint( QPainter*, const QStyleOptionViewItem&, const QModelIndex& ) const;
+   void  paint   ( QPainter*, const QStyleOptionViewItem&, const QModelIndex& ) const override;
+   QSize sizeHint( const QStyleOptionViewItem&, const QModelIndex& ) const override;
 };
 
 #endif // INCLUDED_QBtViewDelegate_h

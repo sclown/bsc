@@ -47,6 +47,16 @@ QBtViewDelegate::QBtViewDelegate( QBtView* const in_view )
 // end of QBtViewDelegate
 
 //*******************************************************************
+// sizeHint                                        PRIVATE inherited
+//*******************************************************************
+QSize QBtViewDelegate::sizeHint( const QStyleOptionViewItem& in_options,
+                                 const QModelIndex&          in_index ) const
+{
+   return QItemDelegate::sizeHint( in_options, in_index ) + QSize( 0, 2 * ROW_PADDING );
+}
+// end of sizeHint
+
+//*******************************************************************
 // paint                                           PRIVATE inherited
 //*******************************************************************
 void QBtViewDelegate::paint(  QPainter*                   in_painter,
