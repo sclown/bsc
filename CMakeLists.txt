@@ -174,3 +174,12 @@ install(TARGETS bsc
     BUNDLE DESTINATION .
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+# Build and start the app: cmake --build --preset run
+add_custom_target(run
+    COMMAND $<TARGET_FILE:bsc>
+    DEPENDS bsc
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    USES_TERMINAL
+    COMMENT "Starting bsc"
+)

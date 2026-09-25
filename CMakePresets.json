@@ -1,6 +1,10 @@
 {
   "version": 6,
-  "cmakeMinimumRequired": { "major": 3, "minor": 25, "patch": 0 },
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "base",
@@ -19,17 +23,37 @@
       "name": "debug",
       "displayName": "Debug",
       "inherits": "base",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
     },
     {
       "name": "release",
       "displayName": "Release",
       "inherits": "base",
-      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
-    { "name": "debug", "displayName": "Debug", "configurePreset": "debug" },
-    { "name": "release", "displayName": "Release", "configurePreset": "release" }
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "run",
+      "displayName": "Debug: build and run",
+      "configurePreset": "debug",
+      "targets": [
+        "run"
+      ]
+    }
   ]
 }

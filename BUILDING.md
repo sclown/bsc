@@ -10,10 +10,14 @@ brew install qt cmake ninja
 ## Command line
 
 ```sh
-cmake --preset debug            # or: release
-cmake --build --preset debug
-open build/debug/bsc.app        # or run build/debug/bsc.app/Contents/MacOS/bsc to see logs
+cmake --preset debug            # configure once (again only if CMakeLists.txt changes)
+cmake --build --preset run      # build and start the app, log in this terminal
 ```
+
+`cmake --build --preset debug` only builds. The result is an app bundle,
+`build/debug/bsc.app`, which is a folder: start it with `open build/debug/bsc.app`
+or run the executable inside it, `build/debug/bsc.app/Contents/MacOS/bsc`.
+Release: `cmake --preset release && cmake --build --preset release`.
 
 The presets (`CMakePresets.json`) expect Homebrew's Qt in `/opt/homebrew/opt/qt`.
 For another Qt install, set `QT_PREFIX` in a `CMakeUserPresets.json` (not committed):
