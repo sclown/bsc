@@ -238,13 +238,6 @@ void QBtDirModel::append_row( const qint32 in_row,
 
    if( is_parent_dir ) return;
    int childIndex = 1;
-//   {  // Extension
-//      QBtViewStandardItem* const item = new QBtViewStandardItem;
-//      item->setTextAlignment( Qt::AlignLeft );
-//      item->setText( in_data[ childIndex ] );
-//      root_it->setChild( in_row, childIndex, item );
-//   }
-//   ++childIndex;
    {  // Rozmiar pliku
       QBtViewStandardItem* const item = new QBtViewStandardItem;
       item->setTextAlignment( Qt::AlignRight | Qt::AlignVCenter );

@@ -44,7 +44,6 @@ const QString QBtInfoLabel::Slash  = "/";
 QBtInfoLabel::QBtInfoLabel( QWidget* in_parent )
 : QLabel( in_parent )
 {
-   //setSizePolicy( QSizePolicy::Ignored, QSizePolicy::Preferred );
 }
 // end of QBtInfoLabel
 

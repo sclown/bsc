@@ -404,10 +404,6 @@ void BtShared::openTerminal(const QString &path) {
     terminalEmulator = "open";
     args << "-a" << "/Applications/Utilities/Terminal.app";
     args << path;
-#else
-    //        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));
-    //        terminalEmulator = args.takeFirst();
-    //        args.append(QString::fromLocal8Bit(qgetenv("SHELL")));
 #endif
     open(terminalEmulator, args, path);
 }

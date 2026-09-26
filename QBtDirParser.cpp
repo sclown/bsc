@@ -72,16 +72,6 @@ void QBtDirParser::do_it( const QString& in_path )
    
    if( fi.isDir() ) {
        moveToTrash(in_path);
-
-
-//      if( fi.isExecutable() && fi.isReadable() ) {
-//         emit change_dir( in_path );
-//         parse_dir( in_path );
-//         if( remove_ ) remove_dir( in_path );
-//      }
-//      else {
-//         emit cant_read_dir( in_path );
-//      }
    }
    else {
       emit current_item( in_path );
@@ -99,7 +89,7 @@ void QBtDirParser::parse_dir( const QString& in_dir_path )
    if( break_ ) return;
 
    QDir dir( in_dir_path );
-   QDir::Filters filter = QDir::AllDirs | QDir::Files | QDir::System /*| QDir::NoSymLinks*/;
+   QDir::Filters filter = QDir::AllDirs | QDir::Files | QDir::System;
    if( !file_filter_ ) filter |= QDir::Hidden;
    dir.setFilter ( filter );
    dir.setNameFilters( fname_muster_.split( ';', Qt::SkipEmptyParts ) );

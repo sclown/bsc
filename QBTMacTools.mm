@@ -23,16 +23,6 @@ QUrl resolveMacSpecialURL(QUrl url)
 
 void activateAnotherInstance()
 {
-//    // check if abc.app is running
-//    NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.youApplication.abc"];
-//    if ([apps count] == 0)
-//    {
-//        // not running, launch it
-//        [[NSWorkspace sharedWorkspace] launchApplicationAtURL:[NSURL fileURLWithPath:@"abc.app" isDirectory:NO] options:NSWorkspaceLaunchDefault  configuration:nil error:NULL];
-//    }
-
-
-
     NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.yourcompany.bsc"];
     int count = [apps count];
     if ([apps count])

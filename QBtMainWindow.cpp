@@ -200,7 +200,6 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
    operations_tbar_->setObjectName( "OPERATIONS_TBAR" );
    
    create_menu();
-//   create_tool_bars();
    update_action();
 
    QFrame* const frame = new QFrame( this );
@@ -421,9 +420,6 @@ void QBtMainWindow::create_menu()
    menu_operations_->addSeparator();
    menu_operations_->addAction( md5_create_     );
    menu_operations_->addAction( md5_check_      );
-   //menu_operations_->addSeparator();
-   //menu_operations_->addAction( ftp_connect_    );
-   //menu_operations_->addAction( ftp_disconnect_ );
    menu_operations_->addSeparator();
    menu_operations_->addAction( system_info_    );
    //------- Languages -------

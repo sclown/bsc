@@ -227,8 +227,6 @@ void QBtFileViewer::image_file( const QString& in_path )
 //*******************************************************************
 void QBtFileViewer::do_it( const QString& in_cmd )
 {
-//   set_font();
-
    QBtSystemCall syscall;
    syscall.run( in_cmd );
    browser_->setLineWrapMode( QTextEdit::NoWrap );

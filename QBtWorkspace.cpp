@@ -695,10 +695,6 @@ void QBtWorkspace::open_terminal()
     terminalEmulator = "open";
     args << "-a" << "/Applications/Utilities/Terminal.app";
     args << src->current_path();
-#else
-//        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));
-//        terminalEmulator = args.takeFirst();
-//        args.append(QString::fromLocal8Bit(qgetenv("SHELL")));
 #endif
     open(terminalEmulator, args, src->current_path());
 

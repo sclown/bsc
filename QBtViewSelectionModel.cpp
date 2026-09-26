@@ -58,14 +58,7 @@ void QBtViewSelectionModel::setCurrentIndex(const QModelIndex &index, QItemSelec
 
 void QBtViewSelectionModel::select( const QModelIndex &index, QItemSelectionModel::SelectionFlags command )
 {
-//    if(index.row()==0)
-//    {
-//        return;
-//    }
     QItemSelectionModel::select(index, command);
-//    if((command & (QItemSelectionModel::Current | QItemSelectionModel::ClearAndSelect))) {
-//        setCurrentIndex(index,command);
-//    }
 }
 
 void QBtViewSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags command)

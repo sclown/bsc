@@ -219,7 +219,6 @@ private:
    */
    bool exists( QObject* in_receiver, qint32 in_event_id );
    
-   //void     print  ();
 };
 
 #endif // INCLUDED_QBtEventsController_h

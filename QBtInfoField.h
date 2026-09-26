@@ -40,10 +40,8 @@ public:
    QBtInfoField( QWidget* const in_parent = 0 ) : QLineEdit( in_parent )
    {
       setReadOnly( true );
-//      setFrame( false );
       setAlignment( Qt::AlignLeft );
       setFocusPolicy( Qt::NoFocus );
-      //setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
    }
 private:
    QBtInfoField( const QBtInfoField& );

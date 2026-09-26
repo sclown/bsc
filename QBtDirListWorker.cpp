@@ -99,7 +99,7 @@ void QBtDirListWorker::list(const QString &path, int column, quint8 order)
         auto time   = fi.lastmod().time().toString( "hh:mm:ss" );
         auto owner  = fi.owner();
         auto group  = fi.group();
-        fields << name /*<< ext*/ << size << date << time << access << owner << group;
+        fields << name << size << date << time << access << owner << group;
         emit item_info( row++, QVariant::fromValue( fi ), fields );
     }
     if( path != QDir::rootPath() ) {
