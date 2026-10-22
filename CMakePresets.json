@@ -34,6 +34,19 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI (Release)",
+      "description": "Used by .github/workflows/build.yml; Qt from QT_ROOT_DIR (set by install-qt-action).",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/ci",
+      "environment": {
+        "QT_PREFIX": "$env{QT_ROOT_DIR}"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
     }
   ],
   "buildPresets": [
@@ -54,6 +67,11 @@
       "targets": [
         "run"
       ]
+    },
+    {
+      "name": "ci",
+      "displayName": "CI",
+      "configurePreset": "ci"
     }
   ]
 }

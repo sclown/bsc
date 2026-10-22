@@ -46,6 +46,20 @@ IntelliSense uses the CMake Tools configuration (`compile_commands.json`).
 
 Open `CMakeLists.txt`; the presets are picked up automatically.
 
+## Linux and Windows
+
+The code is portable; only the presets assume Homebrew's Qt. On Linux
+install `qt6-base-dev` (6.6+), `cmake`, `ninja-build` and a C++20 compiler,
+then `cmake --preset debug` works as above (the missing Homebrew path is
+ignored). On Windows run from a Visual Studio developer prompt with
+`QT_PREFIX` pointing at e.g. `C:\Qt\6.8.3\msvc2022_64`.
+
+## Continuous integration
+
+`.github/workflows/build.yml` builds the `ci` preset on macOS, Linux and
+Windows runners (Qt installed by `jurplel/install-qt-action`) and
+smoke-starts the Linux binary with the offscreen platform plugin.
+
 ## Universal binary / distribution
 
 A universal binary (Apple Silicon + Intel) needs a Qt built for both

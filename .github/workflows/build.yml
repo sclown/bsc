@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+    branches: [master, qt6-modernization]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: macOS,   os: macos-latest }
+          - { name: Linux,   os: ubuntu-latest }
+          - { name: Windows, os: windows-latest }
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.8.3'
+          cache: true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build libgl1-mesa-dev libxkbcommon0 libfontconfig1
+
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Configure
+        run: cmake --preset ci
+
+      - name: Build
+        run: cmake --build --preset ci
+
+      # Starts the app with the offscreen platform plugin; it must still be
+      # running when the timeout fires (exit 124), i.e. no crash on start.
+      - name: Smoke run
+        if: runner.os == 'Linux'
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          set +e
+          timeout 5 build/ci/bsc
+          rc=$?
+          set -e
+          test "$rc" -eq 124 || { echo "bsc exited with $rc"; exit 1; }

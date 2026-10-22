@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.25)
 
 # Must be set before project(). Native arch by default;
 # pass -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" for a universal binary.
