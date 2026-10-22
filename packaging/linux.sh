@@ -4,7 +4,8 @@
 # Needs QT_ROOT_DIR (Qt prefix) and a Qt-built bsc in <build-dir>.
 set -euo pipefail
 BUILD=$1
-OUT=$2
+# Absolute, because the script changes directory below.
+OUT=$(mkdir -p "$(dirname "$2")" && cd "$(dirname "$2")" && pwd)/$(basename "$2")
 SRC=$(cd "$(dirname "$0")/.." && pwd)
 WORK=$(mktemp -d)
 
