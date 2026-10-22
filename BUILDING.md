@@ -54,11 +54,24 @@ then `cmake --preset debug` works as above (the missing Homebrew path is
 ignored). On Windows run from a Visual Studio developer prompt with
 `QT_PREFIX` pointing at e.g. `C:\Qt\6.8.3\msvc2022_64`.
 
-## Continuous integration
+## Continuous integration and releases
 
 `.github/workflows/build.yml` builds the `ci` preset on macOS, Linux and
-Windows runners (Qt installed by `jurplel/install-qt-action`) and
-smoke-starts the Linux binary with the offscreen platform plugin.
+Windows runners for pull requests and pushes to any branch except `master`,
+and smoke-starts the Linux binary with the offscreen platform plugin.
+
+`.github/workflows/release.yml` runs on every push to `master`: it builds
+the same preset on all three platforms, packages the result and publishes
+a GitHub release tagged `v<version>-<run number>` with
+
+- `bsc-macos.dmg` (`packaging/macos.sh`: macdeployqt, pruned, ad-hoc signed),
+- `bsc-linux-x86_64.AppImage` (`packaging/linux.sh`: linuxdeploy + Qt plugin,
+  built on Ubuntu 22.04 so it runs on anything newer),
+- `bsc-windows-x64.zip` (windeployqt output, no installer).
+
+The packages are not code-signed with a developer certificate. Both
+packaging scripts can be run locally after a release build, e.g.
+`QT_ROOT_DIR=$(brew --prefix qt) packaging/macos.sh build/release/bsc.app bsc.dmg`.
 
 ## Universal binary / distribution
 

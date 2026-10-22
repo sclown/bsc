@@ -2,7 +2,7 @@ name: Build
 
 on:
   push:
-    branches: [master, qt6-modernization]
+    branches-ignore: [master]   # master is built and packaged by release.yml
   pull_request:
   workflow_dispatch:
 
