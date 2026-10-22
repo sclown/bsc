@@ -48,6 +48,8 @@
 #define NOMINMAX
 #endif
 #include <windows.h>
+// winnt.h defines MEM_FREE (a VirtualQuery state); it would clobber our constant.
+#undef MEM_FREE
 #endif
 #include <QtDebug>
 

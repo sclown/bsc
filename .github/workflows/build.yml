@@ -19,9 +19,19 @@ jobs:
           - { name: Windows, os: windows-latest }
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
+      # The aqt-packaged Qt 6.8 for macOS still links the AGL framework,
+      # which Xcode 26 no longer ships, so macOS uses Homebrew's Qt (built
+      # against the current SDK, the same setup BUILDING.md describes).
+      - name: Install Qt (macOS, Homebrew)
+        if: runner.os == 'macOS'
+        run: |
+          brew install qt ninja
+          echo "QT_ROOT_DIR=$(brew --prefix qt)" >> "$GITHUB_ENV"
 
       - name: Install Qt
+        if: runner.os != 'macOS'
         uses: jurplel/install-qt-action@v4
         with:
           version: '6.8.3'
