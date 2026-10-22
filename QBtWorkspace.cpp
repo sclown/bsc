@@ -56,6 +56,7 @@
 #include <QResource>
 #include <QCoreApplication>
 #include <QDesktopServices>
+#include <QUrl>
 #include <QtDebug>
 
 /*------- local constants:
@@ -212,7 +213,7 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
         open_editor();
         break;
     case QBtEvent::EXECUTE:
-        open( event->data(0).toString(), QStringList(), QString() );
+        QDesktopServices::openUrl( QUrl::fromLocalFile( event->data(0).toString() ) );
         break;
     }
 }
@@ -641,41 +642,8 @@ void QBtWorkspace::open_shell()
     QBtView* dst = 0;
     if( !src_and_dst_view( src, dst ) ) return;
 
-    // Mac, Windows support folder or file.
-#if defined(Q_OS_WIN)
-    const QString explorer = Environment::systemEnvironment().searchInPath(QLatin1String("explorer.exe"));
-    if (explorer.isEmpty()) {
-        QMessageBox::warning(NULL,
-                             tr("Launching Windows Explorer failed"),
-                             tr("Could not find explorer.exe in path to launch Windows Explorer."));
-        return;
-    }
-    QString param;
-    if (!QFileInfo(src->current_path()).isDir())
-        param = QLatin1String("/select,");
-    param += QDir::toNativeSeparators(pathIn);
-    QProcess::startDetached(explorer, QStringList(param));
-#elif defined(Q_OS_MAC)
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    QString script(dir.path() + "/Resources/scripts/openFinder.scpt");
-    QProcess::startDetached(script, QStringList(src->current_path()));
-    open(script, QStringList(src->selected_file_path()), src->current_path());
-#else
-    // we cannot select a file here, because no file browser really supports it...
-    const QFileInfo fileInfo(src->current_path());
-    const QString folder = fileInfo.absoluteFilePath();
-    const QString app = Utils::UnixUtils::fileBrowser(Core::ICore::instance()->settings());
-    QProcess browserProc;
-    const QString browserArgs = Utils::UnixUtils::substituteFileBrowserParameters(app, folder);
-    if (debug)
-        qDebug() <<  browserArgs;
-    bool success = browserProc.startDetached(browserArgs);
-    const QString error = QString::fromLocal8Bit(browserProc.readAllStandardError());
-    success = success && error.isEmpty();
-    if (!success)
-        showGraphicalShellError(NULL, app, error);
-#endif
+    const QString selected = src->selected_file_path();
+    BtShared::revealInFileManager( selected.isEmpty() ? src->current_path() : selected );
 }
 
 void QBtWorkspace::open_terminal()
@@ -684,49 +652,16 @@ void QBtWorkspace::open_terminal()
     QBtView* dst = 0;
     if( !src_and_dst_view( src, dst ) ) return;
 
-    QString terminalEmulator;
-    QStringList args;
-#if defined(Q_OS_WIN)
-    terminalEmulator = "cmd.exe";
-#elif defined(Q_OS_MAC)
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
-    terminalEmulator = "open";
-    args << "-a" << "/Applications/Utilities/Terminal.app";
-    args << src->current_path();
-#endif
-    open(terminalEmulator, args, src->current_path());
-
+    BtShared::openTerminal( src->current_path() );
 }
 
 void QBtWorkspace::open_editor()
 {
     QBtView* src = 0;
     QBtView* dst = 0;
-    if( !src_and_dst_view( src, dst ) ) {
-        return;
-    }
+    if( !src_and_dst_view( src, dst ) ) return;
 
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    open(dir.path() + "/Resources/scripts/openSublime.scpt", QStringList(src->selected_file_path()), src->current_path());
-}
-
-void QBtWorkspace::open( const QString &path, const QStringList &args, const QString &pwd )
-{
-    const QFileInfo fileInfo(path);
-    if(!args.isEmpty()) {
-#if defined(Q_OS_MAC)
-        if(!fileInfo.isExecutable() || fileInfo.isDir()) {
-            QProcess::startDetached(QLatin1String("open"), QStringList() << "-a" << path << args);
-            return;
-        }
-#endif
-        QProcess::startDetached(path, args, pwd);
-        return;
-    }
-    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+    BtShared::openInEditor( src->selected_file_path() );
 }
 
 void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)

@@ -35,7 +35,6 @@
 #include "QBtViewStandardItem.h"
 #include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
-#include "QBTMacTools.h"
 #include <QApplication>
 #include <QDateTime>
 #include <QDir>

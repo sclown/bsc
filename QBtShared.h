@@ -95,8 +95,12 @@ public:
 
 namespace BtShared {
 
-void openTerminal(const QString& path);
-void open(const QString &path, const QStringList &args, const QString &pwd);
+// Opens the system terminal in the given directory.
+void openTerminal( const QString& dir );
+// Shows the path in the system file manager (Finder / Explorer / default).
+void revealInFileManager( const QString& path );
+// Opens the file in the system's default (text) editor.
+void openInEditor( const QString& path );
 
 }
 

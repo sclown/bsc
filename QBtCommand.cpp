@@ -12,8 +12,9 @@ bool isCommand(int in_argc, char **in_argv)
     }
     QBtSettings stt;
     stt.save("Command", QVariant(QString(in_argv[1])));
-    activateAnotherInstance();
-    return true;
+    // Hand the argument to a running instance. When there is none, start
+    // normally: handleCommand() picks the saved argument up on first show.
+    return activateAnotherInstance();
 }
 
 void handleCommand()

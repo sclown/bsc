@@ -40,6 +40,7 @@
 #include <QDir>
 #include <QUrl>
 #include <QDesktopServices>
+#include <QStandardPaths>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -392,34 +393,50 @@ QFileInfo QBtShared::pathFromFSItem(const QFileInfo &info)
     return info.isDir() ? info : QFileInfo( info.absolutePath() );
 }
 
-void BtShared::openTerminal(const QString &path) {
-    QString terminalEmulator;
-    QStringList args;
-#if defined(Q_OS_WIN)
-    terminalEmulator = "cmd.exe";
-#elif defined(Q_OS_MAC)
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
-    terminalEmulator = "open";
-    args << "-a" << "/Applications/Utilities/Terminal.app";
-    args << path;
-#endif
-    open(terminalEmulator, args, path);
-}
-
-void BtShared::open(const QString &path, const QStringList &args, const QString &pwd)
+void BtShared::openTerminal( const QString& dir )
 {
-    const QFileInfo fileInfo(path);
-    if(!args.isEmpty()) {
 #if defined(Q_OS_MAC)
-        if(!fileInfo.isExecutable() || fileInfo.isDir()) {
-            QProcess::startDetached(QLatin1String("open"), QStringList() << "-a" << path << args);
+    QProcess::startDetached( "open", { "-a", "Terminal", dir } );
+#elif defined(Q_OS_WIN)
+    QProcess::startDetached( "cmd.exe", {}, dir );
+#else
+    static const QStringList candidates = {
+        "x-terminal-emulator", "gnome-terminal", "konsole", "xfce4-terminal", "xterm"
+    };
+    for( const QString& name : candidates ) {
+        const QString exe = QStandardPaths::findExecutable( name );
+        if( !exe.isEmpty() ) {
+            QProcess::startDetached( exe, {}, dir );
             return;
         }
-#endif
-        QProcess::startDetached(path, args, pwd);
-        return;
     }
-    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+#endif
 }
+// end of openTerminal
+
+void BtShared::revealInFileManager( const QString& path )
+{
+    const QFileInfo fi( path );
+#if defined(Q_OS_MAC)
+    if( fi.isDir() ) QProcess::startDetached( "open", { path } );
+    else             QProcess::startDetached( "open", { "-R", path } );
+#elif defined(Q_OS_WIN)
+    const QString native = QDir::toNativeSeparators( path );
+    if( fi.isDir() ) QProcess::startDetached( "explorer.exe", { native } );
+    else             QProcess::startDetached( "explorer.exe", { "/select,", native } );
+#else
+    QDesktopServices::openUrl( QUrl::fromLocalFile( fi.isDir() ? path : fi.absolutePath() ) );
+#endif
+}
+// end of revealInFileManager
+
+void BtShared::openInEditor( const QString& path )
+{
+    if( path.isEmpty() ) return;
+#if defined(Q_OS_MAC)
+    QProcess::startDetached( "open", { "-t", path } );
+#else
+    QDesktopServices::openUrl( QUrl::fromLocalFile( path ) );
+#endif
+}
+// end of openInEditor

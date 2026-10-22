@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.21)
 # pass -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64" for a universal binary.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "14.0" CACHE STRING "Minimum macOS version")
 
-project(bsc VERSION 4.1.3 LANGUAGES CXX OBJCXX)
+project(bsc VERSION 4.1.3 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -143,25 +143,23 @@ else()
 endif()
 
 if(APPLE)
+    enable_language(OBJCXX)
+    set(BSC_BUNDLE_ID com.yourcompany.bsc)
+
     target_sources(bsc PRIVATE QBTMacTools.mm)
     target_link_libraries(bsc PRIVATE "-framework CoreFoundation" "-framework Cocoa")
+    # QBTMacTools.mm looks the running instance up by this identifier.
+    target_compile_definitions(bsc PRIVATE BSC_BUNDLE_ID="${BSC_BUNDLE_ID}")
 
     set(BSC_ICON ${CMAKE_CURRENT_SOURCE_DIR}/bsc.icns)
-    set(BSC_SCRIPTS
-        scripts/openTerminal.scpt
-        scripts/openFinder.scpt
-        scripts/openSublime.scpt
-    )
-    target_sources(bsc PRIVATE ${BSC_ICON} ${BSC_SCRIPTS})
+    target_sources(bsc PRIVATE ${BSC_ICON})
     set_source_files_properties(${BSC_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
-    set_source_files_properties(${BSC_SCRIPTS} PROPERTIES MACOSX_PACKAGE_LOCATION Resources/scripts)
 
     set_target_properties(bsc PROPERTIES
         MACOSX_BUNDLE TRUE
         OUTPUT_NAME bsc
         MACOSX_BUNDLE_BUNDLE_NAME "Beesoft Commander"
-        # Must match the identifier used in QBTMacTools.mm (activateAnotherInstance)
-        MACOSX_BUNDLE_GUI_IDENTIFIER com.yourcompany.bsc
+        MACOSX_BUNDLE_GUI_IDENTIFIER ${BSC_BUNDLE_ID}
         MACOSX_BUNDLE_ICON_FILE bsc.icns
         MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
         MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}

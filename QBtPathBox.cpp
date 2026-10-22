@@ -1,6 +1,5 @@
 #include "QBtPathBox.h"
 #include "3rdprty/dircompleter.h"
-#include "QBTMacTools.h"
 #include "QBtShared.h"
 #include <QDragEnterEvent>
 #include <QDropEvent>

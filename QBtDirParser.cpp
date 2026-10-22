@@ -29,7 +29,6 @@
 -------------------------------------------------------------------*/
 #include "QBtDirParser.h"
 #include "QBtShared.h"
-#include "QBTMacTools.h"
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -71,7 +70,7 @@ void QBtDirParser::do_it( const QString& in_path )
    const QFileInfo fi( in_path );
    
    if( fi.isDir() ) {
-       moveToTrash(in_path);
+       QFile::moveToTrash( in_path );
    }
    else {
       emit current_item( in_path );
