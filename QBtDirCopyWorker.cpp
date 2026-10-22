@@ -1,14 +1,13 @@
 #include "QBtDirCopyWorker.h"
 #include "QBtShared.h"
-#include "QBtSystemCall.h"
 #include <QDir>
 #include <QFile>
 #include <QDateTime>
-#include <QMessageBox>
 #include <QtDebug>
 
-#include <unistd.h>
-#include <utime.h>
+#if defined(Q_OS_UNIX)
+#include <unistd.h>   // chown
+#endif
 
 
 QBtDirCopyWorker::QBtDirCopyWorker(QObject *parent) :
@@ -103,7 +102,9 @@ void QBtDirCopyWorker::copy_dir( const QString& in_src_dir, const QString& in_ds
     }
     QFile dfi( dst_subdir.absolutePath() );
     dfi.setPermissions( src.permissions() );
-    chown(dst_subdir.absolutePath().toUtf8(), src.ownerId(), src.groupId());
+#if defined(Q_OS_UNIX)
+    chown( dst_subdir.absolutePath().toUtf8(), src.ownerId(), src.groupId() );
+#endif
 
 
    ++currentState_->index;
@@ -140,12 +141,11 @@ bool QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst
                emit progress( nbytes );
            }
         }
-        utimbuf timebuf;
-        timebuf.actime = fi.lastModified().toSecsSinceEpoch();
-        timebuf.modtime = fi.lastModified().toSecsSinceEpoch();
+        out.setFileTime( fi.lastModified(), QFileDevice::FileModificationTime );
         out.setPermissions( in.permissions() );
-        chown(dst_path.toUtf8(), fi.ownerId(), fi.groupId());
-        utime(dst_path.toUtf8(), &timebuf);
+#if defined(Q_OS_UNIX)
+        chown( dst_path.toUtf8(), fi.ownerId(), fi.groupId() );
+#endif
      }
      else {
          emit ask_overwrite(dst_path, QBtOverwriteAnswer::WRITE_ERROR);
@@ -163,11 +163,11 @@ bool QBtDirCopyWorker::copy_file( const QString& in_src_path, const QString& dst
 
 void QBtDirCopyWorker::copy_link( const QString& in_src_path, const QString& dst_path )
 {
-    QByteArray buf(1024, 0);
-    uint size = static_cast<uint>(readlink(in_src_path.toUtf8(), buf.data(), static_cast<size_t>(buf.size())));
-    buf[size] = 0;
-    QString target = QString(buf);
-    QFile::link(target, dst_path);
+    // Raw link text (relative links stay relative), not the resolved path.
+    const QString target = QFileInfo( in_src_path ).readSymLink();
+    if( !target.isEmpty() ) {
+        QFile::link( target, dst_path );
+    }
     ++currentState_->index;
 }
 

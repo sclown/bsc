@@ -63,6 +63,7 @@ public:
    static const char* const InputPrompt;
    static const char* const CompareFiles;
    static const char* const NoFiles;
+   static const char* const NoDiffTool;
    static const char* const FilesJoining;
    static const char* const EnterFileName;
    static const char* const NoWritableDir;
@@ -71,8 +72,6 @@ public:
    static const char* const SyncNoDirs;
    static const char* const CmpNoDirs;
    static const char* const UserError;
-   static const QString     Md5Create;
-   static const QString     Md5Check;
 
 //******* MEMBERS *******
 private:

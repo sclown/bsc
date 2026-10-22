@@ -38,7 +38,7 @@
 #include <QFileInfo>
 #include <QDateEdit>
 #include <QTimeEdit>
-#include <QProcess>
+#include <QDateTime>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -154,20 +154,10 @@ void QBtTimeStamp::muster( const bool in_checked )
 //*******************************************************************
 void QBtTimeStamp::touch()
 {
-   static const QString Touch ="touch -c -t %1 %2";
-   static const QString Format ="yyyyMMddhhmm.ss";
-   
-   const QString dt = QDateTime( date_edit_->date(), time_edit_->time() ).toString( Format );
-
-   SelectionsSet::const_iterator it = data_.begin();
-   const SelectionsSet::const_iterator end = data_.end();
-   while( it != end ) {
-      const QString cmd = Touch.arg( dt ).arg( QBtShared::quoted_fpath( *it ) );
-      QProcess process;
-      process.startDetached( cmd );
-      ++it;
+   const QDateTime dt( date_edit_->date(), time_edit_->time() );
+   for( const QString& path : data_ ) {
+      QBtShared::set_modification_time( path, dt );
    }
-
    accept();
 }
 // end of touch

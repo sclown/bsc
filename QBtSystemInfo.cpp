@@ -36,7 +36,19 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QProcess>
+#include <QStorageInfo>
+#include <QLocale>
+#include <QFile>
+#include <QHash>
+#if defined(Q_OS_MAC)
+#include <sys/sysctl.h>
+#include <mach/mach.h>
+#elif defined(Q_OS_WIN)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 #include <QtDebug>
 
 /*------- constants:
@@ -150,20 +162,22 @@ void QBtSystemInfo::showEvent( QShowEvent* const in_event )
 //*******************************************************************
 void QBtSystemInfo::read_dsk_data()
 {
-   QStringList args;
-   args << "-h" << "-T";
-   
-   QProcess sc;
-   sc.start( "df", args );
-
-   QByteArray data;
-   while( sc.waitForReadyRead() ) {
-      data += sc.readAll();
-   }
-
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
-   for( qint32 i = 1; i < text.size(); ++i ) {
-      add_dsk_item( text[ i ].split( ' ', Qt::SkipEmptyParts ) );
+   const QLocale locale;
+   const QList<QStorageInfo> volumes = QStorageInfo::mountedVolumes();
+   for( const QStorageInfo& volume : volumes ) {
+      if( !volume.isValid() || !volume.isReady() ) continue;
+      const qint64 total = volume.bytesTotal();
+      const qint64 avail = volume.bytesAvailable();
+      const qint64 used  = total - volume.bytesFree();
+      QStringList info;
+      info << QString::fromUtf8( volume.device() )
+           << QString::fromUtf8( volume.fileSystemType() )
+           << locale.formattedDataSize( total, 1 )
+           << locale.formattedDataSize( used, 1 )
+           << locale.formattedDataSize( avail, 1 )
+           << ( total > 0 ? QString::number( used * 100 / total ) + '%' : QString() )
+           << volume.rootPath();
+      add_dsk_item( info );
    }
    for( qint32 i = 0; i < DSK_COL_COUNT; ++i ) {
       disk_view_->resizeColumnToContents( i );
@@ -176,20 +190,57 @@ void QBtSystemInfo::read_dsk_data()
 //*******************************************************************
 void QBtSystemInfo::read_mem_data()
 {
-   QStringList args;
-   args << "-t" << "-o";
-   
-   QProcess sc;
-   sc.start( "free", args );
+   // Rows: label, total, used, free [, shared, buffers, cached] in MB.
+   const auto mb = []( qint64 bytes ) { return QString::number( bytes / ( 1024 * 1024 ) ); };
+   QList<QStringList> rows;
 
-   QByteArray data;
-   while( sc.waitForReadyRead() ) {
-      data += sc.readAll();
+#if defined(Q_OS_LINUX)
+   QFile meminfo( "/proc/meminfo" );
+   if( meminfo.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+      QHash<QString, qint64> bytes;
+      while( !meminfo.atEnd() ) {
+         const QList<QByteArray> parts = meminfo.readLine().simplified().split( ' ' );
+         if( parts.size() >= 2 ) {
+            bytes.insert( QString::fromLatin1( parts[ 0 ].chopped( 1 ) ), parts[ 1 ].toLongLong() * 1024 );
+         }
+      }
+      const qint64 total   = bytes.value( "MemTotal" );
+      const qint64 free    = bytes.value( "MemFree" );
+      const qint64 buffers = bytes.value( "Buffers" );
+      const qint64 cached  = bytes.value( "Cached" ) + bytes.value( "SReclaimable" );
+      rows << ( QStringList() << "Mem:" << mb( total ) << mb( total - free - buffers - cached ) << mb( free )
+                              << mb( bytes.value( "Shmem" ) ) << mb( buffers ) << mb( cached ) );
+      const qint64 swap_total = bytes.value( "SwapTotal" );
+      const qint64 swap_free  = bytes.value( "SwapFree" );
+      rows << ( QStringList() << "Swap:" << mb( swap_total ) << mb( swap_total - swap_free ) << mb( swap_free ) );
    }
+#elif defined(Q_OS_MAC)
+   qint64 total = 0;
+   size_t len = sizeof( total );
+   sysctlbyname( "hw.memsize", &total, &len, nullptr, 0 );
+   vm_statistics64_data_t   vm;
+   mach_msg_type_number_t   count = HOST_VM_INFO64_COUNT;
+   qint64 free = 0;
+   if( KERN_SUCCESS == host_statistics64( mach_host_self(), HOST_VM_INFO64, reinterpret_cast<host_info64_t>( &vm ), &count ) ) {
+      free = static_cast<qint64>( vm.free_count + vm.inactive_count ) * static_cast<qint64>( vm_page_size );
+   }
+   rows << ( QStringList() << "Mem:" << mb( total ) << mb( total - free ) << mb( free ) );
+   xsw_usage swap;
+   len = sizeof( swap );
+   if( 0 == sysctlbyname( "vm.swapusage", &swap, &len, nullptr, 0 ) ) {
+      rows << ( QStringList() << "Swap:" << mb( swap.xsu_total ) << mb( swap.xsu_used ) << mb( swap.xsu_avail ) );
+   }
+#elif defined(Q_OS_WIN)
+   MEMORYSTATUSEX ms;
+   ms.dwLength = sizeof( ms );
+   if( GlobalMemoryStatusEx( &ms ) ) {
+      rows << ( QStringList() << "Mem:"  << mb( ms.ullTotalPhys )     << mb( ms.ullTotalPhys - ms.ullAvailPhys )         << mb( ms.ullAvailPhys ) );
+      rows << ( QStringList() << "Swap:" << mb( ms.ullTotalPageFile ) << mb( ms.ullTotalPageFile - ms.ullAvailPageFile ) << mb( ms.ullAvailPageFile ) );
+   }
+#endif
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', Qt::SkipEmptyParts );
-   for( qint32 i = 1; i < text.size(); ++i ) {
-      add_mem_item( text[ i ].split( ' ', Qt::SkipEmptyParts ) );
+   for( const QStringList& row : rows ) {
+      add_mem_item( row );
    }
    for( qint32 i = 0; i < MEM_COL_COUNT; ++i ) {
       memory_view_->resizeColumnToContents( i );

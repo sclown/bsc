@@ -35,7 +35,6 @@
 #include "QBtEventsController.h"
 #include "QBtView.h"
 #include "BtTypes.h"
-#include "QBtSystemCall.h"
 #include "QBtDirCopyDialog.h"
 #include "QBtPackDialog.h"
 #include "QBtTimeStamp.h"
@@ -49,6 +48,8 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QFileInfo>
+#include <QFile>
+#include <QCryptographicHash>
 #include <QInputDialog>
 #include <QDir>
 #include <QMessageBox>
@@ -65,6 +66,7 @@ const char* const QBtWorkspace::InputCaption  = QT_TR_NOOP( "New file name" );
 const char* const QBtWorkspace::InputPrompt   = QT_TR_NOOP( "Enter a package file name:" );
 const char* const QBtWorkspace::CompareFiles  = QT_TR_NOOP( "Compare files." );
 const char* const QBtWorkspace::NoFiles       = QT_TR_NOOP( "You can compare only files." );
+const char* const QBtWorkspace::NoDiffTool    = QT_TR_NOOP( "No diff program found.\nConfigure one in Settings / Applications." );
 const char* const QBtWorkspace::FilesJoining  = QT_TR_NOOP( "Files joining" );
 const char* const QBtWorkspace::EnterFileName = QT_TR_NOOP( "Enter destination file name:" );
 const char* const QBtWorkspace::NoWritableDir = QT_TR_NOOP( "You can't write to this directory: %1.\n"
@@ -77,8 +79,18 @@ const char* const QBtWorkspace::SyncNoDirs    = QT_TR_NOOP( "To synchronize dire
 const char* const QBtWorkspace::CmpNoDirs     = QT_TR_NOOP( "To compare directories you must select directories.\n"
                                                             "At last one of selected items is not the directory." );
 const char* const QBtWorkspace::UserError     = QT_TR_NOOP( "Users wrong action" );
-const QString     QBtWorkspace::Md5Create     = "md5sum %1 > %2";
-const QString     QBtWorkspace::Md5Check      = "md5sum -c %1";
+
+namespace {
+// Hex MD5 of a file, empty when it cannot be read.
+QString md5_of_file( const QString& in_path )
+{
+    QFile file( in_path );
+    if( !file.open( QIODevice::ReadOnly ) ) return QString();
+    QCryptographicHash hash( QCryptographicHash::Md5 );
+    if( !hash.addData( &file ) ) return QString();
+    return QString::fromLatin1( hash.result().toHex() );
+}
+}
 
 
 //*******************************************************************
@@ -449,30 +461,9 @@ void QBtWorkspace::sync_dirs()
 //*******************************************************************
 void QBtWorkspace::diff( const QString& in_fname_1, const QString& in_fname_2 ) const
 {
-    const QString fname1  = QBtShared::quoted_fpath( in_fname_1 );
-    const QString fname2  = QBtShared::quoted_fpath( in_fname_2 );
-    const QString beediff = QBtShared::slashed_dir( QDir::homePath() ) + "/beediff/beediff %1 %2";
-    bool          ok      = true;
-
-    QBtSettings stt;
-    QVariant data;
-    if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
-        ok = data.toBool();
+    if( !BtShared::openDiff( in_fname_1, in_fname_2 ) ) {
+        QMessageBox::warning( const_cast<QBtWorkspace*>( this ), tr( CompareFiles ), tr( NoDiffTool ) );
     }
-
-    QString muster = beediff;
-    if( !ok ) {
-        if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
-            muster = data.toString().trimmed();
-            if( muster.isEmpty() ) {
-                return;
-            }
-        }
-    }
-
-    QProcess process;
-    const QString cmd = muster.arg( fname1 ).arg( fname2 );
-    process.startDetached( cmd );
 }
 // end of diff
 
@@ -577,10 +568,18 @@ void QBtWorkspace::md5_create()
     }
 
     QBtShared::set_cursor( Qt::BusyCursor );
-    const QString cmd = Md5Create.arg( QBtShared::quoted_fpath( src_fpath ),
-                                       QBtShared::quoted_fpath( dst_fpath ) );
-    system( cmd.toLocal8Bit() );
+    const QString digest = md5_of_file( src_fpath );
+    bool ok = !digest.isEmpty();
+    if( ok ) {
+        QFile out( dst_fpath );
+        ok = out.open( QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text )
+             && out.write( ( digest + "  " + QFileInfo( src_fpath ).fileName() + "\n" ).toUtf8() ) != -1;
+    }
     QBtShared::restore_cursor();
+    if( !ok ) {
+        QMessageBox::critical( this, tr( Md5 ), tr( "Can't create %1." ).arg( dst_fpath ) );
+        return;
+    }
 
     src->refresh( QFileInfo( dst_fpath).fileName() );
     if( src->current_path() == dst->current_path() ) dst->refresh();
@@ -602,11 +601,35 @@ void QBtWorkspace::md5_check()
 
     const QString src_fpath = *data.begin();
 
-    QBtSystemCall sc;
-    sc.run( Md5Check.arg( QBtShared::quoted_fpath( src_fpath ) ) );
-    const QString msg = sc.result();
+    QFile in( src_fpath );
+    if( !in.open( QIODevice::ReadOnly | QIODevice::Text ) ) {
+        QMessageBox::critical( this, tr( Md5 ), tr( "Can't read %1." ).arg( src_fpath ) );
+        return;
+    }
 
-    QMessageBox::information( this, tr( Md5 ), msg );
+    // md5sum format: "<hex>  <name>" (or "<hex> *<name>"), names relative to the list file.
+    const QDir  dir = QFileInfo( src_fpath ).absoluteDir();
+    QStringList report;
+    QBtShared::set_cursor( Qt::BusyCursor );
+    while( !in.atEnd() ) {
+        const QString line = QString::fromUtf8( in.readLine() ).trimmed();
+        if( line.isEmpty() ) continue;
+        const qsizetype sep = line.indexOf( ' ' );
+        if( sep < 1 ) {
+            report << tr( "%1: malformed line" ).arg( line );
+            continue;
+        }
+        const QString expected = line.left( sep ).toLower();
+        QString name = line.mid( sep ).trimmed();
+        if( name.startsWith( '*' ) ) name.remove( 0, 1 );
+        const QString actual = md5_of_file( dir.filePath( name ) );
+        const QString status = actual.isEmpty() ? tr( "can't read" )
+                             : ( actual == expected ? tr( "OK" ) : tr( "FAILED" ) );
+        report << QString( "%1: %2" ).arg( name, status );
+    }
+    QBtShared::restore_cursor();
+
+    QMessageBox::information( this, tr( Md5 ), report.isEmpty() ? tr( "Empty checksum file." ) : report.join( '\n' ) );
 }
 // end of md5_check
 

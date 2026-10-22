@@ -501,29 +501,9 @@ QString QBtCompareDirsDialog::cmp_contents(  const QString& in_src_fpath,
 //*******************************************************************
 void QBtCompareDirsDialog::diff( const QString& in_fname_1, const QString& in_fname_2 ) const
 {
-   const QString fname1  = QBtShared::quoted_fpath( in_fname_1 );
-   const QString fname2  = QBtShared::quoted_fpath( in_fname_2 );
-   const QString beediff = QBtShared::slashed_dir( QDir::homePath() ) + "/beediff/beediff %1 %2";
-   bool          ok      = true;
-   
-   QBtSettings stt;
-   QVariant data;
-   if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
-      ok = data.toBool();
+   if( !BtShared::openDiff( in_fname_1, in_fname_2 ) ) {
+      QMessageBox::warning( const_cast<QBtCompareDirsDialog*>( this ), windowTitle(),
+                            tr( "No diff program found.\nConfigure one in Settings / Applications." ) );
    }
-
-   QString muster = beediff;
-   if( !ok ) {
-      if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
-         muster = data.toString().trimmed();
-         if( muster.isEmpty() ) {
-            return;
-         }
-      }
-   }
-
-   const QString cmd = muster.arg( fname1 ).arg( fname2 );
-   QProcess process;
-   process.startDetached( cmd );
 }
 // end of diff

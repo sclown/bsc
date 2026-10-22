@@ -28,7 +28,6 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtAttrDialog.h"
-#include "QBtSystemCall.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGroupBox>
@@ -36,7 +35,9 @@
 #include <QPushButton>
 #include <QLabel>
 #include <QFileInfo>
-#include <QProcess>
+#include <QDir>
+#include <QDirIterator>
+#include <QMessageBox>
 #include <QtDebug>
 
 /*------- constants:
@@ -52,6 +53,7 @@ const char* const QBtAttrDialog::CLOSE     = QT_TR_NOOP( "&Close"  );
 const char* const QBtAttrDialog::READ      = QT_TR_NOOP( "read"  );
 const char* const QBtAttrDialog::WRITE     = QT_TR_NOOP( "write"  );
 const char* const QBtAttrDialog::EXECUTE   = QT_TR_NOOP( "execute"  );
+const char* const QBtAttrDialog::CANT_CHANGE = QT_TR_NOOP( "Permissions of %n item(s) could not be changed, e.g.:\n%1" );
 
 
 //*******************************************************************
@@ -146,31 +148,21 @@ void QBtAttrDialog::set_info()
 //*******************************************************************
 // get_info                                                  PRIVATE
 //*******************************************************************
-QString QBtAttrDialog::get_info() const
+QFileDevice::Permissions QBtAttrDialog::get_permissions() const
 {
-   static const QString PREFIX = "0";
-   
-   qint32 user_attr = 0;
-   if( user_read_ ->isChecked() ) user_attr += 4;
-   if( user_write_->isChecked() ) user_attr += 2;
-   if( user_exec_ ->isChecked() ) user_attr += 1;
-   
-   qint32 group_attr = 0;
-   if( group_read_ ->isChecked() ) group_attr += 4;
-   if( group_write_->isChecked() ) group_attr += 2;
-   if( group_exec_ ->isChecked() ) group_attr += 1;
-   
-   qint32 other_attr = 0;
-   if( other_read_ ->isChecked() ) other_attr += 4;
-   if( other_write_->isChecked() ) other_attr += 2;
-   if( other_exec_ ->isChecked() ) other_attr += 1;
-
-   return ( PREFIX
-            + QString::number( user_attr ) 
-            + QString::number( group_attr )
-            + QString::number( other_attr ));
+   QFileDevice::Permissions p;
+   if( user_read_  ->isChecked() ) p |= QFileDevice::ReadOwner  | QFileDevice::ReadUser;
+   if( user_write_ ->isChecked() ) p |= QFileDevice::WriteOwner | QFileDevice::WriteUser;
+   if( user_exec_  ->isChecked() ) p |= QFileDevice::ExeOwner   | QFileDevice::ExeUser;
+   if( group_read_ ->isChecked() ) p |= QFileDevice::ReadGroup;
+   if( group_write_->isChecked() ) p |= QFileDevice::WriteGroup;
+   if( group_exec_ ->isChecked() ) p |= QFileDevice::ExeGroup;
+   if( other_read_ ->isChecked() ) p |= QFileDevice::ReadOther;
+   if( other_write_->isChecked() ) p |= QFileDevice::WriteOther;
+   if( other_exec_ ->isChecked() ) p |= QFileDevice::ExeOther;
+   return p;
 }
-// end of get_info
+// end of get_permissions
 
 //*******************************************************************
 // are_dirs                                                  PRIVATE
@@ -194,29 +186,26 @@ bool QBtAttrDialog::are_dirs() const
 //*******************************************************************
 void QBtAttrDialog::accept()
 {
-   static const QString COMMAND   = "chmod";
-   static const QString SILENT    = "-v";
-   static const QString RECURSIVE = "-R";
-   static const QString PATH      = "\"%1\"";
-   static const QString SPACE     = " ";
+   const QFileDevice::Permissions permissions = get_permissions();
+   const bool recursive = recursive_->isChecked();
+   QStringList failed;
 
-   QString cmd = COMMAND;
-   cmd += SPACE;
-   cmd += SILENT;
-   cmd += SPACE;
-   if( recursive_->isChecked() ) cmd += RECURSIVE;
-   cmd += SPACE;
-   cmd += get_info();
-   cmd += SPACE;
+   for( const QString& path : data_ ) {
+      path_->setText( path );
+      if( !QFile::setPermissions( path, permissions ) ) failed << path;
+      if( recursive && QFileInfo( path ).isDir() ) {
+         QDirIterator it( path,
+                          QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot | QDir::NoSymLinks,
+                          QDirIterator::Subdirectories );
+         while( it.hasNext() ) {
+            const QString sub = it.next();
+            if( !QFile::setPermissions( sub, permissions ) ) failed << sub;
+         }
+      }
+   }
 
-   QBtSystemCall syscall( this );
-   
-   SelectionsSet::const_iterator it = data_.begin();
-   const SelectionsSet::const_iterator end = data_.end();
-   while( it != end ) {
-      path_->setText( *it );
-      syscall.run( cmd + PATH.arg( *it ) );
-      ++it;
+   if( !failed.isEmpty() ) {
+      QMessageBox::warning( this, tr( CAPTION ), tr( CANT_CHANGE, "", failed.size() ).arg( failed.first() ) );
    }
    QDialog::accept();
 }

@@ -32,6 +32,9 @@
 #include "QBtSystemCall.h"
 #include <QFile>
 #include <QTextStream>
+#include <QMimeDatabase>
+#include <QMimeType>
+#include <QStandardPaths>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QLineEdit>
@@ -110,23 +113,22 @@ void QBtFileViewer::load_file()
    QString file_path = QFile::symLinkTarget( path_ );
    if( file_path.isEmpty() ) file_path = path_;
 
-   static const QString cmd = "file -b -i \"%1\"";
-
-   QApplication::setOverrideCursor( Qt::WaitCursor );      
-   QBtSystemCall syscall;
-   syscall.run( cmd.arg( file_path ) );
-   const QString marker = syscall.result();
+   QApplication::setOverrideCursor( Qt::WaitCursor );
+   const QMimeType mime = QMimeDatabase().mimeTypeForFile( file_path );
 
    if( file_path.endsWith( ".tar" ) || file_path.endsWith( ".tar.gz" ) || file_path.endsWith( ".tar.bz2" ) ) {
       tar_file( file_path );
    }
    else if( file_path.endsWith( ".zip" ) ) {
-      zip_file( file_path );   
+      zip_file( file_path );
    }
-   else if( marker.startsWith( "text" ) ) {
-      ( marker.indexOf( "/html" ) != -1 ) ? html_file( file_path ) : text_file( file_path );
+   else if( mime.inherits( "text/html" ) ) {
+      html_file( file_path );
    }
-   else if( marker.startsWith( "image" ) ) {
+   else if( mime.inherits( "text/plain" ) ) {
+      text_file( file_path );
+   }
+   else if( mime.name().startsWith( "image/" ) ) {
       image_file( file_path );
    }
    else {
@@ -141,8 +143,7 @@ void QBtFileViewer::load_file()
 //*******************************************************************
 void QBtFileViewer::tar_file( const QString& in_path )
 {
-   static const QString cmd = "tar -t -v -f \"%1\"";
-   do_it( cmd.arg( in_path ) );
+   do_it( "tar", { "-t", "-v", "-f", in_path } );
 }
 // end of tar_file
 
@@ -151,8 +152,13 @@ void QBtFileViewer::tar_file( const QString& in_path )
 //*******************************************************************
 void QBtFileViewer::zip_file( const QString& in_path )
 {
-   static const QString cmd = "unzip -l \"%1\"";
-   do_it( cmd.arg( in_path ) );
+   const QString unzip = QStandardPaths::findExecutable( "unzip" );
+   if( unzip.isEmpty() ) {
+      do_it( "tar", { "-t", "-v", "-f", in_path } );   // bsdtar (macOS, Windows) lists zip archives
+   }
+   else {
+      do_it( unzip, { "-l", in_path } );
+   }
 }
 // end of tar_file
 
@@ -225,10 +231,10 @@ void QBtFileViewer::image_file( const QString& in_path )
 //*******************************************************************
 // do_it                                                     PRIVATE
 //*******************************************************************
-void QBtFileViewer::do_it( const QString& in_cmd )
+void QBtFileViewer::do_it( const QString& in_program, const QStringList& in_args )
 {
    QBtSystemCall syscall;
-   syscall.run( in_cmd );
+   syscall.run( in_program, in_args );
    browser_->setLineWrapMode( QTextEdit::NoWrap );
    browser_->insertPlainText( syscall.result() );
 }

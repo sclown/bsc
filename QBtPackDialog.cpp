@@ -43,6 +43,8 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QApplication>
+#include <QMessageBox>
+#include <QStandardPaths>
 #include <QtDebug>
 
 /*------- constants:
@@ -59,6 +61,7 @@ const char* const QBtPackDialog::CANCEL        = QT_TR_NOOP( "&Cancel" );
 const char* const QBtPackDialog::GZIP          = QT_TR_NOOP( "gzip (gz)" );
 const char* const QBtPackDialog::BZIP2         = QT_TR_NOOP( "bzip2 (bz2)" );
 const char* const QBtPackDialog::ZIP           = QT_TR_NOOP( "zip (zip)" );
+const char* const QBtPackDialog::PACK_FAILED   = QT_TR_NOOP( "%1 failed:\n%2" );
 const QString     QBtPackDialog::TAR_EXT       = ".tar";
 const QString     QBtPackDialog::GZIP_EXT      = ".gz";
 const QString     QBtPackDialog::BZIP2_EXT     = ".bz2";
@@ -303,132 +306,69 @@ QString QBtPackDialog::path2display()
 void QBtPackDialog::run()
 {
    QApplication::setOverrideCursor( Qt::WaitCursor );
-   ( USE_ZIP == compress_type_ ) ? run_zip() : run_tar();
+   const bool ok = ( USE_ZIP == compress_type_ ) ? run_zip() : run_tar();
    QApplication::restoreOverrideCursor();
-   accept();
+   if( ok ) accept();
 }
 // end of run
 
 //*******************************************************************
+// execute                                                   PRIVATE
+//*******************************************************************
+bool QBtPackDialog::execute( const QString& in_program, const QStringList& in_args, const QString& in_working_dir )
+{
+   QBtSystemCall sc;
+   if( sc.run( in_program, in_args, in_working_dir ) ) return true;
+   QMessageBox::critical( this, tr( CAPTION ), tr( PACK_FAILED ).arg( in_program, sc.result() ) );
+   return false;
+}
+// end of execute
+
+//*******************************************************************
 // run_tar                                                   PRIVATE
 //*******************************************************************
-void QBtPackDialog::run_tar()
+bool QBtPackDialog::run_tar()
 {
-   const QChar space = ' ';
+   if( data_.empty() ) return false;
+   const QString src_dir = QFileInfo( *data_.begin() ).absolutePath();
 
-   QBtSystemCall sc;
-   
-   SelectionsSet::const_iterator it = data_.begin();
-   const SelectionsSet::const_iterator end = data_.end();
-   if( it == end ) return;
-   
-   QFileInfo fi( *it );
-   const QString src_dir  = fi.absolutePath();
-   
-   dst_path_ = dst_dir_;
-   if( !dst_path_.endsWith( QDir::separator() ) ) {
-      dst_path_ += QDir::separator();
-   }
-   dst_path_ += name_;
-   dst_path_ += TAR_EXT;
-
-   QString create_cmd = "tar --verbose";
-   create_cmd += space;
-   create_cmd += "--create";
-   create_cmd += space;
-   create_cmd += "--directory=";
-   create_cmd += src_dir;
-   create_cmd += space;
-   create_cmd += "--file=";
-   create_cmd += dst_path_;
-   create_cmd += space;
-   
-   QString update_cmd = "tar --verbose";
-   update_cmd += space;
-   update_cmd += "--update";
-   update_cmd += space;
-   update_cmd += "--directory=";
-   update_cmd += src_dir;
-   update_cmd += space;
-   update_cmd += "--file=";
-   update_cmd += dst_path_;
-   update_cmd += space;
-   
-   fi.setFile( *it );
-   display_src( *it );
-   sc.run( create_cmd + fi.fileName() );
-   
-   ++it;
-   while( it != end ) {
-      fi.setFile( *it );
-      display_src( *it );
-      sc.run( update_cmd + fi.fileName() );
-      ++it;
-   }
-
-   // Ewentualna kompresja.
+   dst_path_ = QBtShared::slashed_dir( dst_dir_ ) + name_ + TAR_EXT;
+   QStringList args = { "-c", "-v" };
    if( compression_->isChecked() ) {
+      // tar compresses itself (-z/-j) on GNU tar and bsdtar alike.
       const bool is_gzip = ( USE_GZIP == compress_type_ );
-      QString cmd = is_gzip ? "gzip -" : "bzip2 -";
-      cmd += ratio_->currentText();
-      cmd += space;
-      cmd += dst_path_;
-      sc.run( cmd );
+      args << ( is_gzip ? "-z" : "-j" );
       dst_path_ += ( is_gzip ? GZIP_EXT : BZIP2_EXT );
    }
+   args << "-C" << src_dir << "-f" << dst_path_;
+   for( const QString& path : data_ ) {
+      display_src( path );
+      args << QFileInfo( path ).fileName();
+   }
+   return execute( "tar", args, src_dir );
 }
 // end of run_tar
 
 //*******************************************************************
 // run_zip                                                   PRIVATE
 //*******************************************************************
-void QBtPackDialog::run_zip()
+bool QBtPackDialog::run_zip()
 {
-   const QChar space = ' ';
+   if( data_.empty() ) return false;
+   const QString src_dir = QFileInfo( *data_.begin() ).absolutePath();
 
-   QBtSystemCall sc;
-   
-   SelectionsSet::const_iterator it = data_.begin();
-   const SelectionsSet::const_iterator end = data_.end();
-   if( it == end ) return;
-   
-   dst_path_ = dst_dir_;
-   if( !dst_path_.endsWith( QDir::separator() ) ) {
-      dst_path_ += QDir::separator();
+   dst_path_ = QBtShared::slashed_dir( dst_dir_ ) + name_ + ZIP_EXT;
+   QStringList names;
+   for( const QString& path : data_ ) {
+      display_src( path );
+      names << QFileInfo( path ).fileName();
    }
-   dst_path_ += name_;
-   dst_path_ += ZIP_EXT;
 
-   QString create_cmd = "zip";
-   create_cmd += space;
-   create_cmd += "-";
-   create_cmd += ratio_->currentText();
-   create_cmd += space;
-   create_cmd += "-r";
-   create_cmd += space;
-   create_cmd += dst_path_;
-   create_cmd += space;
-   
-   QString update_cmd = "zip";
-   update_cmd += space;
-   update_cmd += "-";
-   update_cmd += ratio_->currentText();
-   update_cmd += space;
-   update_cmd += "-u";
-   update_cmd += space;
-   update_cmd += "-r";
-   update_cmd += space;
-   update_cmd += dst_path_;
-   update_cmd += space;
-
-   display_src( *it );
-   sc.run( create_cmd + *it );
-   
-   ++it;
-   while( it != end ) {
-      display_src( *it );
-      sc.run( update_cmd + *it );
-      ++it;
+   const QString zip = QStandardPaths::findExecutable( "zip" );
+   if( !zip.isEmpty() ) {
+      return execute( zip, QStringList{ "-" + ratio_->currentText(), "-r", dst_path_ } + names, src_dir );
    }
+   // No zip tool (e.g. Windows): bsdtar picks the zip format from the extension.
+   return execute( "tar", QStringList{ "-a", "-c", "-v", "-C", src_dir, "-f", dst_path_ } + names, src_dir );
 }
 // end of run_zip

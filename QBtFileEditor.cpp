@@ -29,7 +29,8 @@
 -------------------------------------------------------------------*/
 #include "QBtFileEditor.h"
 #include "QBtShared.h"
-#include "QBtSystemCall.h"
+#include <QMimeDatabase>
+#include <QMimeType>
 #include <QFile>
 #include <QTextEdit>
 #include <QTextStream>
@@ -107,16 +108,8 @@ void QBtFileEditor::showEvent( QShowEvent* const in_event )
 //*******************************************************************
 void QBtFileEditor::load_file()
 {
-   static const QString cmd = "file -b -i \"%1\"";
-
-   QApplication::setOverrideCursor( Qt::WaitCursor );      
-   QBtSystemCall syscall;
-   syscall.run( cmd.arg( path_ ) );
-   const QString marker = syscall.result();
-
-   const bool is_text = marker.startsWith( "text" ) ||
-                        marker.contains( "script" ) ||
-                        marker.contains( "perl" );
+   QApplication::setOverrideCursor( Qt::WaitCursor );
+   const bool is_text = QMimeDatabase().mimeTypeForFile( path_ ).inherits( "text/plain" );
    
    if( is_text ) reload_file();
    QApplication::restoreOverrideCursor();
