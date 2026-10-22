@@ -50,7 +50,7 @@ private:
 
 //******* CONSTANTS *******
 private:
-   enum { ROW_PADDING = 2 };   // extra space above and below each row (px)
+   enum { ROW_PADDING = 1 };   // extra space above and below each row (px)
 
 //******* MEMBERS *******
 private:
