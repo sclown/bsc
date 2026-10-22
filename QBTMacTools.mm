@@ -1,55 +1,38 @@
-#include "QBtMacTools.h"
+#include "QBTMacTools.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <Foundation/NSArray.h>
 #include <Cocoa/Cocoa.h>
 
+#ifndef BSC_BUNDLE_ID
+#error "BSC_BUNDLE_ID must be defined by the build (see CMakeLists.txt)"
+#endif
 
-bool isMacSpecialURL(QUrl url)
+bool isMacSpecialURL( const QUrl& url )
 {
-   return url.url().startsWith("file:///.file/id=");
+   return url.url().startsWith( "file:///.file/id=" );
 }
 
-
-QUrl resolveMacSpecialURL(QUrl url)
+QUrl resolveMacSpecialURL( const QUrl& url )
 {
     CFURLRef cfurl = url.toCFURL();
     CFErrorRef error = 0;
-    CFURLRef absurl = CFURLCreateFilePathURL(kCFAllocatorDefault, cfurl, &error);
-    url = QUrl::fromCFURL(absurl);
-    CFRelease(cfurl);
-    CFRelease(absurl);
-    return url;
+    CFURLRef absurl = CFURLCreateFilePathURL( kCFAllocatorDefault, cfurl, &error );
+    QUrl result = absurl ? QUrl::fromCFURL( absurl ) : url;
+    CFRelease( cfurl );
+    if( absurl ) CFRelease( absurl );
+    return result;
 }
 
-void activateAnotherInstance()
+bool activateAnotherInstance()
 {
-//    // check if abc.app is running
-//    NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.youApplication.abc"];
-//    if ([apps count] == 0)
-//    {
-//        // not running, launch it
-//        [[NSWorkspace sharedWorkspace] launchApplicationAtURL:[NSURL fileURLWithPath:@"abc.app" isDirectory:NO] options:NSWorkspaceLaunchDefault  configuration:nil error:NULL];
-//    }
-
-
-
-    NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.yourcompany.bsc"];
-    int count = [apps count];
-    if ([apps count])
-    {
-        NSRunningApplication* app = [apps objectAtIndex:0];
-        // abc.app is running, check if active
-        if (![app isActive])
-        {
-            // not active, activate it
-            [app activateWithOptions: NSApplicationActivateIgnoringOtherApps];
-        }
+    NSString* bundleId = [NSString stringWithUTF8String:BSC_BUNDLE_ID];
+    NSArray* apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:bundleId];
+    if( [apps count] == 0 ) {
+        return false;
     }
-}
-
-void moveToTrash(QString path)
-{
-    NSString *objcPath = [NSString stringWithCString:path.toUtf8() encoding:NSUTF8StringEncoding];
-    NSError * error = nil;
-    [[NSFileManager defaultManager] trashItemAtURL:[NSURL fileURLWithPath:objcPath] resultingItemURL:nil error:&error];
+    NSRunningApplication* app = [apps objectAtIndex:0];
+    if( ![app isActive] ) {
+        [app activateWithOptions:0];
+    }
+    return true;
 }

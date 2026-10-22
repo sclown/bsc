@@ -30,9 +30,11 @@
 -------------------------------------------------------------------*/
 #include "QBtShared.h"
 #include "QBtFileInfo.h"
+#include "QBtSettings.h"
+#include "QBtConfig.h"
 #include "QBTMacTools.h"
 #include <QApplication>
-#include <QDesktopWidget>
+#include <QScreen>
 #include <QFontMetrics>
 #include <QDateTime>
 #include <QProcess>
@@ -40,6 +42,8 @@
 #include <QDir>
 #include <QUrl>
 #include <QDesktopServices>
+#include <QStandardPaths>
+#include <QVariant>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -73,8 +77,8 @@ const QString& QBtShared::program_name()
 //*******************************************************************
 void QBtShared::resize( QWidget* const in_widget, const qint32 in_width, const qint32 in_height )
 {
-   const qint32 screen_width = qApp->desktop()->availableGeometry().width();
-   const qint32 screen_height = qApp->desktop()->availableGeometry().height();
+   const qint32 screen_width = QGuiApplication::primaryScreen()->availableGeometry().width();
+   const qint32 screen_height = QGuiApplication::primaryScreen()->availableGeometry().height();
    const qreal  width_percent = static_cast<qreal>( in_width ) / 100.0;
    const qreal  height_percent = static_cast<qreal>( in_height ) / 100.0;    
    const qint32 dx = static_cast<qint32>( screen_width * width_percent );
@@ -84,8 +88,8 @@ void QBtShared::resize( QWidget* const in_widget, const qint32 in_width, const q
 }
 void QBtShared::resize( QWidget* const in_widget, const QSize& in_size )
 {
-    const qint32 screen_width  = qApp->desktop()->availableGeometry().width();
-    const qint32 screen_height = qApp->desktop()->availableGeometry().height();
+    const qint32 screen_width  = QGuiApplication::primaryScreen()->availableGeometry().width();
+    const qint32 screen_height = QGuiApplication::primaryScreen()->availableGeometry().height();
     const qint32 x  = ( screen_width  - in_size.width()  + 1 ) >> 1;
     const qint32 y  = ( screen_height - in_size.height() + 1 ) >>  1;
     
@@ -94,7 +98,7 @@ void QBtShared::resize( QWidget* const in_widget, const QSize& in_size )
 }
 void QBtShared::resize_width( QWidget* const in_widget, const qint32 in_width )
 {
-   const qint32 screen_width  = qApp->desktop()->screenGeometry( 0 ).width();
+   const qint32 screen_width  = QGuiApplication::primaryScreen()->geometry().width();
    const qreal  width_percent = ( static_cast<qreal>( in_width ) ) / 100.0;
    
    QSize s = in_widget->size();
@@ -216,8 +220,8 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
    static const QString SPACER = "/.../";
    static const QString SPACE  = " ";
    
-   if( in_fm.width( in_out_path ) > in_width ) {
-      const QStringList    WORDS  = in_out_path.split( SLASH, QString::SkipEmptyParts );
+   if( in_fm.horizontalAdvance( in_out_path ) > in_width ) {
+      const QStringList    WORDS  = in_out_path.split( SLASH, Qt::SkipEmptyParts );
 
       int     i        = 0;
       int     j        = WORDS.count() - 1;
@@ -231,7 +235,7 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
          lft_ok = false;
          if( i < j ) {
             tmp = lft_part + SLASH + WORDS[i];
-            if( in_fm.width( tmp + SPACER + rgt_part ) < in_width ) {
+            if( in_fm.horizontalAdvance( tmp + SPACER + rgt_part ) < in_width ) {
                lft_part = tmp;
                lft_ok = true;
                ++i;
@@ -241,7 +245,7 @@ void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString
          rgt_ok = false;
          if( i < j ) {
             tmp = WORDS[j] + SLASH + rgt_part;
-            if( in_fm.width( lft_part + SPACER + tmp ) < in_width ) {
+            if( in_fm.horizontalAdvance( lft_part + SPACER + tmp ) < in_width ) {
                rgt_part = tmp;
                rgt_ok = true;
                --j;
@@ -363,15 +367,25 @@ QString QBtShared::quoted_fpath( const QString& in_fpath )
 //*******************************************************************
 void QBtShared::touch( const QString& in_muster_fpath, const QString& in_dst_fpath )
 {
-   static const QString Touch ="touch -c -t %1 %2";
-   static const QString Format ="yyyyMMddhhmm.ss";
-
-   const QString dt  = QFileInfo( in_muster_fpath ).lastModified().toString( Format );
-   const QString cmd = Touch.arg( dt ).arg( QBtShared::quoted_fpath( in_dst_fpath ) );
-   QProcess process;
-   process.startDetached( cmd );
+   set_modification_time( in_dst_fpath, QFileInfo( in_muster_fpath ).lastModified() );
 }
 // end of touch
+
+//*******************************************************************
+// set_modification_time
+//*******************************************************************
+bool QBtShared::set_modification_time( const QString& in_fpath, const QDateTime& in_time )
+{
+   // QFileDevice::setFileTime needs an open file; write access is preferred
+   // (required on Windows), read-only is enough for an owned file on Unix.
+   QFile file( in_fpath );
+   if( !file.open( QIODevice::ReadWrite | QIODevice::ExistingOnly ) &&
+       !file.open( QIODevice::ReadOnly ) ) {
+      return false;
+   }
+   return file.setFileTime( in_time, QFileDevice::FileModificationTime );
+}
+// end of set_modification_time
 
 QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
 {
@@ -389,41 +403,101 @@ QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
 
 QFileInfo QBtShared::pathFromFSItem(const QFileInfo &info)
 {
-    return info.isDir()? info : info.absolutePath();
+    return info.isDir() ? info : QFileInfo( info.absolutePath() );
 }
 
-void BtShared::openTerminal(const QString &path) {
-    QString terminalEmulator;
-    QStringList args;
-#if defined(Q_OS_WIN)
-    terminalEmulator = "cmd.exe";
-#elif defined(Q_OS_MAC)
-    QDir dir(QCoreApplication::applicationDirPath());
-    dir.cdUp();
-    QString script(dir.path() + "/Resources/scripts/openTerminal.scpt");
-    terminalEmulator = "open";
-    args << "-a" << "/Applications/Utilities/Terminal.app";
-    args << path;
-#else
-    //        args = QtcProcess::splitArgs(ConsoleProcess::terminalEmulator(ICore::settings()));
-    //        terminalEmulator = args.takeFirst();
-    //        args.append(QString::fromLocal8Bit(qgetenv("SHELL")));
-#endif
-    open(terminalEmulator, args, path);
-}
-
-void BtShared::open(const QString &path, const QStringList &args, const QString &pwd)
+void BtShared::openTerminal( const QString& dir )
 {
-    const QFileInfo fileInfo(path);
-    if(!args.isEmpty()) {
 #if defined(Q_OS_MAC)
-        if(!fileInfo.isExecutable() || fileInfo.isDir()) {
-            QProcess::startDetached(QLatin1String("open"), QStringList() << "-a" << path << args);
+    QProcess::startDetached( "open", { "-a", "Terminal", dir } );
+#elif defined(Q_OS_WIN)
+    QProcess::startDetached( "cmd.exe", {}, dir );
+#else
+    static const QStringList candidates = {
+        "x-terminal-emulator", "gnome-terminal", "konsole", "xfce4-terminal", "xterm"
+    };
+    for( const QString& name : candidates ) {
+        const QString exe = QStandardPaths::findExecutable( name );
+        if( !exe.isEmpty() ) {
+            QProcess::startDetached( exe, {}, dir );
             return;
         }
-#endif
-        QProcess::startDetached(path, args, pwd);
-        return;
     }
-    QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+#endif
 }
+// end of openTerminal
+
+void BtShared::revealInFileManager( const QString& path )
+{
+    const QFileInfo fi( path );
+#if defined(Q_OS_MAC)
+    if( fi.isDir() ) QProcess::startDetached( "open", { path } );
+    else             QProcess::startDetached( "open", { "-R", path } );
+#elif defined(Q_OS_WIN)
+    const QString native = QDir::toNativeSeparators( path );
+    if( fi.isDir() ) QProcess::startDetached( "explorer.exe", { native } );
+    else             QProcess::startDetached( "explorer.exe", { "/select,", native } );
+#else
+    QDesktopServices::openUrl( QUrl::fromLocalFile( fi.isDir() ? path : fi.absolutePath() ) );
+#endif
+}
+// end of revealInFileManager
+
+void BtShared::openInEditor( const QString& path )
+{
+    if( path.isEmpty() ) return;
+#if defined(Q_OS_MAC)
+    QProcess::startDetached( "open", { "-t", path } );
+#else
+    QDesktopServices::openUrl( QUrl::fromLocalFile( path ) );
+#endif
+}
+// end of openInEditor
+
+bool BtShared::openDiff( const QString& in_file1, const QString& in_file2 )
+{
+    QBtSettings stt;
+    QVariant    data;
+    bool        use_default = true;
+    if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
+        use_default = data.toBool();
+    }
+
+    QString     program;
+    QStringList args;
+    if( use_default ) {
+#if defined(Q_OS_MAC)
+        static const QStringList candidates = { "opendiff", "meld", "kdiff3" };
+#elif defined(Q_OS_WIN)
+        static const QStringList candidates = { "WinMergeU", "meld", "kdiff3" };
+#else
+        static const QStringList candidates = { "meld", "kdiff3", "kompare", "diffuse" };
+#endif
+        for( const QString& name : candidates ) {
+            program = QStandardPaths::findExecutable( name );
+            if( !program.isEmpty() ) break;
+        }
+        args << in_file1 << in_file2;
+    }
+    else {
+        QString muster;
+        if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
+            muster = data.toString().trimmed();
+        }
+        if( muster.isEmpty() ) return false;
+        // The configured command keeps the "%1 %2" placeholders of the old
+        // shell-based launcher; without them the files are appended.
+        const bool has_placeholders = muster.contains( "%1" );
+        if( has_placeholders ) {
+            muster = muster.arg( QBtShared::quoted_fpath( in_file1 ), QBtShared::quoted_fpath( in_file2 ) );
+        }
+        args = QProcess::splitCommand( muster );
+        if( args.isEmpty() ) return false;
+        program = args.takeFirst();
+        if( !has_placeholders ) args << in_file1 << in_file2;
+    }
+
+    if( program.isEmpty() ) return false;
+    return QProcess::startDetached( program, args );
+}
+// end of openDiff

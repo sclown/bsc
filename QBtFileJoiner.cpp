@@ -170,7 +170,7 @@ QBtFileJoiner::QBtFileJoiner( QWidget* const in_parent               ,
 
    connect( start_btn_ , SIGNAL( clicked      ()    ), this, SLOT( start_slot ()    ) );
    connect( cancel_btn_, SIGNAL( clicked      ()    ), this, SLOT( cancel_slot()    ) );
-   connect( btn_grp_1  , SIGNAL( buttonClicked(int) ), this, SLOT( mode_slot  (int) ) );
+   connect( btn_grp_1  , SIGNAL( idClicked(int) ), this, SLOT( mode_slot  (int) ) );
    connect( up_btn_    , SIGNAL( clicked      ()    ), this, SLOT( up_slot    ()    ) );
    connect( down_btn_  , SIGNAL( clicked      ()    ), this, SLOT( down_slot  ()    ) );
 }
@@ -185,13 +185,6 @@ void QBtFileJoiner::create_list( const SelectionsSet& in_files )
    list_->setColumnCount( 1 );
    list_->setRootIsDecorated( false );
    list_->setSortingEnabled( false );
-   /*
-   list_->setDragEnabled( true );
-   list_->setAcceptDrops( true );
-   list_->setDragDropOverwriteMode( false );
-   list_->setDropIndicatorShown( true );
-   list_->setDragDropMode( QTreeWidget::InternalMove );
-   */
 
    QTreeWidgetItem* const root = list_->invisibleRootItem();
    SelectionsSet::const_iterator it = in_files.begin();
@@ -398,8 +391,8 @@ bool QBtFileJoiner::append( QFile& out_dstf, const QString& in_fpath )
             return false;
          }
          
-         b += data.count();
-         n -= data.count();
+         b += data.size();
+         n -= data.size();
          progress_->setValue( b );
          QBtShared::idle();
       }

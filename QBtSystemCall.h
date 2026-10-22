@@ -40,7 +40,7 @@ class QBtSystemCall : public QObject
 {
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtSystemCall( QObject* in_parent = 0 ) : QObject( in_parent )
+   QBtSystemCall( QObject* in_parent = 0 ) : QObject( in_parent ), exit_code_( -1 )
    {}
 private:
    QBtSystemCall( const QBtSystemCall& );
@@ -49,14 +49,15 @@ private:
 //******* MEMBERS *******
 private:
    QByteArray buffer_;
+   int        exit_code_;
 
 //******* METHODS ********
 public:
-   void    run   ( const QString& );
-   QString result() const;
-
-public:
-   static QString sys( const QString& cmd );
+   // Runs the program synchronously; stdout and stderr are captured together.
+   // Returns true when the program started and exited with code 0.
+   bool    run      ( const QString& program, const QStringList& args, const QString& working_dir = QString() );
+   QString result   () const;
+   int     exit_code() const { return exit_code_; }
 };
 
 #endif // INCLUDED_QBtSystemCall_h

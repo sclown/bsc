@@ -1,0 +1,77 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 25,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_PREFIX_PATH": "$env{QT_PREFIX}",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      },
+      "environment": {
+        "QT_PREFIX": "/opt/homebrew/opt/qt"
+      }
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ci",
+      "displayName": "CI (Release)",
+      "description": "Used by .github/workflows/build.yml; Qt from QT_ROOT_DIR (set by install-qt-action).",
+      "inherits": "base",
+      "binaryDir": "${sourceDir}/build/ci",
+      "environment": {
+        "QT_PREFIX": "$env{QT_ROOT_DIR}"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "run",
+      "displayName": "Debug: build and run",
+      "configurePreset": "debug",
+      "targets": [
+        "run"
+      ]
+    },
+    {
+      "name": "ci",
+      "displayName": "CI",
+      "configurePreset": "ci"
+    }
+  ]
+}

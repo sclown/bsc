@@ -35,7 +35,6 @@
 #include "QBtViewStandardItem.h"
 #include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
-#include "QBtMacTools.h"
 #include <QApplication>
 #include <QDateTime>
 #include <QDir>
@@ -62,8 +61,12 @@ QBtDirModel::QBtDirModel( QObject* const in_parent ) : QBtViewModel( in_parent )
    connect(worker_, &QBtDirListWorker::work_finished, this, &QBtDirModel::work_finished_slot);
    thread_.start();
 
-   connect( &watcher_, SIGNAL( directoryChanged      ( const QString & ) ),
-            this    , SLOT  ( directory_changed_slot ( const QString ) ) );
+   // Coalesce bursts of change notifications into a single refresh.
+   refresh_timer_.setSingleShot( true );
+   refresh_timer_.setInterval( 250 );
+   connect( &refresh_timer_, &QTimer::timeout, this, &QBtDirModel::delayed_refresh );
+   connect( &watcher_, &QFileSystemWatcher::directoryChanged,
+            this, &QBtDirModel::directory_changed_slot );
 }
 // end of QBtDirModel
 
@@ -90,7 +93,6 @@ void QBtDirModel::setup( const QString& in_path, int sortColumn, Qt::SortOrder s
 //*******************************************************************
 void QBtDirModel::update( const QString& in_path)
 {
-   watcher_.removePath( current_path_ );
    emit list( in_path, sortIndex_, sortOrder_ );
 }
 
@@ -235,16 +237,9 @@ void QBtDirModel::append_row( const qint32 in_row,
 
    if( is_parent_dir ) return;
    int childIndex = 1;
-//   {  // Extension
-//      QBtViewStandardItem* const item = new QBtViewStandardItem;
-//      item->setTextAlignment( Qt::AlignLeft );
-//      item->setText( in_data[ childIndex ] );
-//      root_it->setChild( in_row, childIndex, item );
-//   }
-//   ++childIndex;
    {  // Rozmiar pliku
       QBtViewStandardItem* const item = new QBtViewStandardItem;
-      item->setTextAlignment( Qt::AlignRight );
+      item->setTextAlignment( Qt::AlignRight | Qt::AlignVCenter );
       item->setText( in_data[ childIndex ] );
       root_it->setChild( in_row, childIndex, item );
    }
@@ -263,7 +258,6 @@ void QBtDirModel::append_row( const qint32 in_row,
    ++childIndex;
    {  // Prawa dostepu
       QBtViewStandardItem* const item = new QBtViewStandardItem;
-      item->setTextAlignment( Qt::AlignLeft );
       item->setText( in_data[ childIndex ] );
       root_it->setChild( in_row, childIndex, item );
    }
@@ -340,6 +334,7 @@ bool QBtDirModel::dropMimeData(const QMimeData *data, Qt::DropAction action, int
 void QBtDirModel::work_started_slot()
 {
    QApplication::setOverrideCursor( Qt::WaitCursor );      
+   emit update_started();
    busy_ = true;
    file_count_ = dir_count_ = qint32();
    selections_.clear();
@@ -386,18 +381,43 @@ void QBtDirModel::work_finished_slot( const QString in_path )
    current_path_ = in_path;
    QApplication::restoreOverrideCursor();
    emit update_finished();
-   watcher_.addPath( current_path_ );
+   watch( current_path_ );
    busy_ = false;
 }
 // end of work_finished_slot
 
+//*******************************************************************
+// watch                                                     PRIVATE
+//*******************************************************************
+// Re-adding a path makes the macOS watcher report a change right away,
+// so the watch is only replaced when the directory actually changes.
+void QBtDirModel::watch( const QString& in_path )
+{
+   const QStringList watched = watcher_.directories();
+   if( watched.size() == 1 && watched.first() == in_path ) return;
+
+   if( !watched.isEmpty() ) watcher_.removePaths( watched );
+   watcher_.addPath( in_path );
+   watch_age_.start();
+}
+// end of watch
+
 void QBtDirModel::directory_changed_slot( const QString &in_path )
 {
-    QTimer::singleShot( 100, this, SLOT( delayed_refresh() ) );
+    // The macOS watcher reports a change right after a path is added;
+    // ignore that one instead of re-listing the folder just loaded.
+    if( watch_age_.isValid() && watch_age_.elapsed() < 500 ) return;
+    if( in_path == current_path_ ) {
+        refresh_timer_.start();
+    }
 }
 
 void QBtDirModel::delayed_refresh()
 {
+    if( busy_ ) {
+        refresh_timer_.start();
+        return;
+    }
     refresh();
 }
 

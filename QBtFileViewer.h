@@ -81,7 +81,7 @@ private:
    void other_file ( const QString& );
    void set_font   ();
    void load_file  ();
-   void do_it      ( const QString& );
+   void do_it      ( const QString& program, const QStringList& args );
    void highlightSearch(QTextDocument *document, QString searchString);
    QTextCharFormat defaultCharFormat();
 private slots:

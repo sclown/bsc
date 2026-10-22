@@ -72,6 +72,7 @@ private:
    QBtViewSelectionModel*  selectionModel_;
    std::queue< qint32 >  requests_;
    std::stack< QString > initial_file_stack_;
+   int keep_scroll_ = -1;   // scroll position to restore after a background refresh
 
 //******* CONSTANTS *******
 private:
@@ -113,6 +114,7 @@ private:
    void    one_level_up      ();
    void    jump_to_home      ();
    void    resize_columns    ();
+   void    style_header      ();
    void    select            ();
    void    select_mask       ();
    void    deselect_mask     ();
@@ -135,6 +137,7 @@ private slots:
    void    enter            ( const QModelIndex& );
    void    selectionChangedSlot( const QItemSelection & selected, const QItemSelection & deselected );
    void    rowChangedSlot( QModelIndex to, QModelIndex from );
+   void    request_started ();
    void    request_finished();
    void    sortChanged( int logicalIndex, Qt::SortOrder order );
 signals:

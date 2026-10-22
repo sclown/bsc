@@ -44,11 +44,14 @@
 #include <QGridLayout>
 #include <QLabel>
 #include <QDir>
-#include <QProcess>
+#include <QFileIconProvider>
+#include <QStorageInfo>
+#include <QToolButton>
+#include <QMenu>
+#include <QActionGroup>
 #include <QLineEdit>
 #include <QKeyEvent>
 #include <QCompleter>
-#include <QDirModel>
 #include <QtDebug>
 
 /*------- constants:
@@ -61,34 +64,22 @@ const char* const QBtPanel::SELECTED = QT_TR_NOOP( "Selected:" );
 //*******************************************************************
 // QBtPanel                                          CONSTRUCTOR
 //*******************************************************************
-QHBoxLayout * const QBtPanel::pathLineLayout()
+// Volume selector on the left (sized to its content), path field taking
+// the rest of the row.
+QHBoxLayout* QBtPanel::pathLineLayout()
 {
     QHBoxLayout* const hb_top = new QHBoxLayout;
-    hb_top->setMargin( 0 );
-
-#if defined(Q_OS_MAC) //layout hack for os x
-    path_->lineEdit()->setMaximumHeight(QFontMetrics( font() ).height()*0.9);
-    QHBoxLayout* const hb_combofix = new QHBoxLayout;
-    hb_combofix->setContentsMargins(0,8,0,0);
-    hb_combofix->addWidget( path_ );
-    hb_top->addLayout( hb_combofix );
-    hb_top->addWidget( fstab_ );
-    hb_top->setStretchFactor( hb_combofix, 8 );
-    hb_top->setStretchFactor( fstab_, 2 );
-#else
-    hb_top->addWidget( path_ );
-    hb_top->addWidget( fstab_ );
-    hb_top->setStretchFactor( path_, 8 );
-    hb_top->setStretchFactor( fstab_, 2 );
-#endif
-
+    hb_top->setContentsMargins( 0, 0, 0, 0 );
+    hb_top->setSpacing( 4 );
+    hb_top->addWidget( fstab_, 0, Qt::AlignVCenter );
+    hb_top->addWidget( path_, 1 );
     return hb_top;
 }
 
 QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( in_parent )
 , idx_      ( in_idx )
 , path_     ( new QBtPathBox )
-, fstab_    ( new QComboBox )
+, fstab_    ( new QToolButton )
 , tbar_     ( new QBtTabBar )
 , wstack_   ( new QStackedWidget )
 , dirs_     ( new QLabel )
@@ -96,10 +87,31 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 , selected_ ( new QLabel )
 {
    path_->setDuplicatesEnabled( false );
-   path_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
+   path_->setMinimumWidth( 10 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
    path_->installEventFilter(this);
-   fstab_->setMinimumWidth( 5 * QFontMetrics( font() ).width( 'X' ) );
-   tbar_->setElideMode( Qt::ElideLeft );
+   path_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
+   // Volume selector: icon-only button, names are listed in its menu.
+   fstab_->setMenu( new QMenu( fstab_ ) );
+   fstab_->setPopupMode( QToolButton::InstantPopup );
+   fstab_->setToolButtonStyle( Qt::ToolButtonIconOnly );
+   fstab_->setAutoRaise( true );
+   fstab_->setIconSize( QSize( 20, 20 ) );
+   fstab_->setCursor( Qt::PointingHandCursor );
+   fstab_->setStyleSheet( "QToolButton { border: none; border-radius: 5px; padding: 3px; }"
+                          "QToolButton:hover { background: palette(midlight); }"
+                          "QToolButton:pressed, QToolButton:open { background: palette(mid); }"
+                          "QToolButton::menu-indicator { image: none; width: 0; }" );
+   fstab_->setToolTip( tr( "Volumes" ) );
+   connect( fstab_->menu(), &QMenu::aboutToShow, this, &QBtPanel::update_fstab );
+   connect( fstab_->menu(), &QMenu::triggered, this, &QBtPanel::fstab_changed );
+
+   // Tabs are named after the folder (full path in the tooltip) and only
+   // shown once a second tab is opened.
+   tbar_->setDocumentMode( true );
+   tbar_->setExpanding( false );
+   tbar_->setAutoHide( true );
+   tbar_->setUsesScrollButtons( true );
+   tbar_->setElideMode( Qt::ElideMiddle );
 
 
    //===== zaden z ponizszych elementow nie reaguje na tab =====
@@ -125,14 +137,14 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    hb_selected->addWidget( selected_ );
    hb_selected->setStretchFactor( selected_, 100 );
    QGridLayout* const grid = new QGridLayout;
-   grid->setMargin( 0 );
+   grid->setContentsMargins( 0, 0, 0, 0 );
    grid->addLayout( hb_dirs, 0, 0 );
    grid->addLayout( hb_files, 0, 1 );
    grid->addLayout( hb_selected, 0, 2 );
 
    // main layout -----------------------------------------   
    QVBoxLayout* const vb = new QVBoxLayout;
-   vb->setMargin( 4 );
+   vb->setContentsMargins( 4, 4, 4, 4 );
    vb->setSpacing( 4 );
    vb->addWidget( tbar_ );
    vb->addLayout( hb_top );
@@ -153,12 +165,10 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
    QBtEventsController::instance()->append( this, QBtEvent::SHOW_LEFT_FSTAB   );
    QBtEventsController::instance()->append( this, QBtEvent::SHOW_RIGHT_FSTAB  );
 
-   connect( path_            , SIGNAL( activated      ( const QString& ) ),
+   connect( path_            , SIGNAL( textActivated  ( const QString& ) ),
             this             , SLOT  ( path_changed   ( const QString& ) ) );
    connect( path_            , SIGNAL( selectFile     ( const QString& ) ),
             this             , SLOT  ( item_changed   ( const QString& ) ) );
-   connect( fstab_           , SIGNAL( activated      ( const QString& ) ),
-            this             , SLOT  ( fstab_changed  ( const QString& ) ) );
    connect( path_->lineEdit(), SIGNAL( editingFinished()                 ),
             this             , SLOT  ( edit_finished  ()                 ) );
    connect( tbar_            , SIGNAL( currentChanged ( int )            ),
@@ -201,24 +211,7 @@ void QBtPanel::tab_mouse_event()
 
 bool QBtPanel::eventFilter(QObject *obj, QEvent *event)
 {
-    if(obj == path_)
-    {
-        if(event->type() == QEvent::KeyPress)
-        {
-            QKeyEvent* key = static_cast<QKeyEvent*>(event);
-            if( key->key() == Qt::Key_Tab )
-            {
-                event->accept();
-                auto edit = path_->lineEdit();
-                if( edit->hasSelectedText() && !edit->selectedText().endsWith("/") ) {
-                    edit->setText(edit->text() + "/");
-                }
-                edit->setSelection(edit->text().size(),0);
-                return true;
-            }
-        }
-    }
-    return false;
+    return QWidget::eventFilter(obj, event);
 }
 
 //*******************************************************************
@@ -292,12 +285,12 @@ void QBtPanel::customEvent( QEvent* const in_event )
       switch( type ) {
          case QBtEvent::SHOW_LEFT_FSTAB:
             if( QBtWorkspace::LEFT_PANEL_ID == idx_ ) {
-               fstab_->showPopup();
+               fstab_->showMenu();
             }
             break;
          case QBtEvent::SHOW_RIGHT_FSTAB:
             if( QBtWorkspace::RIGHT_PANEL_ID == idx_ ) {
-               fstab_->showPopup();
+               fstab_->showMenu();
             }
             break;
       }
@@ -328,7 +321,7 @@ void QBtPanel::set_tab_id( const qint32 in_id )
 //*******************************************************************
 void QBtPanel::show_fstab()
 {
-   fstab_->showPopup();
+   fstab_->showMenu();
 }
 // end of show_fstab
 
@@ -450,7 +443,9 @@ void QBtPanel::del_tab_request()
 //*******************************************************************
 qint32 QBtPanel::new_tab(const QString& in_path , int sortColumn, Qt::SortOrder sortOrder)
 {
-   qint32 idx = tbar_->addTab( in_path );
+   const QString name = QFileInfo( in_path ).fileName();
+   const qint32 idx = tbar_->addTab( name.isEmpty() ? in_path : name );
+   tbar_->setTabToolTip( idx, in_path );
 
    QBtView* const view = new QBtView( in_path, sortColumn, sortOrder );
    view->setDragEnabled(true);
@@ -475,33 +470,56 @@ qint32 QBtPanel::new_tab(const QString& in_path , int sortColumn, Qt::SortOrder 
 void QBtPanel::current_path( const QString& in_path )
 {
    path_->setPath(in_path);
-   tbar_->setTabText( tbar_->currentIndex(), in_path );
+   const QString name = QFileInfo( in_path ).fileName();
+   const qint32 idx = tbar_->currentIndex();
+   tbar_->setTabText( idx, name.isEmpty() ? in_path : name );
+   tbar_->setTabToolTip( idx, in_path );
+   select_volume( in_path );
 }
 // end of current_path
 
 //*******************************************************************
 // update_fstab                                              PRIVATE
 //*******************************************************************
+// Rebuilt every time the menu opens, so newly mounted volumes show up.
 void QBtPanel::update_fstab()
 {
-   QStringList args;
-   args << "-h" << "-T nonfs";
-   
-   QProcess sc;
-   sc.start( "df", args );
-
-   QByteArray data;
-   while( sc.waitForReadyRead() ) {
-      data += sc.readAll();
+   QMenu* const menu = fstab_->menu();
+   menu->clear();
+   QActionGroup* const group = new QActionGroup( menu );
+   QFileIconProvider icons;
+   const QList<QStorageInfo> volumes = QStorageInfo::mountedVolumes();
+   for( const QStorageInfo& volume : volumes ) {
+      if( !volume.isValid() || !volume.isReady() ) continue;
+      const QString root = volume.rootPath();
+#if defined(Q_OS_MAC)
+      // Hide the APFS system/data/VM helper volumes, keep "/" and /Volumes/*.
+      if( root != "/" && !root.startsWith( "/Volumes/" ) ) continue;
+#endif
+      QString name = volume.displayName();
+      if( name.isEmpty() || name == root ) name = root;
+      QAction* const action = menu->addAction( icons.icon( QFileInfo( root ) ), name );
+      action->setData( root );
+      action->setToolTip( root );
+      action->setCheckable( true );
+      action->setChecked( root == volume_root_ );
+      group->addAction( action );
    }
+}
 
-   const QStringList text = QString::fromLocal8Bit( data ).split( '\n', QString::SkipEmptyParts );
-   for( qint32 i = 1; i < text.size(); ++i ) {
-      const QStringList items = text[ i ].split( ' ', QString::SkipEmptyParts );
-      if( items.first().startsWith( '/' ) && items.last().startsWith( '/' ) ) {
-         fstab_->addItem( items.last() );
-      }
-   }
+//*******************************************************************
+// select_volume                                             PRIVATE
+//*******************************************************************
+void QBtPanel::select_volume( const QString& in_path )
+{
+   const QStorageInfo volume( in_path );
+   const QString root = volume.rootPath();
+   if( root == volume_root_ ) return;
+
+   volume_root_ = root;
+   const QString name = volume.displayName().isEmpty() ? root : volume.displayName();
+   fstab_->setIcon( QFileIconProvider().icon( QFileInfo( root ) ) );
+   fstab_->setToolTip( tr( "Volume: %1 (%2)" ).arg( name, root ) );
 }
 // end of update_fstab
 
@@ -555,11 +573,13 @@ void QBtPanel::item_changed( const QString& in_text )
 //*******************************************************************
 // fstab_changed                                        PRIVATE slot
 //*******************************************************************
-void QBtPanel::fstab_changed( const QString& in_path )
+void QBtPanel::fstab_changed( QAction* const in_action )
 {
+   const QString path = in_action->data().toString();
+   if( path.isEmpty() ) return;
    QBtView* const view = dynamic_cast< QBtView* >( wstack_->currentWidget() );
    view->setFocus( Qt::OtherFocusReason );
-   view->update( in_path );
+   view->update( path );
 }
 // end of fstab_activated
 

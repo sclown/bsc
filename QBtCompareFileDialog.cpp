@@ -125,13 +125,13 @@ void QBtCompareFileDialog::showEvent( QShowEvent* const in_event )
    const QFontMetrics fm     = ifield1_->fontMetrics();
 
    QString src_path = fpath1_;
-   if( fm.width( src_path ) > MAXLEN ) {
+   if( fm.horizontalAdvance( src_path ) > MAXLEN ) {
       QBtShared::elide( fm, MAXLEN, src_path );
    }
    ifield1_->setText( src_path );
    
    QString dst_path = fpath2_;
-   if( fm.width( dst_path ) > MAXLEN ) {
+   if( fm.horizontalAdvance( dst_path ) > MAXLEN ) {
       QBtShared::elide( fm, MAXLEN, dst_path );
    }
    ifield2_->setText( dst_path );

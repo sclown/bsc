@@ -28,5 +28,6 @@
         <file>img/terminal.png</file>
         <file>img/symlink.png</file>
         <file>img/symlink@2x.png</file>
+        <file>help.en.html</file>
     </qresource>
 </RCC>

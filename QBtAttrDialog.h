@@ -32,6 +32,7 @@
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
 #include <QDialog>
+#include <QFileDevice>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -65,6 +66,7 @@ private:
    static const char* const READ;
    static const char* const WRITE;
    static const char* const EXECUTE;
+   static const char* const CANT_CHANGE;
 
 //******* MEMBERS *******
 private:
@@ -86,7 +88,7 @@ private:
 //******* METHODS *******
 private:
    void    set_info();
-   QString get_info() const;
+   QFileDevice::Permissions get_permissions() const;
    bool    are_dirs() const;
    void    execute ( const QString& ) const;
 private slots:

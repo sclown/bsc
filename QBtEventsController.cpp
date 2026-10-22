@@ -82,7 +82,6 @@ bool QBtEventsController::append( QObject* const in_receiver, const qint32 in_ev
       EventsRegister::iterator it = evreg_.find( in_event_id );
       if( it != evreg_.end() ) {
          retval = it->second.insert( in_receiver ).second;
-         //print();
       }
    }
    return retval;
@@ -104,7 +103,6 @@ void QBtEventsController::remove( QObject* const in_receiver )
          ++it;
       }
    }
-   //print();
 }
 // end of remove
 
@@ -219,27 +217,3 @@ void QBtEventsController::send_event(  const qint32 in_event_id,
    }
 }
 // end of send_event
-
-
-//*******************************************************************
-// print                                                     PRIVATE
-//*******************************************************************
-/*
-void QBtEventsController::print()
-{
-   qDebug() << "=======================================================";
-   EventsRegister::const_iterator rit = evreg_.begin();
-   const EventsRegister::const_iterator rend = evreg_.end();
-   while( rit != rend ) {
-      qDebug() << rit->first;
-      Objects::const_iterator it = rit->second.begin();
-      const Objects::const_iterator end = rit->second.end();
-      while( it != end ) {
-         qDebug() << "\t" << *it;
-         ++it;
-      }
-      ++rit;
-   }
-}
-*/
-// end of print

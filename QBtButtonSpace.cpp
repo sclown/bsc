@@ -34,6 +34,7 @@
 #include <QPushButton>
 #include <QSignalMapper>
 #include <QHBoxLayout>
+#include <QKeySequence>
 #include <QtDebug>
 
 /*------- constants:
@@ -57,10 +58,10 @@ const char* const QBtButtonSpace::LABEL[] = {
 QBtButtonSpace::QBtButtonSpace( QWidget* const in_parent ) : QWidget( in_parent )
 {
    QSignalMapper* const mapper = new QSignalMapper( this );
-   connect( mapper, SIGNAL( mapped( int ) ), this, SLOT( clicked( int ) ) );
+   connect( mapper, SIGNAL( mappedInt( int ) ), this, SLOT( clicked( int ) ) );
 
    QHBoxLayout* const hbt = new QHBoxLayout( this );
-   hbt->setMargin( 0 );
+   hbt->setContentsMargins( 0, 0, 0, 0 );
 
    for( qint32 i = F1; i < BUTTONS_COUNT; ++i ) {
       button_[ i ] = new QPushButton;
@@ -86,28 +87,27 @@ void QBtButtonSpace::retranslate()
       const QString label  = tr( LABEL[ i ] );
       QString text = "";
 
+      // Captions show the plain number: the button answers to both
+      // F<n> and Alt(Option)+<n> (Alt+0 for F10).
+      const QString digit = QString::number( ( i + 1 ) % 10 );
       switch( mode ) {
          case ONLY_FN:
-            text = "F" + number;
+            text = number;
             break;
          case ONLY_TEXT:
             text = label;
             break;
          case FULL_DESC:
-            text  = "F";
-            text += number;
-            text += ' ';
-            text += label;
+            text = number + ' ' + label;
             break;
          case TWO_LINES:
-            text  = "F";
-            text += number;
-            text += '\n';
-            text += label;
+            text = number + '\n' + label;
          break;
       }
       button_[ i ]->setFont( font );
       button_[ i ]->setText( text );
+      button_[ i ]->setToolTip( QString( "%1 (F%2, %3)" ).arg( label, number,
+         QKeySequence( Qt::ALT | ( Qt::Key_0 + digit.toInt() ) ).toString( QKeySequence::NativeText ) ) );
    }
 }
 // end of retranslate

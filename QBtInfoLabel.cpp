@@ -44,7 +44,6 @@ const QString QBtInfoLabel::Slash  = "/";
 QBtInfoLabel::QBtInfoLabel( QWidget* in_parent )
 : QLabel( in_parent )
 {
-   //setSizePolicy( QSizePolicy::Ignored, QSizePolicy::Preferred );
 }
 // end of QBtInfoLabel
 
@@ -55,7 +54,7 @@ void QBtInfoLabel::setText( const QString& in_text )
 {
    const QFontMetrics fm( font() );
    QFileInfo fi( in_text );
-   setMinimumWidth( fm.width( Spacer + fi.fileName() ) );
+   setMinimumWidth( fm.horizontalAdvance( Spacer + fi.fileName() ) );
    QLabel::setText( in_text );
 }
 // end of setText
@@ -81,9 +80,9 @@ QString QBtInfoLabel::elide( const int in_width ) const
    const QFontMetrics fm( font() );
    
    QString buffer = text();
-   if( fm.width( buffer ) <= in_width ) return buffer;
+   if( fm.horizontalAdvance( buffer ) <= in_width ) return buffer;
 
-   const QStringList words    = buffer.split( Slash, QString::SkipEmptyParts );
+   const QStringList words    = buffer.split( Slash, Qt::SkipEmptyParts );
          int         i        = 0;
          int         j        = words.count() - 1;
          QString     lft_part = QString();
@@ -95,7 +94,7 @@ QString QBtInfoLabel::elide( const int in_width ) const
       lft_ok = false;
       if( i < j ) {
          const QString tmp = lft_part + Slash + words[i];
-         if( fm.width( tmp + Spacer + rgt_part ) < in_width ) {
+         if( fm.horizontalAdvance( tmp + Spacer + rgt_part ) < in_width ) {
             lft_part = tmp;
             lft_ok = true;
             ++i;
@@ -105,7 +104,7 @@ QString QBtInfoLabel::elide( const int in_width ) const
       rgt_ok = false;
       if( i < j ) {
          const QString tmp = words[j] + Slash + rgt_part;
-         if( fm.width( lft_part + Spacer + tmp ) < in_width ) {
+         if( fm.horizontalAdvance( lft_part + Spacer + tmp ) < in_width ) {
             rgt_part = tmp;
             rgt_ok = true;
             --j;

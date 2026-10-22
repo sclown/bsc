@@ -90,7 +90,7 @@ QBtEditExtensions::QBtEditExtensions( QWidget* in_parent, const QString& in_ext,
    prg_prompt_->setBuddy( prg_ );
    par_prompt_->setBuddy( par_ );
 
-   const qint32 w = fontMetrics().width( "_..._" );
+   const qint32 w = fontMetrics().horizontalAdvance( "_..._" );
    path_->setMaximumWidth( w );
    path_->setMinimumWidth( w );
 

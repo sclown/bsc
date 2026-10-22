@@ -33,13 +33,23 @@
 //*******************************************************************
 // run                                                        PUBLIC
 //*******************************************************************
-void QBtSystemCall::run( const QString& in_cmd )
+bool QBtSystemCall::run( const QString& in_program, const QStringList& in_args, const QString& in_working_dir )
 {
    buffer_.clear();
+   exit_code_ = -1;
+
    QProcess process;
-   process.start( in_cmd );
-   process.waitForFinished();
-   buffer_ = process.readAll();
+   process.setProcessChannelMode( QProcess::MergedChannels );
+   if( !in_working_dir.isEmpty() ) process.setWorkingDirectory( in_working_dir );
+   process.start( in_program, in_args );
+   if( !process.waitForStarted() ) {
+      buffer_ = process.errorString().toLocal8Bit();
+      return false;
+   }
+   process.waitForFinished( -1 );
+   buffer_    = process.readAll();
+   exit_code_ = process.exitCode();
+   return ( QProcess::NormalExit == process.exitStatus() ) && ( 0 == exit_code_ );
 }
 // end of run
 
@@ -53,15 +63,3 @@ QString QBtSystemCall::result() const
 
 // end of result
 
-QString QBtSystemCall::sys(const QString &cmd)
-{
-    QProcess process;
-    process.start( cmd );
-    process.waitForStarted();
-    QString result;
-    do {
-        result += process.readAllStandardOutput();
-        result += process.readAllStandardError();
-    } while (!process.waitForFinished(100));
-    return result;
-}

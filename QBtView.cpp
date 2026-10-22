@@ -46,6 +46,8 @@
 #include "QBTMacTools.h"
 #include <QVBoxLayout>
 #include <QHeaderView>
+#include <QStyleHints>
+#include <QScrollBar>
 #include <QKeyEvent>
 #include <QDir>
 #include <QInputDialog>
@@ -54,7 +56,7 @@
 #include <QMessageBox>
 #include <QDrag>
 #include <QDesktopServices>
-#include <QApplication>>
+#include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
 #include <QUrl>
@@ -93,13 +95,18 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    setVerticalScrollMode(ScrollPerItem);
 
    header()->setStretchLastSection( true );
+   header()->setHighlightSections( false );
+   header()->setMinimumSectionSize( 40 );
    header()->setSortIndicator( sortColumn, sortOrder );
    header()->setSortIndicatorShown( true );
    header()->setSectionsClickable( true );
    connect( header(), SIGNAL( sortIndicatorChanged(int, Qt::SortOrder ) ), this, SLOT( sortChanged( int, Qt::SortOrder ) ) );
 
    settings();
+   style_header();
+   connect( qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, &QBtView::style_header );
 
+   connect( model_, SIGNAL( update_started() ), this, SLOT( request_started() ) );
    connect( model_, SIGNAL( update_finished() ), this, SLOT( request_finished() ) );
    setModel( model_ );
    selectionModel_ = new QBtViewSelectionModel( model_ );
@@ -848,6 +855,24 @@ void QBtView::scrollContentsBy(int dx, int dy)
 }
 
 //*******************************************************************
+// request_started                                      PRIVATE slot
+//*******************************************************************
+// A listing the view did not ask for (e.g. the folder changed on disk)
+// must not lose the cursor: remember the current item and select it
+// again once the listing is done.
+void QBtView::request_started()
+{
+   if( requests_.empty() ) {
+      const QString current = selected_file_full_name();
+      if( !current.isEmpty() ) {
+         set_initial_file_request( current );
+         keep_scroll_ = verticalScrollBar()->value();
+      }
+   }
+}
+// end of request_started
+
+//*******************************************************************
 // request_finished                                     PRIVATE slot
 //*******************************************************************
 void QBtView::request_finished()
@@ -868,6 +893,10 @@ void QBtView::request_finished()
             break;
       }
    }
+   if( keep_scroll_ >= 0 ) {
+      verticalScrollBar()->setValue( keep_scroll_ );
+      keep_scroll_ = -1;
+   }
    emit dir_count   ( model_->dir_count ()   );
    emit file_count  ( model_->file_count()   );
    emit select_count( selectionModel_->selection_count() );
@@ -886,12 +915,46 @@ void QBtView::sortChanged(int logicalIndex, Qt::SortOrder order)
 //*******************************************************************
 void QBtView::resize_columns()
 {
+   // Name, Size, Date and Time fill the panel; the remaining columns
+   // (Access, Owner, Group) sit past the right edge.
    setColumnWidth(0, width()*0.55);
    for( qint32 i = 1; i < model_->columnCount(); ++i ) {
        setColumnWidth(i, width()*0.15);
    }
 }
 // end of resize_columns
+
+//*******************************************************************
+// style_header                                              PRIVATE
+//*******************************************************************
+// Flat, Finder-like column header: secondary text colour, no raised
+// sections, hairline separators. Colours come from the palette so it
+// follows light/dark mode.
+void QBtView::style_header()
+{
+   const QPalette pal = palette();
+   const QColor base = pal.color( QPalette::Base );
+   const QColor text = pal.color( QPalette::Text );
+   const auto mix = [&]( qreal t ) {
+      return QColor::fromRgbF( base.redF()   + ( text.redF()   - base.redF()   ) * t,
+                               base.greenF() + ( text.greenF() - base.greenF() ) * t,
+                               base.blueF()  + ( text.blueF()  - base.blueF()  ) * t ).name();
+   };
+
+   QFont hf = font();
+   hf.setPointSizeF( hf.pointSizeF() * 0.92 );
+   hf.setWeight( QFont::DemiBold );
+   header()->setFont( hf );
+
+   header()->setStyleSheet( QString(
+      "QHeaderView { background: %1; border: none; border-bottom: 1px solid %2; }"
+      "QHeaderView::section { background: %1; color: %3; border: none;"
+      "  border-right: 1px solid %4; padding: 4px 6px; }"
+      "QHeaderView::section:last { border-right: none; }"
+      "QHeaderView::section:hover { color: %5; }" )
+      .arg( base.name(), mix( 0.15 ), mix( 0.55 ), mix( 0.10 ), text.name() ) );
+}
+// end of style_header
 
 //*******************************************************************
 // goto_top                                                   PUBLIC

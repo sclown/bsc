@@ -31,7 +31,6 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtCopyDialog.h"
-#include "QBtSystemCall.h"
 #include "QBtOverwriteAnswer.h"
 #include <QThread>
 
@@ -57,16 +56,10 @@ private:
 
 //******* CONSTANTS *******
 private:
-   enum {
-      BLOCK_SIZE = 8192000
-   };
    static const char* const CAPTION;
-   static const QString     CHOWN;
 
 //******* MEMBERS *******
 private:
-   char block_ [ BLOCK_SIZE ];
-   QBtSystemCall sc_;
    QThread thread_;
    QBtDirCopyWorker *worker_;
 

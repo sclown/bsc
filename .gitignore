@@ -5,3 +5,10 @@ Makefile
 # osx noise
 .DS_Store
 
+
+# build output / IDE state
+build/
+cmake-build-*/
+CMakeLists.txt.user
+*.pro.user
+tmp/

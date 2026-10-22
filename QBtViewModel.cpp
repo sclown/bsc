@@ -31,7 +31,6 @@
 #include "QBtViewItem.h"
 #include "QBtEventsController.h"
 #include <QInputDialog>
-#include <QRegExp>
 #include <QDir>
 #include <QtDebug>
 
@@ -68,7 +67,6 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
 {
    QStringList hdrs;
    hdrs  << HDR_NAME
-//         << HDR_EXT
          << HDR_SIZE
          << HDR_DATE
          << HDR_TIME
@@ -76,6 +74,12 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
          << HDR_OWNER
          << HDR_GROUP;
    setHorizontalHeaderLabels ( hdrs );
+
+   // Header captions follow the alignment of their column values.
+   for( qint32 i = 0; i < hdrs.size(); ++i ) {
+      setHeaderData( i, Qt::Horizontal, int( Qt::AlignLeft | Qt::AlignVCenter ), Qt::TextAlignmentRole );
+   }
+   setHeaderData( 1, Qt::Horizontal, int( Qt::AlignRight | Qt::AlignVCenter ), Qt::TextAlignmentRole );
 }
 // end of QBtViewModel
 

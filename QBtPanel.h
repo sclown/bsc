@@ -38,7 +38,8 @@ class QBtTabBar;
 class QBtPathBox;
 class QStackedWidget;
 class QLabel;
-class QComboBox;
+class QToolButton;
+class QAction;
 class QHBoxLayout;
 class QBtView;
 
@@ -66,7 +67,8 @@ private:
 private:
    qint32                idx_;
    QBtPathBox*      const path_;
-   QComboBox*      const fstab_;
+   QToolButton*    const fstab_;
+   QString               volume_root_;
    QBtTabBar*      const tbar_;
    QStackedWidget* const wstack_;
    QLabel*         const dirs_;
@@ -78,7 +80,7 @@ public:
    void           show_fstab            ();
    void           set_tab_id            ( qint32 );
    QBtView* const current_view          () const;
-   QHBoxLayout * const pathLineLayout();
+   QHBoxLayout*   pathLineLayout        ();
 private:
    bool           eventFilter           ( QObject*, QEvent* );
    void           keyPressEvent         ( QKeyEvent* );
@@ -87,6 +89,7 @@ private:
    void           del_tab_request       ();
    qint32         new_tab               ( const QString&, int, Qt::SortOrder );
    void           update_fstab          ();
+   void           select_volume         ( const QString& );
    void           save                  ();
    void           restore               ();
 private slots:
@@ -98,7 +101,7 @@ private slots:
    void           update_selected_count ( qint32 );
    void           path_changed          ( const QString& );
    void           item_changed          ( const QString& );
-   void           fstab_changed         ( const QString& );
+   void           fstab_changed         ( QAction* );
    void           edit_finished         ();
 };
 

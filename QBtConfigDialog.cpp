@@ -81,7 +81,7 @@ QBtConfigDialog::QBtConfigDialog( QWidget* const in_parent ) : QDialog( in_paren
    hb->addWidget( exit_ );
    
    QVBoxLayout* vb = new QVBoxLayout( this );
-   vb->setMargin( 2 );
+   vb->setContentsMargins( 2, 2, 2, 2 );
    vb->addWidget( tbar_ );
    vb->addWidget( wstack_ );
    vb->addLayout( hb );

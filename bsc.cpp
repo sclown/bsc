@@ -44,8 +44,6 @@
 int main( int in_argc, char** in_argv )
 {
 
-   Q_INIT_RESOURCE( bsc );
-
    QCoreApplication::setOrganizationName  ( QBtShared::ORGANISATION );
    QCoreApplication::setOrganizationDomain( QBtShared::ORGANISATION );
    QCoreApplication::setApplicationName   ( QBtShared::PROGRAM_NAME );
@@ -58,7 +56,6 @@ int main( int in_argc, char** in_argv )
    #if defined(Q_OS_WIN)
        bsc.setWindowIcon( QIcon( ":/img/bsc.png" ) );
    #endif
-   bsc.setAttribute(Qt::AA_UseHighDpiPixmaps);
 
    QBtConfig::instance();
    QBtEventsController::instance();

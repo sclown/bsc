@@ -163,82 +163,82 @@ void QBtConfig::read_data()
    // bkg f nc ns
    bkg_f_nc_ns_color_ = DEFAULT_BKG_F_NC_NS_COLOR;
    if( stt.read( VIEW_GROUP + BKG_F_NC_NS_COLOR_KEY, data ) ) {
-      bkg_f_nc_ns_color_.setNamedColor( data.toString() );
+      bkg_f_nc_ns_color_ = QColor::fromString( data.toString() );
    }
    // txt f nc ns
    txt_f_nc_ns_color_ = DEFAULT_TXT_F_NC_NS_COLOR;
    if( stt.read( VIEW_GROUP + TXT_F_NC_NS_COLOR_KEY, data ) ) {
-      txt_f_nc_ns_color_.setNamedColor( data.toString() );
+      txt_f_nc_ns_color_ = QColor::fromString( data.toString() );
    }
    // bkg nf nc ns
    bkg_nf_nc_ns_color_ = DEFAULT_BKG_NF_NC_NS_COLOR;
    if( stt.read( VIEW_GROUP + BKG_NF_NC_NS_COLOR_KEY, data ) ) {
-      bkg_nf_nc_ns_color_.setNamedColor( data.toString() );
+      bkg_nf_nc_ns_color_ = QColor::fromString( data.toString() );
    }
    // txt nf nc ns
    txt_nf_nc_ns_color_ = DEFAULT_TXT_NF_NC_NS_COLOR;
    if( stt.read( VIEW_GROUP + TXT_NF_NC_NS_COLOR_KEY, data ) ) {
-      txt_nf_nc_ns_color_.setNamedColor( data.toString() );
+      txt_nf_nc_ns_color_ = QColor::fromString( data.toString() );
    }
    // bkg f nc s
    bkg_f_nc_s_color_ = DEFAULT_BKG_F_NC_S_COLOR;
    if( stt.read( VIEW_GROUP + BKG_F_NC_S_COLOR_KEY, data ) ) {
-      bkg_f_nc_s_color_.setNamedColor( data.toString() );
+      bkg_f_nc_s_color_ = QColor::fromString( data.toString() );
    }
    // txt f nc s
    txt_f_nc_s_color_ = DEFAULT_TXT_F_NC_S_COLOR;
    if( stt.read( VIEW_GROUP + TXT_F_NC_S_COLOR_KEY, data ) ) {
-      txt_f_nc_s_color_.setNamedColor( data.toString() );
+      txt_f_nc_s_color_ = QColor::fromString( data.toString() );
    }
    // bkg nf nc s
    bkg_nf_nc_s_color_ = DEFAULT_BKG_NF_NC_S_COLOR;
    if( stt.read( VIEW_GROUP + BKG_NF_NC_S_COLOR_KEY, data ) ) {
-      bkg_nf_nc_s_color_.setNamedColor( data.toString() );
+      bkg_nf_nc_s_color_ = QColor::fromString( data.toString() );
    }
    // txt nf nc s
    txt_nf_nc_s_color_ = DEFAULT_TXT_NF_NC_S_COLOR;
    if( stt.read( VIEW_GROUP + TXT_NF_NC_S_COLOR_KEY, data ) ) {
-      txt_nf_nc_s_color_.setNamedColor( data.toString() );
+      txt_nf_nc_s_color_ = QColor::fromString( data.toString() );
    }
    // bkg f c s
    bkg_f_c_s_color_ = DEFAULT_BKG_F_C_S_COLOR;
    if( stt.read( VIEW_GROUP + BKG_F_C_S_COLOR_KEY, data ) ) {
-      bkg_f_c_s_color_.setNamedColor( data.toString() );
+      bkg_f_c_s_color_ = QColor::fromString( data.toString() );
    }
    // txt f c s
    txt_f_c_s_color_ = DEFAULT_TXT_F_C_S_COLOR;
    if( stt.read( VIEW_GROUP + TXT_F_C_S_COLOR_KEY, data ) ) {
-      txt_f_c_s_color_.setNamedColor( data.toString() );
+      txt_f_c_s_color_ = QColor::fromString( data.toString() );
    }
    // bkg nf c s
    bkg_nf_c_s_color_ = DEFAULT_BKG_NF_C_S_COLOR;
    if( stt.read( VIEW_GROUP + BKG_NF_C_S_COLOR_KEY, data ) ) {
-      bkg_nf_c_s_color_.setNamedColor( data.toString() );
+      bkg_nf_c_s_color_ = QColor::fromString( data.toString() );
    }
    // txt nf c s
    txt_nf_c_s_color_ = DEFAULT_TXT_NF_C_S_COLOR;
    if( stt.read( VIEW_GROUP + TXT_NF_C_S_COLOR_KEY, data ) ) {
-      txt_nf_c_s_color_.setNamedColor( data.toString() );
+      txt_nf_c_s_color_ = QColor::fromString( data.toString() );
    }
    // bkg f c ns
    bkg_f_c_ns_color_ = DEFAULT_BKG_F_C_NS_COLOR;
    if( stt.read( VIEW_GROUP + BKG_F_C_NS_COLOR_KEY, data ) ) {
-      bkg_f_c_ns_color_.setNamedColor( data.toString() );
+      bkg_f_c_ns_color_ = QColor::fromString( data.toString() );
    }
    // txt f c ns
    txt_f_c_ns_color_ = DEFAULT_TXT_F_C_NS_COLOR;
    if( stt.read( VIEW_GROUP + TXT_F_C_NS_COLOR_KEY, data ) ) {
-      txt_f_c_ns_color_.setNamedColor( data.toString() );
+      txt_f_c_ns_color_ = QColor::fromString( data.toString() );
    }
    // bkg nf c ns
    bkg_nf_c_ns_color_ = DEFAULT_BKG_NF_C_NS_COLOR;
    if( stt.read( VIEW_GROUP + BKG_NF_C_NS_COLOR_KEY, data ) ) {
-      bkg_nf_c_ns_color_.setNamedColor( data.toString() );
+      bkg_nf_c_ns_color_ = QColor::fromString( data.toString() );
    }
    // txt nf c ns
    txt_nf_c_ns_color_ = DEFAULT_TXT_NF_C_NS_COLOR;
    if( stt.read( VIEW_GROUP + TXT_NF_C_NS_COLOR_KEY, data ) ) {
-      txt_nf_c_ns_color_.setNamedColor( data.toString() );
+      txt_nf_c_ns_color_ = QColor::fromString( data.toString() );
    }
 }
 // end of read_data

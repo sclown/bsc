@@ -16,17 +16,17 @@
  *  along with Phototonic.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <QDirModel>
+#include <QFileSystemModel>
 #include "dircompleter.h"
 
 DirCompleter::DirCompleter(QObject *parent) : QCompleter(parent),
     home_(QDir::homePath()),
     replaceHome_(false)
 {
-	QDirModel *model = new QDirModel;
+    QFileSystemModel *model = new QFileSystemModel(this);
     model->setFilter(QDir::AllDirs | QDir::Hidden | QDir::NoDotAndDotDot);
-	model->setLazyChildCount(true);
-	setModel(model);
+    model->setRootPath(QString());
+    setModel(model);
 }
 
 QString DirCompleter::pathFromIndex(const QModelIndex &index) const

@@ -29,7 +29,6 @@
 -------------------------------------------------------------------*/
 #include "QBtDirCopyDialog.h"
 #include "QBtCanOverwrite.h"
-#include "QBtDirParser.h"
 #include "QBtShared.h"
 #include "QBtDirCopyWorker.h"
 #include <QDir>
@@ -40,13 +39,9 @@
 #include <QLineEdit>
 #include <QtDebug>
 
-#include <unistd.h>
-#include <utime.h>
-
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtDirCopyDialog::CAPTION = QT_TR_NOOP( "Copy processing" );
-const QString     QBtDirCopyDialog::CHOWN   = "chown %1:%2 %3";
 
 
 //*******************************************************************

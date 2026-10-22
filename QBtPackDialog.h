@@ -77,6 +77,7 @@ private:
    static const char* const GZIP;
    static const char* const BZIP2;
    static const char* const ZIP;
+   static const char* const PACK_FAILED;
    static const QString     TAR_EXT;
    static const QString     GZIP_EXT;
    static const QString     BZIP2_EXT;
@@ -115,8 +116,9 @@ public:
    void           display_src    ( const QString& );
    void           display_dst    ();
    QString        path2display   ();
-   void           run_tar        ();
-   void           run_zip        ();
+   bool           run_tar        ();
+   bool           run_zip        ();
+   bool           execute        ( const QString& program, const QStringList& args, const QString& working_dir );
 private slots:
    void reject            ();
    void compression       ( bool );

@@ -74,9 +74,8 @@ QBtHelp::QBtHelp( QWidget* const in_parent ) : QDialog( in_parent )
 //*******************************************************************
 void QBtHelp::showEvent( QShowEvent* const in_event )
 {
-   QString fpath = QApplication::applicationDirPath();
-   if( !fpath.endsWith( QDir::separator() ) ) fpath += QDir::separator();
-   fpath += "help.en.html";
+   // Compiled into the executable (bsc.qrc), so every package carries it.
+   const QString fpath = ":/help.en.html";
 
    QFile file( fpath );
    if( file.open( QIODevice::ReadOnly ) ) {

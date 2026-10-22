@@ -33,7 +33,7 @@
  #include <QHBoxLayout>
  #include <QPushButton>
  #include <QTreeView>
- #include <QDirModel>
+ #include <QFileSystemModel>
  #include <QDir>
  #include <QHeaderView>
  #include <QtDebug>
@@ -53,14 +53,18 @@ QBtDirSelector::QBtDirSelector( QWidget* const in_parent, const QString& in_path
 , view_       ( new QTreeView )
 , select_btn_ ( new QPushButton( tr( Select ) ) )
 , cancel_btn_ ( new QPushButton( tr( Close  ) ) )
-, model_      ( new QDirModel( QStringList(), QDir::AllDirs|QDir::NoDotAndDotDot, QDir::Name | QDir::IgnoreCase ) )
+, model_      ( new QFileSystemModel( this ) )
 , path_       ( in_path )
 {
    setWindowTitle( tr( Caption ) );
    cancel_btn_->setDefault( true );
 
+   model_->setFilter( QDir::AllDirs | QDir::NoDotAndDotDot );
    model_->setReadOnly( true );
+   model_->setRootPath( QString() );
    view_->setModel( model_ );
+   view_->setSortingEnabled( true );
+   view_->sortByColumn( 0, Qt::AscendingOrder );
    view_->setColumnHidden( 1, true );
    QHeaderView* const hdr = view_->header();
    hdr->setStretchLastSection( true );
