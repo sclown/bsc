@@ -36,39 +36,21 @@
 #include <QGroupBox>
 #include <QGridLayout>
 #include <QProgressBar>
-#include <QCheckBox>
 #include <QPushButton>
 #include <QLabel>
-#include <QInputDialog>
 #include <QFileInfo>
-#include <QProcess>
 #include <QFileSystemModel>
 #include <QCompleter>
-#include <QtDebug>
 
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtCopyDialog::SRC_DST_CAPTION  = QT_TR_NOOP( "Source and destination" );
 const char* const QBtCopyDialog::PROGRESS_CAPTION = QT_TR_NOOP( "Progress" );
-const char* const QBtCopyDialog::REMOVE           = QT_TR_NOOP( "&remove source file(s)" );
-const char* const QBtCopyDialog::OWNER            = QT_TR_NOOP( "preserve &owner/group" );
-const char* const QBtCopyDialog::PERMISSIONS      = QT_TR_NOOP( "preserve &permissions" );
-const char* const QBtCopyDialog::DATIME           = QT_TR_NOOP( "preserve &date/time" );
 const char* const QBtCopyDialog::START            = QT_TR_NOOP( "&Start" );
 const char* const QBtCopyDialog::EXIT             = QT_TR_NOOP( "&Exit" );
 const char* const QBtCopyDialog::BREAK            = QT_TR_NOOP( "&Break" );
 const char* const QBtCopyDialog::SRC_LABEL        = QT_TR_NOOP( "Source:" );
 const char* const QBtCopyDialog::DST_LABEL        = QT_TR_NOOP( "Destination:" );
-const char* const QBtCopyDialog::DIR_NOT_WRITABLE = QT_TR_NOOP( "You can't wite to this directory (%1).\nCheck permission access." );
-const char* const QBtCopyDialog::DIR_NOT_READABLE = QT_TR_NOOP( "You can't read from this directory: %1.\nCheck permission access." );
-const char* const QBtCopyDialog::FILE_NOT_READABLE= QT_TR_NOOP( "You can't read from this file (%1).\nCheck permission access." );
-const char* const QBtCopyDialog::OPEN_READ_ERROR  = QT_TR_NOOP( "Can't open the file for reading:\n%1" );
-const char* const QBtCopyDialog::OPEN_WRITE_ERROR = QT_TR_NOOP( "Can't open the file for writing:\n%1" );
-const char* const QBtCopyDialog::RENAME           = QT_TR_NOOP( "Rename" );
-const char* const QBtCopyDialog::NEW_FILE_NAME    = QT_TR_NOOP( "New file name:" );
-const char* const QBtCopyDialog::MKDIR_ERROR      = QT_TR_NOOP( "Can't create the directory: %1" );
-const char* const QBtCopyDialog::CANT_DEL_FILE    = QT_TR_NOOP( "Can't remove a file:\n%1" );
-const char* const QBtCopyDialog::CANT_DEL_DIR     = QT_TR_NOOP( "Can't remove a directory:\n%1" );
 const char* const QBtCopyDialog::SRC_ITEMS_COUNT_TEXT    = QT_TR_NOOP( "%1 items" );
 
 
@@ -81,7 +63,6 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , start_        ( new QPushButton( tr( START     ) ) )
 , exit_         ( new QPushButton( tr( EXIT      ) ) )
 , started_      ( false )
-, ask_again_    ( true )
 , sources_      ( SelectionsSet() )
 , destpath_     ( QString() )
 , src_path_     ( new QBtInfoField )
@@ -115,10 +96,6 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    progress_layout->addWidget( progress_ );
    
    // Buttons
-   QVBoxLayout* const btn_layout = new QVBoxLayout;
-   btn_layout->addWidget( exit_ );
-   btn_layout->addWidget( start_ );
-   btn_layout->addStretch( 100 );
    QHBoxLayout* const in_layout = new QHBoxLayout;
    in_layout->addWidget( start_ );
    in_layout->addWidget( exit_ );
@@ -232,27 +209,6 @@ void QBtCopyDialog::display_paths( const QString& in_src_path, const QString& in
    dst_path_->setText( in_dst_path );
 }
 // end of display_info
-
-//*******************************************************************
-// rename                                                    PRIVATE
-//*******************************************************************
-QString QBtCopyDialog::rename( const QString& inout_fpath )
-{
-    QString fpath = QBtShared::auto_rename(inout_fpath);
-   
-    const QFileInfo fi( fpath );
-    const QString fname = fi.fileName();
-
-    bool ok = false;
-    const QString new_fname = QInputDialog::getText( this, tr( RENAME ), tr( NEW_FILE_NAME ), QLineEdit::Normal, fname, &ok );
-    if( ok && !new_fname.isEmpty() ) {
-        QString fpath = fi.path();
-        if( !fpath.endsWith( '/' )) fpath += '/';
-        fpath += new_fname;
-    }
-    return fpath;
-}
-// end of rename
 
 //*******************************************************************
 // reset_progress                                          PROTECTED

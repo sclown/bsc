@@ -50,18 +50,11 @@ class QBtCanOverwrite : public QDialog
 public:
    QBtCanOverwrite( QWidget* );
 private:
-   QBtCanOverwrite( const QBtCanOverwrite* );
+   QBtCanOverwrite( const QBtCanOverwrite& );
    QBtCanOverwrite& operator=( const QBtCanOverwrite& );
 
 //******* CONSTANTS *******
 public:
-   enum {
-      CANCEL_FILE = -1,
-      SKIP_FILE = 1,
-      OVERWRITE_FILE,
-      UPDATE_FILE,
-      RENAME_FILE
-   };
    static const char* const CAPTION;
    static const char* const MESSAGE;
    static const char* const SKIP;

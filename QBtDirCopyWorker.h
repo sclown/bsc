@@ -48,7 +48,6 @@ private:
     char block_ [ BLOCK_SIZE ];
     QMutex mutex_;
     QBtCopyList list_;
-    QBtCopyState invalidSate_;
     QBtCopyState *currentState_;
     QBtOverwriteAnswer answer_;
 
@@ -56,7 +55,6 @@ signals:
    void ask_overwrite (const QString&, QBtOverwriteAnswer::ErrorType);
    void item_info (const QString&, const QString&, const qint64);
    void progress ( qint64 );
-   void failure ();
    void finished ();
 
 public slots:

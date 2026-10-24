@@ -103,32 +103,6 @@ public:
       data_.push_back( in_val1 );
       data_.push_back( in_val2 );
    }
-   //------- 3 --------------------------------------------
-   explicit QBtEvent(   const qint32 in_event_id,
-                        const QVariant in_val1,
-                        const QVariant in_val2,
-                        const QVariant in_val3 )
-   : QEvent( static_cast<QEvent::Type>( in_event_id ) )
-   {
-      data_.reserve( 3 );
-      data_.push_back( in_val1 );
-      data_.push_back( in_val2 );
-      data_.push_back( in_val3 );
-   }
-   //------- 4 --------------------------------------------
-   explicit QBtEvent(   const int in_event_id,
-                        const QVariant in_val1,
-                        const QVariant in_val2,
-                        const QVariant in_val3,
-                        const QVariant in_val4 )
-   : QEvent( static_cast<QEvent::Type>( in_event_id ) )
-   {
-      data_.reserve( 4 );
-      data_.push_back( in_val1 );
-      data_.push_back( in_val2 );
-      data_.push_back( in_val3 );
-      data_.push_back( in_val4 );
-   }
 private:
    std::vector<QVariant> data_;
 public:

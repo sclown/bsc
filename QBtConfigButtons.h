@@ -56,7 +56,6 @@ private:
 private:
    static const char* const CAPTION_MODE;
    static const char* const CAPTION_FONT;
-   static const char* const CAPTION_EXAMPLE;
    static const char* const CAPTION_FONTS;
    static const char* const ONLY_FN;
    static const char* const ONLY_TEXT;

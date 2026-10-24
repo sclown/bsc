@@ -44,14 +44,13 @@ class QBtColorDemo : public QLineEdit
 
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtColorDemo( bool = false, QWidget* = 0 );
+   QBtColorDemo( QWidget* = 0 );
 private:
    QBtColorDemo( const QBtColorDemo& );
    QBtColorDemo& operator=( const QBtColorDemo& );
 
 //******* CONSTANTS *******
 private:
-   static const int HEIGHT;
    static const char* const TEXT;
 
 //******* METHODS *******
@@ -61,7 +60,6 @@ public:
    void   color      ( const QColor& );
    QColor color      () const;
    void   fonts      ( const QFont& );
-   QFont  fonts      () const;
 
 public slots:
    void   select_bkg ();

@@ -179,32 +179,7 @@ public:
    * @param in_val2 Dana nr. 2 przekazywana wraz sygnalem.
    */
    void send_event( qint32 in_event_id, QVariant in_val1, QVariant in_val2 );
-   
-   /**
-   * @brief Wyslanie wskazanego sygnalu wraz z trzema danymi.
-   * @param in_event_id Identyfikator(numer) wysylanego sygnalu.
-   * @param in_val1 Dana nr. 1 przekazywana wraz sygnalem.
-   * @param in_val2 Dana nr. 2 przekazywana wraz sygnalem.
-   * @param in_val3 Dana nr. 3 przekazywana wraz sygnalem.
-   */
-   void send_event(  qint32   in_event_id,
-                     QVariant in_val1,
-                     QVariant in_val2,
-                     QVariant in_val3 );
 
-   /**
-   * @brief Wyslanie wskazanego sygnalu wraz z czterema danymi.
-   * @param in_event_id Identyfikator(numer) wysylanego sygnalu.
-   * @param in_val1 Dana nr. 1 przekazywana wraz sygnalem.
-   * @param in_val2 Dana nr. 2 przekazywana wraz sygnalem.
-   * @param in_val3 Dana nr. 3 przekazywana wraz sygnalem.
-   * @param in_val4 Dana nr. 4 przekazywana wraz sygnalem.
-   */
-   void send_event(  qint32   in_event_id,
-                     QVariant in_val1,
-                     QVariant in_val2,
-                     QVariant in_val3,
-                     QVariant in_val4 );
 private:
    /**
    * @brief Sprawdzenie czy para obiekt-sygnal jest juz zarejestrowana w rejestrze.

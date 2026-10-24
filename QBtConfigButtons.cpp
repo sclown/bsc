@@ -43,7 +43,6 @@
 -------------------------------------------------------------------*/
 const char* const QBtConfigButtons::CAPTION_MODE    = QT_TR_NOOP( "Display mode" );
 const char* const QBtConfigButtons::CAPTION_FONT    = QT_TR_NOOP( "Used font" );
-const char* const QBtConfigButtons::CAPTION_EXAMPLE = QT_TR_NOOP( "Example" );
 const char* const QBtConfigButtons::CAPTION_FONTS   = QT_TR_NOOP( "Accessible fonts" );
 const char* const QBtConfigButtons::ONLY_FN         = QT_TR_NOOP( "&Only function key" );
 const char* const QBtConfigButtons::ONLY_TEXT       = QT_TR_NOOP( "Only &description" );
@@ -97,7 +96,7 @@ QBtConfigButtons::QBtConfigButtons( QWidget* in_parent ) : QWidget( in_parent )
    vb_example->addWidget( example_ );
    vb_example->addWidget( font_desc_ );
    vb_example->addStretch( 100 );
-   QGroupBox* const gbox_example = new QGroupBox( tr( CAPTION_EXAMPLE ) );
+   QGroupBox* const gbox_example = new QGroupBox( tr( EXAMPLE ) );
    gbox_example->setLayout( vb_example );
    
    QHBoxLayout* const hb_main = new QHBoxLayout( this );

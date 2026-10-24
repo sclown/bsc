@@ -38,7 +38,6 @@ class QLineEdit;
 class QLabel;
 class QPushButton;
 class QGroupBox;
-class QTextBrowser;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/

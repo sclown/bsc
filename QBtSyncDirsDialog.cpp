@@ -38,15 +38,12 @@
 #include <QGroupBox>
 #include <QTreeWidget>
 #include <QPushButton>
-#include <QHeaderView>
 #include <QLabel>
 #include <QDir>
 #include <QByteArray>
 #include <QMessageBox>
-#include <QProcess>
 #include <QDateTime>
 #include <QtDebug>
-using namespace std;
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -87,7 +84,6 @@ QBtSyncDirsDialog::QBtSyncDirsDialog( QWidget* const in_parent )
 , right_dirinfo_ ( new QBtInfoLabel )
 , left_path_     ( QString()  )
 , right_path_    ( QString()  )
-, runned_        ( false )
 , continue_      ( false )
 , ready_         ( false )
 {
@@ -171,10 +167,9 @@ void QBtSyncDirsDialog::start_slot()
       QBtShared::set_cursor( Qt::BusyCursor );
       run_btn_->setEnabled( false );
       close_btn_->setText( tr( Break ) );
-      runned_ = continue_ = true;
+      continue_ = true;
       synchronize();
       close_btn_->setText( tr( Close ) );
-      runned_ = false;
       QBtShared::restore_cursor();
       QBtShared::idle();
    }
@@ -184,7 +179,7 @@ void QBtSyncDirsDialog::start_slot()
       QBtShared::set_cursor( Qt::BusyCursor );
       run_btn_->setEnabled( false );
       close_btn_->setText( tr( Break ) );
-      runned_ = continue_ = true;
+      continue_ = true;
       ready_ = false;
       compare( left_path_, right_path_ );
       view_->resizeColumnToContents( 0 );
@@ -194,7 +189,6 @@ void QBtSyncDirsDialog::start_slot()
       run_btn_->setText( tr( Synchronize ) );
       close_btn_->setText( tr( Close ) );
       run_btn_->setEnabled( true );
-      runned_ = false;
       ready_ = true;
       set_focus();
       QBtShared::restore_cursor();

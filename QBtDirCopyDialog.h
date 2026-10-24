@@ -66,7 +66,6 @@ private:
 //******* METHODS *******
 private:
    void stop();
-   bool can_update ( const QString&, const QString& ) const;
 private slots:
    void start();
    void finish();

@@ -197,21 +197,6 @@ void QBtShared::idle()
 // end of idle
 
 //*******************************************************************
-// is_gnome
-//*******************************************************************
-bool QBtShared::is_gnome()
-{
-   const char* const str = getenv( "GNOME_DESKTOP_SESSION_ID" );
-   if( str ) {
-      if( QString( str ) == "Default" ) {
-         return true;
-      }
-   }
-   return false;
-}
-// end of is_gnome
-
-//*******************************************************************
 // elide
 //*******************************************************************
 void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString& in_out_path )
@@ -297,31 +282,6 @@ bool QBtShared::is_regular_file( const QString& in_fname )
    return ( ( THIS_DIR != in_fname ) && ( PARENT_DIR != in_fname ) );
 }
 // end of is_regular_file
-
-//*******************************************************************
-// is_binary_file                                             PUBLIC
-//-------------------------------------------------------------------
-// Sprawdzamy czy wskazany plik jest plikiem binarnym.
-// UWAGA:
-//    Nie wykonujemy tutaj kontroli praw dostepu do pliku.
-//    Zakladamy, ze mamy prawo do jego odczytu.
-//      Kontrola powinna    byc zostac wykonana wczesniej.
-//*******************************************************************
-bool QBtShared::is_binary_file( const QString& in_fpath )
-{
-   bool retval = false;
-   
-   QFile file( in_fpath );
-   if( file.open( QIODevice::ReadOnly  ) ) {
-      QDataStream in( &file );
-      char buffer[ 8 ];
-      in.readRawData( buffer, 4 );
-      retval = (( 'E' == buffer[1] ) && ( 'L' == buffer[2] ) && ( 'F' == buffer[3] ));
-      file.close();
-   }
-   return retval;
-}
-// end of is_binary_file
 
 //*******************************************************************
 // set_cursor

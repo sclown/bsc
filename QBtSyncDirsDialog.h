@@ -88,15 +88,8 @@ private:
          bool           is_lft   () const { return is_lft_;    }
          bool           is_rgt   () const { return is_rgt_;    }
          bool           is_dir   () const { return is_dir_;    }
-         bool           are_both () const { return ( is_lft_ && is_rgt_ ); }
 
-         void name1    ( const QString& in_text ) { name1_     = in_text; }
-         void name2    ( const QString& in_text ) { name2_     = in_text; }
-         void path1    ( const QString& in_text ) { path1_     = in_text; }
-         void path2    ( const QString& in_text ) { path2_     = in_text; }
          void separator( const QString& in_text ) { separator_ = in_text; }
-         void is_lft   ( const bool     in_flag ) { is_lft_    = in_flag; }
-         void is_rgt   ( const bool     in_flag ) { is_rgt_    = in_flag; }
          void is_dir   ( const bool     in_flag ) { is_dir_    = in_flag; }
 
          void reset () {
@@ -157,7 +150,6 @@ private:
    QBtInfoLabel* const right_dirinfo_;
    QString             left_path_;
    QString             right_path_;
-   bool                runned_;
    bool                continue_;
    bool                ready_;
 

@@ -83,8 +83,6 @@ public:
    static void           elide          ( const QFontMetrics&, qint32, QString& );
    static QString        auto_rename    ( const QString& );
    static bool           is_regular_file( const QString& );
-   static bool           is_binary_file ( const QString& );
-   static bool           is_gnome       ();
    static void           set_cursor     ( const QCursor& );
    static void           restore_cursor ();
    static QString        slashed_dir    ( const QString& );

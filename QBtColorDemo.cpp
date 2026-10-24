@@ -33,24 +33,16 @@
 
 /*------- constants:
 -------------------------------------------------------------------*/
-const int         QBtColorDemo::HEIGHT = 14;
 const char* const QBtColorDemo::TEXT   = QT_TR_NOOP( "Text example" );
 
 //*******************************************************************
 // QBtColorDemo                                          CONSTRUCTOR
 //*******************************************************************
-QBtColorDemo::QBtColorDemo( const bool in_with_text, QWidget* const in_parent )
+QBtColorDemo::QBtColorDemo( QWidget* const in_parent )
 : QLineEdit( in_parent )
 {
-   if( in_with_text ) {
-      setText( tr( TEXT ) );
-      setAlignment( Qt::AlignHCenter );
-   }
-   else {
-      setMinimumHeight( HEIGHT );
-      setMaximumHeight( HEIGHT );
-   }
-  
+   setText( tr( TEXT ) );
+   setAlignment( Qt::AlignHCenter );
    setReadOnly( true );
    setFocusPolicy( Qt::NoFocus );
 }
@@ -94,11 +86,6 @@ QColor QBtColorDemo::color() const
 void QBtColorDemo::fonts( const QFont& in_font )
 {
    setFont( in_font );
-}
-//-----------------------------------------------
-QFont QBtColorDemo::fonts() const
-{
-   return font();
 }
 // end of font
 

@@ -61,28 +61,12 @@ private:
 private:
    static const char* const SRC_DST_CAPTION;
    static const char* const PROGRESS_CAPTION;
-   static const char* const REMOVE;
-   static const char* const OWNER;
-   static const char* const PERMISSIONS;
-   static const char* const DATIME;
    static const char* const START;
    static const char* const EXIT;
    static const char* const BREAK;
    static const char* const SRC_LABEL;
    static const char* const DST_LABEL;
-   static const char* const RENAME;
-   static const char* const NEW_FILE_NAME;
    static const char* const SRC_ITEMS_COUNT_TEXT;
-protected:
-   static const char* const DIR_NOT_WRITABLE;
-   static const char* const DIR_NOT_READABLE;
-   static const char* const FILE_NOT_READABLE;
-   static const char* const OPEN_READ_ERROR;
-   static const char* const OPEN_WRITE_ERROR;
-   static const char* const MKDIR_ERROR;
-   static const char* const CANT_DEL_FILE;
-   static const char* const CANT_DEL_DIR;
-   
 
 //******* MEMBERS *******
 private:
@@ -92,7 +76,6 @@ private:
    QPushButton*  const exit_;
    bool                started_;
 protected:
-   bool                ask_again_;
    SelectionsSet       sources_;
    QString             destpath_;
    QBtInfoField* const src_path_;
@@ -108,9 +91,7 @@ private:
    QString  sourceInitialText   ();
 protected:
    virtual void stop() = 0;
-   virtual bool can_update ( const QString&, const QString& ) const = 0;
 
-   QString rename(const QString & );
    void started        ();
    void finished       ();
    void display_paths  ( const QString&, const QString& );

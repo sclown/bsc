@@ -115,7 +115,6 @@ private:
    bool init       ( QFile& );
    void finish     ( QFile& );
    bool append     ( QFile&, const QString& );
-   void disable    () const;
 private slots:
    void start_slot ();
    void cancel_slot();

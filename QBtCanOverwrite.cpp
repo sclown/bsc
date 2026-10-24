@@ -134,7 +134,7 @@ QBtOverwriteAnswer QBtCanOverwrite::ask(const QString &path, QBtOverwriteAnswer:
     overwrite_->setEnabled(can_overwrite);
     update_->setEnabled(can_overwrite);
     rename_->setEnabled(can_overwrite);
-    auto res = exec();
+    exec();
     return QBtOverwriteAnswer(!ask_again(), result_, newPath());
 }
 

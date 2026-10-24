@@ -179,41 +179,4 @@ void QBtEventsController::send_event(  const qint32 in_event_id,
       }
    }
 }
-// WERSJA Z 3 DANYMI
-void QBtEventsController::send_event(  const qint32 in_event_id,
-                                       const QVariant in_val1,
-                                       const QVariant in_val2,
-                                       const QVariant in_val3 )
-{
-   QMutexLocker locker( &mutex_ );
-
-   const EventsRegister::const_iterator rit = evreg_.find( in_event_id );
-   if( rit != evreg_.end() ) {
-      Objects::const_iterator it = rit->second.begin();
-      const Objects::const_iterator end = rit->second.end();
-      while( it != end ) {
-         QApplication::postEvent( *it, new QBtEvent( in_event_id, in_val1, in_val2, in_val3 ) );
-         ++it;
-      }
-   }
-}
-// WERSJA Z 4 DANYMI
-void QBtEventsController::send_event(  const qint32 in_event_id,
-                                       const QVariant in_val1,
-                                       const QVariant in_val2,
-                                       const QVariant in_val3,
-                                       const QVariant in_val4 )
-{
-   QMutexLocker locker( &mutex_ );
-
-   const EventsRegister::const_iterator rit = evreg_.find( in_event_id );
-   if( rit != evreg_.end() ) {
-      Objects::const_iterator it = rit->second.begin();
-      const Objects::const_iterator end = rit->second.end();
-      while( it != end ) {
-         QApplication::postEvent( *it, new QBtEvent( in_event_id, in_val1, in_val2, in_val3, in_val4 ) );
-         ++it;
-      }
-   }
-}
 // end of send_event

@@ -121,13 +121,3 @@ void QBtDirCopyDialog::ask_overwrite(const QString &dst_path, QBtOverwriteAnswer
     emit resume(answer);
 }
 
-//*******************************************************************
-// can_update                                      PRIVATE inherited
-//*******************************************************************
-bool QBtDirCopyDialog::can_update( const QString& in_src_path, const QString& in_dst_path ) const
-{
-   const QFileInfo src_fi( in_src_path );
-   const QFileInfo dst_fi( in_dst_path );
-   return ( src_fi.lastModified() > dst_fi.lastModified() );
-}
-// end of can_update
