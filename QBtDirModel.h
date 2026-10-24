@@ -36,7 +36,6 @@
 #include <QThread>
 #include <QTimer>
 #include <QElapsedTimer>
-#include <memory>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -68,15 +67,10 @@ private:
 public:
    void setup              (const QString& , int, Qt::SortOrder);
    void update              (const QString&);
-   void update              ( const QModelIndex& );
    void refresh             ();
-   bool is_dir              ( const QModelIndex& );
    bool is_executable       ( const QModelIndex& );
-   bool is_readable         ( const QModelIndex& );
    void cdup                ();
    void queryIcon           (const QModelIndex &index );
-   bool removeRows          ( int row, int count, const QModelIndex &parent );
-   bool setItemData         ( const QModelIndex &index, const QMap<int, QVariant> &roles );
    virtual void sort        (int column, Qt::SortOrder order);
 private:
    void append_row          ( qint32, const QBtFileInfo&, const QStringList& );
@@ -101,7 +95,6 @@ private slots:
 
 signals:
    void list( const QString &path, int column , quint8 order );
-   void icon( qint32 row, const QString &path );
 
 };
 

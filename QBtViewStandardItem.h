@@ -3,9 +3,7 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
-#include "QBtConfig.h"
 #include <QStandardItem>
-#include <QPalette>
 
 
 /*------- class declaration:

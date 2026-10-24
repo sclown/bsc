@@ -77,12 +77,10 @@ private:
 
 //******* METHODS *******
 public:
-   void           show_fstab            ();
    void           set_tab_id            ( qint32 );
    QBtView* const current_view          () const;
    QHBoxLayout*   pathLineLayout        ();
 private:
-   bool           eventFilter           ( QObject*, QEvent* );
    void           keyPressEvent         ( QKeyEvent* );
    void           customEvent           ( QEvent* );
    void           new_tab_request       ();

@@ -29,28 +29,19 @@
 -------------------------------------------------------------------*/
 #include "QBtViewModel.h"
 #include "QBtViewItem.h"
-#include "QBtEventsController.h"
-#include <QInputDialog>
 #include <QDir>
 #include <QtDebug>
 
 /*------- constants:
 -------------------------------------------------------------------*/
-const QString     QBtViewModel::THIS_DIR               = ".";
 const QString     QBtViewModel::PARENT_DIR             = "..";
 const char* const QBtViewModel::HDR_NAME               = QT_TR_NOOP( "Name"   );
-const char* const QBtViewModel::HDR_EXT                = QT_TR_NOOP( "Ext"    );
 const char* const QBtViewModel::HDR_ACCESS             = QT_TR_NOOP( "Access" );
 const char* const QBtViewModel::HDR_SIZE               = QT_TR_NOOP( "Size"   );
 const char* const QBtViewModel::HDR_DATE               = QT_TR_NOOP( "Date"   );
 const char* const QBtViewModel::HDR_TIME               = QT_TR_NOOP( "Time"   );
 const char* const QBtViewModel::HDR_OWNER              = QT_TR_NOOP( "Owner"  );
 const char* const QBtViewModel::HDR_GROUP              = QT_TR_NOOP( "Group"  );
-const char* const QBtViewModel::MASK_SELECTION_CAPTION = QT_TR_NOOP( "File selection" );
-const char* const QBtViewModel::MASK_SELECTION_PROMPT  = QT_TR_NOOP( "Enter selection mask:" );
-const char* const QBtViewModel::MASK_DESELECTION_PROMPT= QT_TR_NOOP( "Enter deselection mask" );
-const char* const QBtViewModel::DIR_ICON               = ":/img/folder.png";
-const char* const QBtViewModel::NOREADABLE_ICON        = ":/img/noreadable.png";
 
 
 //*******************************************************************
@@ -61,7 +52,6 @@ QBtViewModel::QBtViewModel( QObject* const in_parent ) : QStandardItemModel( in_
 , file_count_   ( qint32()        )
 , dir_count_    ( qint32()        )
 , busy_         ( true            )
-, selections_   ( SelectionsSet() )
 , sortIndex_    ( 0               )
 , sortOrder_    ( Qt::AscendingOrder)
 {

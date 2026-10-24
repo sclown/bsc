@@ -42,19 +42,16 @@ public:
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
    QBtViewItem() : QStandardItem()
-   , selected_ ( false )
    , finfo_    ( QBtFileInfo() )
    {}
 private:
    QBtViewItem( const QBtViewItem& rhs ) : QStandardItem( rhs )
-   , selected_ ( rhs.selected_ )
    , finfo_    ( rhs.finfo_     )
    {}
    QBtViewItem& operator=( const QBtViewItem& rhs )
    {
       if( this != &rhs ) {
          QStandardItem::operator=( rhs );
-         selected_ = rhs.selected_;
          finfo_    = rhs.finfo_;
       }
       return *this;
@@ -62,15 +59,12 @@ private:
 
 //******* METHODS *******
 public:
-   bool               selected () const                        { return selected_;        }
-   void               selected ( const bool in_selected )      { selected_ = in_selected; }
    const QBtFileInfo& finfo    () const                        { return finfo_;           }
    void               finfo    ( const QBtFileInfo& in_finfo ) { finfo_ = in_finfo;       }
    bool iconLoaded() const { return !icon_.isNull(); }
    void updateIcon(QIcon icon) { icon_ = icon; QStandardItem::setIcon(icon);}
 //******* MEMBERS *******
 private:
-   bool        selected_;
    QBtFileInfo finfo_;
    QIcon    icon_;
 };

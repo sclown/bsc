@@ -30,18 +30,24 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
-#include "QBtListWorker.h"
-#include <QFileIconProvider>
+#include <QObject>
+#include <QVariant>
+#include <QStringList>
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
-class QBtDirListWorker : public QBtListWorker
+class QBtDirListWorker : public QObject
 {
     Q_OBJECT
 
-//******* CONSTRUCTION / DESTRUCTION *******
 public:
-   QBtDirListWorker();
+   QBtDirListWorker() = default;
+
+signals:
+   void work_started  ();
+   void items_count   ( qint32 );
+   void item_info     ( qint32, QVariant, QStringList );
+   void work_finished ( const QString& );
 
 public slots:
     void list(const QString &path, int column , quint8 order);

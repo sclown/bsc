@@ -69,14 +69,10 @@ public:
 private:
    QModelIndexList mask_items(const QString &mask) const;
 
+public:
+   using QItemSelectionModel::select;   // keep the QModelIndex overload visible
 public slots:
-   virtual void setCurrentIndex(const QModelIndex &index, QItemSelectionModel::SelectionFlags command);
-   virtual void select( const QModelIndex &index, SelectionFlags command );
    virtual void select( const QItemSelection & selection, QItemSelectionModel::SelectionFlags command );
-
-signals:
-
-
 };
 
 #endif // INCLUDED_QBtViewSelectionModel_h

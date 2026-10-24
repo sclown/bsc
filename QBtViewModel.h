@@ -54,23 +54,15 @@ private:
 
 //******* CONSTANTS *******
 protected:
-   static const QString     THIS_DIR;
    static const QString     PARENT_DIR;
 private:
    static const char* const HDR_NAME;
-   static const char* const HDR_EXT;
    static const char* const HDR_ACCESS;
    static const char* const HDR_SIZE;
    static const char* const HDR_DATE;
    static const char* const HDR_TIME;
    static const char* const HDR_OWNER;
    static const char* const HDR_GROUP;
-   static const char* const MASK_SELECTION_CAPTION;
-   static const char* const MASK_SELECTION_PROMPT;
-   static const char* const MASK_DESELECTION_PROMPT;
-public:
-   static const char* const DIR_ICON;
-   static const char* const NOREADABLE_ICON;
 
 //******* MEMEBERS *******
 protected:
@@ -78,7 +70,6 @@ protected:
    qint32           file_count_;
    qint32           dir_count_;
    bool             busy_;
-   SelectionsSet    selections_;
    int              sortIndex_;
    Qt::SortOrder    sortOrder_;
 
@@ -86,11 +77,8 @@ protected:
 public:
    virtual void   setup      ( const QString&, int, Qt::SortOrder ) = 0;
    virtual void   update      ( const QString& ) = 0;
-   virtual void   update      ( const QModelIndex& ) = 0;
    virtual void   refresh     ()                     = 0;
-   virtual bool   is_dir      ( const QModelIndex& ) = 0;
    virtual bool   is_executable ( const QModelIndex& ) = 0;
-   virtual bool   is_readable ( const QModelIndex& ) = 0;
    virtual void   cdup        ()                     = 0;
    virtual void   queryIcon (const QModelIndex &index ) = 0;
    //--------------------------------------------
@@ -105,12 +93,9 @@ public:
    //--------------------------------------------
    qint32                dir_count         () const { return dir_count_;         }
    qint32                file_count        () const { return file_count_;        }
-   qint32                select_count      () const { return selections_.size(); }
    int                   sortColumn        () const { return sortIndex_;         }
    Qt::SortOrder         sortOrder         () const { return sortOrder_;         }
    bool                  busy              () const { return busy_;              }
-private:
-   void                  select_this_item  ( bool, QBtViewItem* );
 protected:
    bool                  valid_dir_name    ( const QString& );
 signals:

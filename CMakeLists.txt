@@ -119,7 +119,6 @@ set(BSC_HEADERS
     3rdprty/dircompleter.h
     QBtPathBox.h
     QBTMacTools.h
-    QBtListWorker.h
     QBtDirListWorker.h
     QBtDirCopyWorker.h
     QBtOverwriteAnswer.h

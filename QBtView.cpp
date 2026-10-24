@@ -43,18 +43,14 @@
 #include "QBtFinder.h"
 #include "QBtCanOverwrite.h"
 #include "QBTMacTools.h"
-#include <QVBoxLayout>
 #include <QHeaderView>
 #include <QStyleHints>
 #include <QScrollBar>
 #include <QKeyEvent>
 #include <QDir>
 #include <QInputDialog>
-#include <QProcess>
 #include <QtDebug>
 #include <QMessageBox>
-#include <QDrag>
-#include <QDesktopServices>
 #include <QApplication>
 #include <QClipboard>
 #include <QMimeData>
@@ -670,8 +666,6 @@ void QBtView::enter( const QModelIndex& in_index )
 
     const QString fname = model_->file_full_name( in_index ); // tak ma byc ze wzgledu na ..
     const QFileInfo fi( model_->file_path( in_index ) );
-    const QString fpath = fi.absoluteFilePath();
-    const QString dir = fi.absolutePath();
 
     if( model_->is_executable(in_index) || !fi.isDir()) {
         QBtEventsController::instance()->send_event( QBtEvent::EXECUTE, model_->file_path( in_index ) );
@@ -700,32 +694,6 @@ void QBtView::rowChangedSlot(QModelIndex to, QModelIndex from)
         setCurrentIndex(to);
     }
 }
-
-//*******************************************************************
-// is_ext_declared                                           PRIVATE
-//*******************************************************************
-bool QBtView::is_ext_declared( const QString& in_ext, QString& out_prg, QString& out_par ) const
-{
-   QStringList data = QStringList();
-
-   QBtSettings stt;
-   QVariant value;
-   if( stt.read( QBtConfig::EXT_GROUP + QBtConfig::EXT_KEY, value ) ) {
-      data = value.toStringList();
-   }
-
-   const qint32 n = data.size();
-   for( qint32 i = 0; i < n; ++i ) {
-      const QStringList record = data.at( i ).split( ',' );
-      if( in_ext == record.at( 0 ).toLower() ) {
-         out_prg = record.at( 1 );
-         out_par = record.at( 2 );
-         return true;
-      }
-   }
-   return false;
-}
-// end of is_ext_declared
 
 QString QBtView::get_selection_mask(bool select) const
 {

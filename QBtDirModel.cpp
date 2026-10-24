@@ -27,7 +27,6 @@
 
 /*------- include files:
 -------------------------------------------------------------------*/
-#include "QBtConfig.h"
 #include "QBtDirModel.h"
 #include "QBtShared.h"
 #include "QBtEventsController.h"
@@ -36,7 +35,6 @@
 #include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
 #include <QApplication>
-#include <QDateTime>
 #include <QDir>
 #include <QFileIconProvider>
 #include <QMimeData>
@@ -96,15 +94,6 @@ void QBtDirModel::update( const QString& in_path)
    emit list( in_path, sortIndex_, sortOrder_ );
 }
 
-void QBtDirModel::update( const QModelIndex& in_index )
-{
-   const QBtViewItem* const it = head_item( in_index );
-   if( it ) {
-      if( valid_dir_name( it->finfo().full_name() ) ) {
-         emit list( it->finfo().path(), sortIndex_, sortOrder_ );
-      }
-   }
-}
 // end of update
 
 //*******************************************************************
@@ -116,32 +105,11 @@ void QBtDirModel::refresh()
 }
 // end of refresh
 
-//*******************************************************************
-// is_dir                                                     PUBLIC
-//*******************************************************************
-bool QBtDirModel::is_dir( const QModelIndex& in_index )
-{
-   const QBtViewItem* const it = head_item( in_index );
-   return ( it ) ? it->finfo().is_dir() : false;
-}
-// end of is_dir
-
-
 bool QBtDirModel::is_executable(const QModelIndex& in_index)
 {
     const QFileInfo fi( file_path( in_index ) );
     return !fi.isDir() || (fi.isBundle() && fi.suffix() == ".app");
 }
-
-//*******************************************************************
-// is_readable                                                PUBLIC
-//*******************************************************************
-bool QBtDirModel::is_readable( const QModelIndex& in_index )
-{
-   const QBtViewItem* const it = head_item( in_index );
-   return ( it ) ? it->finfo().is_readable() : false;
-}
-// end of is_dir
 
 //*******************************************************************
 // cdup                                                       PUBLIC
@@ -160,16 +128,6 @@ void QBtDirModel::queryIcon(const QModelIndex &index)
     QApplication::postEvent(this, new QBtEvent(QBtEvent::User, index.row(), file_path(index)));
 }
 
-bool QBtDirModel::removeRows(int row, int count, const QModelIndex &parent)
-{
-    return QBtViewModel::removeRows(row, count, parent);
-}
-
-bool QBtDirModel::setItemData(const QModelIndex &index, const QMap<int, QVariant> &roles)
-{
-    return QBtViewModel::setItemData(index, roles);
-}
-
 void QBtDirModel::sort(int column, Qt::SortOrder order)
 {
     sortIndex_ = column;
@@ -180,7 +138,6 @@ void QBtDirModel::sort(int column, Qt::SortOrder order)
 void QBtDirModel::customEvent(QEvent* const in_event)
 {
     const QBtEvent* const event = dynamic_cast< QBtEvent* >( in_event );
-    const int type = static_cast<int>( event->type() );
 
     auto info = QFileInfo(event->data(1).toString());
     auto row = event->data(0).toInt();
@@ -295,7 +252,6 @@ Qt::DropActions QBtDirModel::supportedDropActions() const
 QMimeData *QBtDirModel::mimeData(const QModelIndexList &indexes) const
 {
     QMimeData *mimeData = new QMimeData();    
-    QStringList texts;
     QList<QUrl> urls;
     foreach (const QModelIndex &index, indexes) {
         if (index.isValid() && index.column()==0) {
@@ -337,7 +293,6 @@ void QBtDirModel::work_started_slot()
    emit update_started();
    busy_ = true;
    file_count_ = dir_count_ = qint32();
-   selections_.clear();
    invisibleRootItem()->removeRows( 0, invisibleRootItem()->rowCount() );
 }
 // end of work_started_slot

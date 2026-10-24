@@ -44,22 +44,10 @@ const QString     QBtViewSelectionModel::PARENT_DIR             = "..";
 QBtViewSelectionModel::QBtViewSelectionModel( QBtViewModel* model, QObject* const in_parent ) : QItemSelectionModel( model, in_parent )
 , model_ ( model )
 {
-    int a=0;
-
 }
 // end of QBtViewSelectionModel
 
 
-
-void QBtViewSelectionModel::setCurrentIndex(const QModelIndex &index, QItemSelectionModel::SelectionFlags command)
-{
-    QItemSelectionModel::setCurrentIndex(index, command);
-}
-
-void QBtViewSelectionModel::select( const QModelIndex &index, QItemSelectionModel::SelectionFlags command )
-{
-    QItemSelectionModel::select(index, command);
-}
 
 void QBtViewSelectionModel::select(const QItemSelection &selection, QItemSelectionModel::SelectionFlags command)
 {

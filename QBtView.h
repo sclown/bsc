@@ -32,7 +32,6 @@
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
 #include <QTreeView>
-#include <QTreeView>
 #include <stack>
 #include <queue>
 
@@ -51,11 +50,9 @@ class QBtView : public QTreeView
 //******** TYPES *******
 private:
    enum {
-      UNKNOWN = 0,
       INITIAL_FILE_SELECT,
       RESIZE_COLUMNS,
       GOTO_TOP,
-      REFRESH,
    };
 
 //******* CONSTRUCTION / DESTRUCTION *******
@@ -131,7 +128,6 @@ private:
    void    console_start     (bool inSelection) const;
    void    open_oposite      () const;
    void    open_in_shell     () const;
-   bool    is_ext_declared   ( const QString&, QString&, QString& ) const;
    QString get_selection_mask ( bool select ) const;
 private slots:
    void    enter            ( const QModelIndex& );
@@ -145,7 +141,6 @@ signals:
    void    file_count       ( qint32 );
    void    select_count     ( qint32 );
    void    path_changed     ( const QString& );
-   void    show_path        ( const QString& ) const;
 };
 
 #endif // INCLUDED_QBtView_h

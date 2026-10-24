@@ -30,19 +30,11 @@
 #include "QBtDirListWorker.h"
 #include "QBtFileInfo.h"
 #include "QBtShared.h"
-#include "QBtConfig.h"
-#include <QFileIconProvider>
-#include <QPainter>
-#include <QIcon>
 #include <QDir>
 #include <QFileInfo>
 #include <QVariant>
 #include <QDebug>
 
-
-QBtDirListWorker::QBtDirListWorker()
-{
-}
 
 void QBtDirListWorker::list(const QString &path, int column, quint8 order)
 {
@@ -83,8 +75,6 @@ void QBtDirListWorker::list(const QString &path, int column, quint8 order)
     for( auto info : data ) {
         const QBtFileInfo fi( info );
 
-        if( "." == fi.full_name() ) continue;
-        if( ".." == fi.full_name() ) continue;
 
         QStringList fields;
         auto name   = fi.full_name();

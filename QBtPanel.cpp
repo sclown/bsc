@@ -35,10 +35,7 @@
 #include "QBtWorkspace.h"
 #include "QBtTabBar.h"
 #include "QBtPathBox.h"
-#include "3rdprty/dircompleter.h"
-#include <QHeaderView>
 #include <QStackedWidget>
-#include <QComboBox>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QGridLayout>
@@ -51,7 +48,6 @@
 #include <QActionGroup>
 #include <QLineEdit>
 #include <QKeyEvent>
-#include <QCompleter>
 #include <QtDebug>
 
 /*------- constants:
@@ -88,7 +84,6 @@ QBtPanel::QBtPanel( const qint32 in_idx, QWidget* const in_parent ) : QWidget( i
 {
    path_->setDuplicatesEnabled( false );
    path_->setMinimumWidth( 10 * QFontMetrics( font() ).horizontalAdvance( 'X' ) );
-   path_->installEventFilter(this);
    path_->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
    // Volume selector: icon-only button, names are listed in its menu.
    fstab_->setMenu( new QMenu( fstab_ ) );
@@ -209,11 +204,6 @@ void QBtPanel::tab_mouse_event()
 }
 // end of tab_mouse_event
 
-bool QBtPanel::eventFilter(QObject *obj, QEvent *event)
-{
-    return QWidget::eventFilter(obj, event);
-}
-
 //*******************************************************************
 // keyPressEvent                                   PRIVATE inherited
 //*******************************************************************
@@ -315,15 +305,6 @@ void QBtPanel::set_tab_id( const qint32 in_id )
    idx_ = in_id;
 }
 // end of set_tab_id
-
-//*******************************************************************
-// show_fstab                                                 PUBLIC
-//*******************************************************************
-void QBtPanel::show_fstab()
-{
-   fstab_->showMenu();
-}
-// end of show_fstab
 
 //*******************************************************************
 // save                                                      PRIVATE
