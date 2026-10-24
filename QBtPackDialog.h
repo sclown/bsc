@@ -71,7 +71,6 @@ private:
    static const char* const DESTINATION;
    static const char* const TOOL;
    static const char* const COMPRESSION;
-   static const char* const REMOVE;
    static const char* const RUN;
    static const char* const CANCEL;
    static const char* const GZIP;
@@ -91,7 +90,6 @@ private:
    QBtInfoField* const source_;
    QBtInfoField* const destination_;
    QCheckBox*    const compression_;
-   QCheckBox*    const remove_;
    QComboBox*    const ratio_;
    QPushButton*  const run_;
    QPushButton*  const cancel_;
@@ -99,8 +97,6 @@ private:
    QRadioButton* const gzip_;
    QRadioButton* const bzip2_;
    QRadioButton* const zip_;
-   bool                started_;
-   bool                break_;
    qint32              compress_type_;
    QFontMetrics        fm_;
    SelectionsSet       data_;
@@ -120,7 +116,6 @@ public:
    bool           run_zip        ();
    bool           execute        ( const QString& program, const QStringList& args, const QString& working_dir );
 private slots:
-   void reject            ();
    void compression       ( bool );
    void type_changed      ();
    void run               ();

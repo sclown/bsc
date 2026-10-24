@@ -41,8 +41,7 @@ class QBtEvent : public QEvent
 // ******* TYPES *******
 public:
    enum {
-      UNKNOWN = QEvent::User,
-      F1_KEY,
+      F1_KEY = QEvent::User,
       F2_KEY,
       F3_KEY,
       F4_KEY,
@@ -64,7 +63,6 @@ public:
       REFRESH_REQUEST,
       FILTER_CHANGED_REQUEST,
       FIND_REQUEST,
-      WIPE,
       COMPARE_FILES,
       COMPARE_DIRS,
       SYNC_DIRS,
@@ -75,8 +73,6 @@ public:
       DATE_TIME,
       DROP_FILES,
       OPEN_OPOSITE,
-      OPEN_SHELL,
-      OPEN_TERMINAL,
       OPEN_EDITOR,
       OPEN_DIR,
       EXECUTE

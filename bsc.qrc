@@ -17,15 +17,12 @@
         <file>img/select.png</file>
         <file>img/unselect.png</file>
         <file>img/revers.png</file>
-        <file>img/connect.png</file>
-        <file>img/disconnect.png</file>
         <file>img/system.png</file>
         <file>img/qt.png</file>
         <file>img/fonts.png</file>
         <file>img/folder.png</file>
         <file>img/noreadable.png</file>
         <file>img/find.png</file>
-        <file>img/terminal.png</file>
         <file>img/symlink.png</file>
         <file>img/symlink@2x.png</file>
         <file>help.en.html</file>

@@ -99,8 +99,6 @@ namespace BtShared {
 
 // Opens the system terminal in the given directory.
 void openTerminal( const QString& dir );
-// Shows the path in the system file manager (Finder / Explorer / default).
-void revealInFileManager( const QString& path );
 // Opens the file in the system's default (text) editor.
 void openInEditor( const QString& path );
 // Starts the configured (or a detected) diff tool on two files; false when none is available.

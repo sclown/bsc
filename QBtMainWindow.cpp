@@ -44,10 +44,8 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QAction>
-#include <QActionGroup>
 #include <QIcon>
 #include <QMessageBox>
-#include <QToolBar>
 #include <QVBoxLayout>
 #include <QFrame>
 #include <QKeyEvent>
@@ -64,7 +62,6 @@ const QString     QBtMainWindow::IMG_LOC         = ":/img/";
 //------- Menu -------
 const char* const QBtMainWindow::MENU_SYSTEM     = QT_TR_NOOP( "&System" );
 const char* const QBtMainWindow::MENU_OPERATIONS = QT_TR_NOOP( "&Operations" );
-const char* const QBtMainWindow::MENU_LANGS      = QT_TR_NOOP( "Lan&guages" );
 const char* const QBtMainWindow::MENU_HELP       = QT_TR_NOOP( "&Help" );
 //------- System -------
 const char* const QBtMainWindow::REFRESH_ICON   = "refresh.png";
@@ -90,12 +87,8 @@ const char* const QBtMainWindow::DATE_TIME_ICON      = "datetime.png";
 const char* const QBtMainWindow::SELECT_MASK_ICON    = "select.png";
 const char* const QBtMainWindow::UNSELECT_MASK_ICON  = "unselect.png";
 const char* const QBtMainWindow::SELECT_REV_ICON     = "revers.png";
-const char* const QBtMainWindow::FTP_CONNECT_ICON    = "connect.png";
-const char* const QBtMainWindow::FTP_DISCONNECT_ICON = "disconnect.png";
 const char* const QBtMainWindow::SYSTEM_INFO_ICON    = "system.png";
 const char* const QBtMainWindow::FIND_ICON           = "find.png";
-const char* const QBtMainWindow::SHELL_ICON          = "folder.png";
-const char* const QBtMainWindow::TERMINAL_ICON       = "terminal.png";
 const char* const QBtMainWindow::NEW_TAB             = QT_TR_NOOP( "&Create new tab" );
 const char* const QBtMainWindow::DEL_TAB             = QT_TR_NOOP( "&Remove current tab" );
 const char* const QBtMainWindow::SWITCH_TABS         = QT_TR_NOOP( "&Switch panels" );
@@ -110,8 +103,6 @@ const char* const QBtMainWindow::UNSELECT_MASK       = QT_TR_NOOP( "&Unselect fi
 const char* const QBtMainWindow::SELECT_REV          = QT_TR_NOOP( "&Reverse selections" );
 const char* const QBtMainWindow::MD5_CREATE          = QT_TR_NOOP( "Create MD5 control file" );
 const char* const QBtMainWindow::MD5_CHECK           = QT_TR_NOOP( "Check MD5 file" );
-const char* const QBtMainWindow::FTP_CONNECT         = QT_TR_NOOP( "FTP connect" );
-const char* const QBtMainWindow::FTP_DISCONNECT      = QT_TR_NOOP( "FTP disconnect" );
 const char* const QBtMainWindow::SYSTEM_INFO         = QT_TR_NOOP( "&System information" );
 const char* const QBtMainWindow::FIND                = QT_TR_NOOP( "&Find" );
 const char* const QBtMainWindow::NEW_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+T" );
@@ -121,13 +112,6 @@ const char* const QBtMainWindow::FILE_JOIN_ACCEL     = QT_TR_NOOP( "Ctrl+J" );
 const char* const QBtMainWindow::MD5_CREATE_ACCEL    = QT_TR_NOOP( "Ctrl+5" );
 const char* const QBtMainWindow::MD5_CHECK_ACCEL     = QT_TR_NOOP( "Ctrl+Alt+5" ); // Alt+5 is Copy
 const char* const QBtMainWindow::FIND_ACCEL          = QT_TR_NOOP( "Ctrl+F7" );
-//------- Languages -------
-const char* const QBtMainWindow::CS_LANG = QT_TR_NOOP( "&Czech (cs)"   );
-const char* const QBtMainWindow::DE_LANG = QT_TR_NOOP( "&Deutsch (de)" );
-const char* const QBtMainWindow::EN_LANG = QT_TR_NOOP( "&English (en)" );
-const char* const QBtMainWindow::PL_LANG = QT_TR_NOOP( "&Polish (pl)"  );
-const char* const QBtMainWindow::RU_LANG = QT_TR_NOOP( "&Russian (ru)" );
-const char* const QBtMainWindow::ES_LANG = QT_TR_NOOP( "&Spanish (es)" );
 //------- Help -------
 const char* const QBtMainWindow::ABOUT_QT_ICON  = "qt.png";
 const char* const QBtMainWindow::ABOUT_BSC_ICON = "bsc.png";
@@ -142,11 +126,7 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 //------- Menu --------
 , menu_system_     ( new QMenu   )
 , menu_operations_ ( new QMenu   )
-, menu_langs_      ( new QMenu   )
 , menu_help_       ( new QMenu   )
-//------- Toolbars -------
-, system_tbar_     ( new QToolBar )
-, operations_tbar_ ( new QToolBar )
 //------- System -------
 , refresh_         ( new QAction( QIcon( IMG_LOC + REFRESH_ICON   ), "", this ) )
 , filter_          ( new QAction( QIcon( IMG_LOC + FILTER_ICON    ), "", this  ) )
@@ -167,20 +147,8 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 , select_rev_      ( new QAction( QIcon( IMG_LOC + SELECT_REV_ICON     ), "", this  ) )
 , md5_create_      ( new QAction( this ) )
 , md5_check_       ( new QAction( this ) )
-, ftp_connect_     ( new QAction( QIcon( IMG_LOC + FTP_CONNECT_ICON    ), "", this  ) )
-, ftp_disconnect_  ( new QAction( QIcon( IMG_LOC + FTP_DISCONNECT_ICON ), "", this  ) )
 , system_info_     ( new QAction( QIcon( IMG_LOC + SYSTEM_INFO_ICON    ), "", this  ) )
 , find_            ( new QAction( QIcon( IMG_LOC + FIND_ICON           ), "", this  ) )
-, open_shell_      ( new QAction( QIcon( IMG_LOC + SHELL_ICON          ), "", this  ) )
-, open_terminal_    ( new QAction( QIcon( IMG_LOC + TERMINAL_ICON       ), "", this  ) )
-//------- Languages -------
-, cs_lang_         ( new QAction( this ) )
-, de_lang_         ( new QAction( this ) )
-, en_lang_         ( new QAction( this ) )
-, pl_lang_         ( new QAction( this ) )
-, ru_lang_         ( new QAction( this ) )
-, es_lang_         ( new QAction( this ) )
-, lang_            ( new QActionGroup( this ) )
 //------- Help -------
 , about_qt_        ( new QAction( QIcon( IMG_LOC + ABOUT_QT_ICON  ), "", this  ) )
 , about_bsc_       ( new QAction( QIcon( IMG_LOC + ABOUT_BSC_ICON ), "", this  ) )
@@ -188,17 +156,9 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 , workspace_       ( new QBtWorkspace )
 , buttons_         ( new QBtButtonSpace( this ) )
 {
-   // NOT IMPLEMENTED
-   menu_langs_->setEnabled( false );
-   ftp_connect_->setEnabled( false );
-   ftp_disconnect_->setEnabled( false );
-   
    setWindowTitle( QBtShared::program_name() );
    filter_->setCheckable( true );
 
-   system_tbar_->setObjectName( "SYSTEM_TBAR" );
-   operations_tbar_->setObjectName( "OPERATIONS_TBAR" );
-   
    create_menu();
    update_action();
 
@@ -393,7 +353,6 @@ void QBtMainWindow::create_menu()
    //------- Menu -------
    menuBar()->addMenu( menu_system_     );
    menuBar()->addMenu( menu_operations_ );
-   menuBar()->addMenu( menu_langs_      );
    menuBar()->addMenu( menu_help_       );
    //------- System -------
    menu_system_->addAction( refresh_       );
@@ -422,48 +381,11 @@ void QBtMainWindow::create_menu()
    menu_operations_->addAction( md5_check_      );
    menu_operations_->addSeparator();
    menu_operations_->addAction( system_info_    );
-   //------- Languages -------
-   menu_langs_->addAction( cs_lang_ );
-   menu_langs_->addAction( de_lang_ );
-   menu_langs_->addAction( en_lang_ );
-   menu_langs_->addAction( pl_lang_ );
-   menu_langs_->addAction( ru_lang_ );
-   menu_langs_->addAction( es_lang_ );
    //------- Help -------
    menu_help_->addAction( about_qt_  );
    menu_help_->addAction( about_bsc_ );
 }
 // end of create_menu
-
-//*******************************************************************
-// create_tool_bars                                          PRIVATE
-//*******************************************************************
-void QBtMainWindow::create_tool_bars()
-{
-   //------- System -------
-   addToolBar( system_tbar_ );
-   system_tbar_->addAction( exit_ );
-   system_tbar_->addSeparator();
-   system_tbar_->addAction( filter_ );
-   system_tbar_->addAction( refresh_ );
-   
-   //------- Operations -------
-   addToolBar( operations_tbar_ );
-   operations_tbar_->addAction( open_shell_ );
-   operations_tbar_->addAction( open_terminal_ );
-   operations_tbar_->addAction( find_ );
-   operations_tbar_->addAction( dir_tree_ );
-   operations_tbar_->addAction( cmp_files_ );
-   operations_tbar_->addAction( cmp_dirs_ );
-   operations_tbar_->addSeparator();
-   operations_tbar_->addAction( select_mask_ );
-   operations_tbar_->addAction( unselect_mask_ );
-   operations_tbar_->addAction( select_rev_ );
-   operations_tbar_->addSeparator();
-   operations_tbar_->addAction( ftp_connect_ );
-   operations_tbar_->addAction( ftp_disconnect_ );
-}
-// end of create_tool_bars
 
 //*******************************************************************
 // update_action                                              PRVATE
@@ -490,27 +412,8 @@ void QBtMainWindow::update_action()
    connect( select_rev_    , SIGNAL( triggered() ), this, SLOT( select_rev()     ) );
    connect( md5_create_    , SIGNAL( triggered() ), this, SLOT( md5_create()     ) );
    connect( md5_check_     , SIGNAL( triggered() ), this, SLOT( md5_check()      ) );
-   connect( ftp_connect_   , SIGNAL( triggered() ), this, SLOT( ftp_connect()    ) );
-   connect( ftp_disconnect_, SIGNAL( triggered() ), this, SLOT( ftp_disconnect() ) );
    connect( system_info_   , SIGNAL( triggered() ), this, SLOT( system_info()    ) );
    connect( find_          , SIGNAL( triggered() ), this, SLOT( find()           ) );
-   connect( open_shell_    , SIGNAL( triggered() ), this, SLOT( open_shell()     ) );
-   connect( open_terminal_ , SIGNAL( triggered() ), this, SLOT( open_terminal()  ) );
-   //------- Languages -------
-   cs_lang_->setCheckable( true );
-   de_lang_->setCheckable( true );
-   en_lang_->setCheckable( true );
-   pl_lang_->setCheckable( true );
-   ru_lang_->setCheckable( true );
-   es_lang_->setCheckable( true );
-   lang_->setExclusive( true );
-   lang_->addAction( cs_lang_ );
-   lang_->addAction( de_lang_ );
-   lang_->addAction( en_lang_ );
-   lang_->addAction( pl_lang_ );
-   lang_->addAction( ru_lang_ );
-   lang_->addAction( es_lang_ );
-   connect( lang_, SIGNAL( triggered( QAction* ) ), this, SLOT( lang( QAction* ) ) );
    //------- Help -------
    connect( about_qt_ , SIGNAL( triggered() ), this, SLOT( about_qt()  ) );
    connect( about_bsc_, SIGNAL( triggered() ), this, SLOT( about_bsc() ) );
@@ -524,7 +427,6 @@ void QBtMainWindow::retranslate()
 {
    menu_system_     ->setTitle( tr( MENU_SYSTEM     ) );
    menu_operations_ ->setTitle( tr( MENU_OPERATIONS ) );
-   menu_langs_      ->setTitle( tr( MENU_LANGS      ) );
    menu_help_       ->setTitle( tr( MENU_HELP       ) );
    //------- System -------
    refresh_      ->setText( tr( REFRESH       ) );
@@ -548,8 +450,6 @@ void QBtMainWindow::retranslate()
    select_rev_    ->setText( tr( SELECT_REV     ) );
    md5_create_    ->setText( tr( MD5_CREATE     ) );
    md5_check_     ->setText( tr( MD5_CHECK      ) );
-   ftp_connect_   ->setText( tr( FTP_CONNECT    ) );
-   ftp_disconnect_->setText( tr( FTP_DISCONNECT ) );
    system_info_   ->setText( tr( SYSTEM_INFO    ) );
    find_          ->setText( tr( FIND           ) );
    new_tab_       ->setShortcut( tr( NEW_TAB_ACCEL     ) );
@@ -559,13 +459,6 @@ void QBtMainWindow::retranslate()
    md5_create_    ->setShortcut( tr( MD5_CREATE_ACCEL  ) );
    md5_check_     ->setShortcut( tr( MD5_CHECK_ACCEL   ) );
    find_          ->setShortcut( tr( FIND_ACCEL        ) );
-   //------- Languages -------
-   cs_lang_->setText( tr( CS_LANG ) );
-   de_lang_->setText( tr( DE_LANG ) );
-   en_lang_->setText( tr( EN_LANG ) );
-   pl_lang_->setText( tr( PL_LANG ) );
-   ru_lang_->setText( tr( RU_LANG ) );
-   es_lang_->setText( tr( ES_LANG ) );
    //------- Help -------
    about_qt_ ->setText( tr( ABOUT_QT  ) );
    about_bsc_->setText( tr( ABOUT_BSC ) );
@@ -761,14 +654,6 @@ void QBtMainWindow::md5_check()
 }
 // end of md5_check
 
-void QBtMainWindow::ftp_connect()
-{
-}
-
-void QBtMainWindow::ftp_disconnect()
-{
-}
-
 //*******************************************************************
 // system_info                                          PRIVATE slot
 //*******************************************************************
@@ -787,20 +672,6 @@ void QBtMainWindow::find()
    QBtEventsController::instance()->send_event( QBtEvent::FIND_REQUEST );
 }
 // end of find
-
-void QBtMainWindow::open_shell()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::OPEN_SHELL );
-}
-
-void QBtMainWindow::open_terminal()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::OPEN_TERMINAL );
-}
-
-void QBtMainWindow::lang( QAction* )
-{
-}
 
 //*******************************************************************
 // about_qt                                             PRIVATE slot

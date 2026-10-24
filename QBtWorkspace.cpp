@@ -127,8 +127,6 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
     QBtEventsController::instance()->append( this, QBtEvent::DATE_TIME );
     QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
-    QBtEventsController::instance()->append( this, QBtEvent::OPEN_SHELL );
-    QBtEventsController::instance()->append( this, QBtEvent::OPEN_TERMINAL );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_EDITOR );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_DIR );
     QBtEventsController::instance()->append( this, QBtEvent::EXECUTE );
@@ -214,12 +212,6 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
         break;
     case QBtEvent::OPEN_DIR:
         open_dir( event->data(0).toString() );
-        break;
-    case QBtEvent::OPEN_SHELL:
-        open_shell();
-        break;
-    case QBtEvent::OPEN_TERMINAL:
-        open_terminal();
         break;
     case QBtEvent::OPEN_EDITOR:
         open_editor();
@@ -658,25 +650,6 @@ void QBtWorkspace::date_time()
 
 // end of date_time
 
-
-void QBtWorkspace::open_shell()
-{
-    QBtView* src = 0;
-    QBtView* dst = 0;
-    if( !src_and_dst_view( src, dst ) ) return;
-
-    const QString selected = src->selected_file_path();
-    BtShared::revealInFileManager( selected.isEmpty() ? src->current_path() : selected );
-}
-
-void QBtWorkspace::open_terminal()
-{
-    QBtView* src = 0;
-    QBtView* dst = 0;
-    if( !src_and_dst_view( src, dst ) ) return;
-
-    BtShared::openTerminal( src->current_path() );
-}
 
 void QBtWorkspace::open_editor()
 {

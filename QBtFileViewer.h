@@ -55,7 +55,6 @@ private:
 //******* CONSTANTS ********
 private:
    static const char* const CAPTION;
-   static const char* const CANCEL;
    static const char* const SEARCH;
 
 //******* MEMBERS *******
@@ -64,7 +63,6 @@ private:
    QTextBrowser* const browser_;
    QLineEdit*    const search_edit_;
    QPushButton*  const search_;
-   QPushButton*  const cancel_;
    QList<int>          search_results_;
    int                 search_index_;
    QString             search_text_;

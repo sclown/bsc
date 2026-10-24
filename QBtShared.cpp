@@ -427,22 +427,6 @@ void BtShared::openTerminal( const QString& dir )
 }
 // end of openTerminal
 
-void BtShared::revealInFileManager( const QString& path )
-{
-    const QFileInfo fi( path );
-#if defined(Q_OS_MAC)
-    if( fi.isDir() ) QProcess::startDetached( "open", { path } );
-    else             QProcess::startDetached( "open", { "-R", path } );
-#elif defined(Q_OS_WIN)
-    const QString native = QDir::toNativeSeparators( path );
-    if( fi.isDir() ) QProcess::startDetached( "explorer.exe", { native } );
-    else             QProcess::startDetached( "explorer.exe", { "/select,", native } );
-#else
-    QDesktopServices::openUrl( QUrl::fromLocalFile( fi.isDir() ? path : fi.absolutePath() ) );
-#endif
-}
-// end of revealInFileManager
-
 void BtShared::openInEditor( const QString& path )
 {
     if( path.isEmpty() ) return;

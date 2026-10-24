@@ -61,7 +61,6 @@ QBtDeleter::QBtDeleter( QWidget* const in_parent ) : QDialog( in_parent )
 , parser_ ( new QBtDirParser( true, this ) )
 , break_  ( false )
 , runned_ ( false )
-, wipe_   ( false )
 {
    setWindowTitle( tr( CAPTION ) );
 
@@ -147,10 +146,9 @@ void QBtDeleter::cancel()
 //*******************************************************************
 // set_data                                                   PUBLIC
 //*******************************************************************
-void QBtDeleter::set_data( const SelectionsSet& in_data, const bool in_wipe )
+void QBtDeleter::set_data( const SelectionsSet& in_data )
 {
    data_ = in_data;
-   wipe_ = in_wipe;
 
    if( !data_.empty() ) {
       info_->setText( *data_.begin() );

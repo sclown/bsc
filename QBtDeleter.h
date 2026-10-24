@@ -72,14 +72,13 @@ private:
    QBtDirParser*           const parser_;
    bool                          break_;
    bool                          runned_;
-   bool                          wipe_;
    SelectionsSet                 data_;
    SelectionsSet::const_iterator it_;
    SelectionsSet::const_iterator end_;
 
 //******* METHODS *******
 public:
-   void set_data( const SelectionsSet&, bool );
+   void set_data( const SelectionsSet& );
 private:
    void showEvent         ( QShowEvent* );
    void keyPressEvent     ( QKeyEvent* );

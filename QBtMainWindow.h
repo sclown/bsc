@@ -61,7 +61,6 @@ private:
    //------- Menu -------
    static const char* const MENU_SYSTEM;
    static const char* const MENU_OPERATIONS;
-   static const char* const MENU_LANGS;
    static const char* const MENU_HELP;
    //------- System -------
    static const char* const REFRESH_ICON;
@@ -87,8 +86,6 @@ private:
    static const char* const SELECT_MASK_ICON;
    static const char* const UNSELECT_MASK_ICON;
    static const char* const SELECT_REV_ICON;
-   static const char* const FTP_CONNECT_ICON;
-   static const char* const FTP_DISCONNECT_ICON;
    static const char* const SYSTEM_INFO_ICON;
    static const char* const FIND_ICON;
    static const char* const NEW_TAB;
@@ -105,8 +102,6 @@ private:
    static const char* const SELECT_REV;
    static const char* const MD5_CREATE;
    static const char* const MD5_CHECK;
-   static const char* const FTP_CONNECT;
-   static const char* const FTP_DISCONNECT;
    static const char* const SYSTEM_INFO;
    static const char* const FIND;
    static const char* const NEW_TAB_ACCEL;
@@ -116,15 +111,6 @@ private:
    static const char* const MD5_CREATE_ACCEL;
    static const char* const MD5_CHECK_ACCEL;
    static const char* const FIND_ACCEL;
-   static const char* const SHELL_ICON;
-   static const char* const TERMINAL_ICON;
-   //------- Languages -------
-   static const char* const CS_LANG;
-   static const char* const DE_LANG;
-   static const char* const EN_LANG;
-   static const char* const PL_LANG;
-   static const char* const RU_LANG;
-   static const char* const ES_LANG;
    //------- Help -------
    static const char* const ABOUT_QT_ICON;
    static const char* const ABOUT_BSC_ICON;
@@ -136,11 +122,7 @@ private:
    //------- Menu -------
    QMenu*          const menu_system_;
    QMenu*          const menu_operations_;
-   QMenu*          const menu_langs_;
    QMenu*          const menu_help_;
-   //------- Toolbars -------
-   QToolBar*       const system_tbar_;
-   QToolBar*       const operations_tbar_;
    //------- System -------
    QAction*        const refresh_;
    QAction*        const filter_;
@@ -161,20 +143,8 @@ private:
    QAction*        const select_rev_;
    QAction*        const md5_create_;
    QAction*        const md5_check_;
-   QAction*        const ftp_connect_;
-   QAction*        const ftp_disconnect_;
    QAction*        const system_info_;
    QAction*        const find_;
-   QAction*        const open_shell_;
-   QAction*        const open_terminal_;
-   //------- Languages -------
-   QAction*        const cs_lang_;
-   QAction*        const de_lang_;
-   QAction*        const en_lang_;
-   QAction*        const pl_lang_;
-   QAction*        const ru_lang_;
-   QAction*        const es_lang_;
-   QActionGroup*   const lang_;
    //------- Help -------
    QAction*        const about_qt_;
    QAction*        const about_bsc_;
@@ -192,7 +162,6 @@ private:
    bool eventFilter      ( QObject*, QEvent* ) override;
    void customEvent      ( QEvent* );
    void create_menu      ();
-   void create_tool_bars ();
    void update_action    ();
    void retranslate      ();
    void f1_key           ();
@@ -217,14 +186,8 @@ private slots:
    void select_rev       ();
    void md5_create       ();
    void md5_check        ();
-   void ftp_connect      ();
-   void ftp_disconnect   ();
    void system_info      ();
    void find             ();
-   void open_shell       ();
-   void open_terminal    ();
-   //------- Languages -------
-   void lang             ( QAction* );
    //------- Help -------
    void about_qt         ();
    void about_bsc        ();

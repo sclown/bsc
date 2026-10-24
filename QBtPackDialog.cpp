@@ -55,7 +55,6 @@ const char* const QBtPackDialog::SOURCE        = QT_TR_NOOP( "Source:" );
 const char* const QBtPackDialog::DESTINATION   = QT_TR_NOOP( "Destination:" );
 const char* const QBtPackDialog::TOOL          = QT_TR_NOOP( "Compression tools" );
 const char* const QBtPackDialog::COMPRESSION   = QT_TR_NOOP( "Com&pression" );
-const char* const QBtPackDialog::REMOVE        = QT_TR_NOOP( "Remo&ve source files" );
 const char* const QBtPackDialog::RUN           = QT_TR_NOOP( "&Run" );
 const char* const QBtPackDialog::CANCEL        = QT_TR_NOOP( "&Cancel" );
 const char* const QBtPackDialog::GZIP          = QT_TR_NOOP( "gzip (gz)" );
@@ -77,7 +76,6 @@ QBtPackDialog::QBtPackDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , source_        ( new QBtInfoField )
 , destination_   ( new QBtInfoField )
 , compression_   ( new QCheckBox( tr( COMPRESSION ) ) )
-, remove_        ( new QCheckBox( tr( REMOVE ) ) )
 , ratio_         ( new QComboBox )
 , run_           ( new QPushButton( tr( RUN ) ) )
 , cancel_        ( new QPushButton( tr( CANCEL ) ) )
@@ -85,8 +83,6 @@ QBtPackDialog::QBtPackDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , gzip_          ( new QRadioButton( tr( GZIP ) ) )
 , bzip2_         ( new QRadioButton( tr( BZIP2 ) ) )
 , zip_           ( new QRadioButton( tr( ZIP ) ) )
-, started_       ( false )
-, break_         ( false )
 , compress_type_ ( USE_TAR )
 , fm_            ( font() )
 , data_          ( SelectionsSet() )
@@ -104,7 +100,6 @@ QBtPackDialog::QBtPackDialog( QWidget* const in_parent ) : QDialog( in_parent )
 
    QGridLayout* const btn_layout = new QGridLayout;
    btn_layout->addWidget( compression_, 0, 0 );
-   btn_layout->addWidget( remove_, 1, 0 );
    btn_layout->addWidget( ratio_, 0, 1 );
    btn_layout->addWidget( run_, 0, 2 );
    btn_layout->addWidget( cancel_, 1, 2 );
@@ -137,16 +132,6 @@ QBtPackDialog::QBtPackDialog( QWidget* const in_parent ) : QDialog( in_parent )
    connect( zip_        , SIGNAL( clicked() )      , this, SLOT( type_changed() ) );
 }
 // end of QBtPackDialog
-
-//*******************************************************************
-// reject                                     PRIVATE inherited slot
-//*******************************************************************
-void QBtPackDialog::reject()
-{
-   if( !started_ ) QDialog::reject();
-   break_ = true;
-}
-// end of reject
 
 //*******************************************************************
 // compression                                          PRIVATE slot

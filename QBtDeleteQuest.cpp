@@ -32,7 +32,6 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QTreeWidget>
-#include <QCheckBox>
 #include <QPushButton>
 #include <QHeaderView>
 #include <QFileInfo>
@@ -40,7 +39,6 @@
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtDeleteQuest::CAPTION = QT_TR_NOOP( "Delete files/directories" );
-const char* const QBtDeleteQuest::WIPE    = QT_TR_NOOP( "&Wipe files" );
 const char* const QBtDeleteQuest::ACCEPT  = QT_TR_NOOP( "&Accept" );
 const char* const QBtDeleteQuest::CANCEL  = QT_TR_NOOP( "&Cancel" );
 const char* const QBtDeleteQuest::HEAD    = QT_TR_NOOP( "Name of file/directory" );
@@ -51,7 +49,6 @@ const char* const QBtDeleteQuest::HEAD    = QT_TR_NOOP( "Name of file/directory"
 //*******************************************************************
 QBtDeleteQuest::QBtDeleteQuest( QWidget* const in_parent ) : QDialog( in_parent )
 , view_   ( new QTreeWidget )
-, wipe_   ( new QCheckBox  ( tr( WIPE   ) ) )
 , accept_ ( new QPushButton( tr( ACCEPT ) ) )
 , cancel_ ( new QPushButton( tr( CANCEL ) ) )
 {
@@ -70,7 +67,6 @@ QBtDeleteQuest::QBtDeleteQuest( QWidget* const in_parent ) : QDialog( in_parent 
 
    QVBoxLayout* const view_layout = new QVBoxLayout;
    view_layout->addWidget( view_ );
-   view_layout->addWidget( wipe_ );
 
    QVBoxLayout* const btn_layout = new QVBoxLayout;
    btn_layout->addStretch( 100 );
@@ -116,12 +112,3 @@ void QBtDeleteQuest::set_files( const SelectionsSet& in_data )
    view_->resizeColumnToContents( 0 );
 }
 // end of set_files
-
-//*******************************************************************
-// to_wipe                                                    PUBLIC
-//*******************************************************************
-bool QBtDeleteQuest::to_wipe() const
-{
-   return wipe_->isChecked();
-}
-// end of to_wipe

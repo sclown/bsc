@@ -55,7 +55,6 @@ private:
 //******* CONSTANTS *******
 private:
    static const char* const CAPTION;
-   static const char* const WIPE;
    static const char* const ACCEPT;
    static const char* const CANCEL;
    static const char* const HEAD;
@@ -63,14 +62,12 @@ private:
 //******* MEMBERS *******
 private:
    QTreeWidget* const view_;
-   QCheckBox*   const wipe_;
    QPushButton* const accept_;
    QPushButton* const cancel_;
 
 //******* METHODS *******
 public:
    void set_files( const SelectionsSet& );
-   bool to_wipe  () const;
 private:
    void showEvent( QShowEvent* );
 };

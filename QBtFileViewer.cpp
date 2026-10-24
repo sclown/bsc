@@ -47,7 +47,6 @@
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtFileViewer::CAPTION            = QT_TR_NOOP( "File viewer"    );
-const char* const QBtFileViewer::CANCEL             = QT_TR_NOOP( "&Cancel" );
 const char* const QBtFileViewer::SEARCH             = QT_TR_NOOP( "&Search" );
 
 
@@ -59,7 +58,6 @@ QBtFileViewer::QBtFileViewer( QWidget* const in_parent, const QString& in_path )
 , browser_ ( new QTextBrowser )
 , search_edit_ ( new QLineEdit )
 , search_  ( new QPushButton( tr( SEARCH ) ) )
-, cancel_  ( new QPushButton( tr( CANCEL ) ) )
 , search_index_ ( 0 )
 {
    setWindowTitle( tr( CAPTION ) );
@@ -78,7 +76,6 @@ QBtFileViewer::QBtFileViewer( QWidget* const in_parent, const QString& in_path )
    setLayout( main_layout );
    browser_->setFocus();
 
-   connect( cancel_, SIGNAL( clicked() ), this, SLOT( accept() ) );
    connect( search_, SIGNAL( clicked() ), this, SLOT( search() ) );
    connect( search_edit_, SIGNAL( returnPressed() ), this, SLOT( search() ) );
 }

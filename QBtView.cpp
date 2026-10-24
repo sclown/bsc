@@ -39,7 +39,6 @@
 #include "QBtDeleter.h"
 #include "QBtShared.h"
 #include "QBtFileViewer.h"
-#include "QBtFileEditor.h"
 #include "QBtAttrDialog.h"
 #include "QBtFinder.h"
 #include "QBtCanOverwrite.h"
@@ -501,10 +500,9 @@ void QBtView::remove_selected()
    QBtDeleteQuest quest( this );
    quest.set_files( data );
    if( quest.exec() != QDialog::Accepted ) return;
-   const bool wipe = quest.to_wipe();
-   
+
    QBtDeleter deleter( this );
-   deleter.set_data( data, wipe );
+   deleter.set_data( data );
    if( QDialog::Accepted == deleter.exec() ) refresh();
 }
 // end of remove_selected

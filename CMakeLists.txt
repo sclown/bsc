@@ -37,7 +37,6 @@ set(BSC_SOURCES
     QBtEditExtensions.cpp
     QBtEventsController.cpp
     QBtFileComparator.cpp
-    QBtFileEditor.cpp
     QBtFileJoiner.cpp
     QBtFileViewer.cpp
     QBtFinder.cpp
@@ -91,7 +90,6 @@ set(BSC_HEADERS
     QBtEvent.h
     QBtEventsController.h
     QBtFileComparator.h
-    QBtFileEditor.h
     QBtFileInfo.h
     QBtFileJoiner.h
     QBtFileViewer.h
