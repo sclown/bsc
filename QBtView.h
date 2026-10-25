@@ -103,7 +103,6 @@ protected:
    virtual void startDrag(Qt::DropActions supportedActions);
    virtual void scrollContentsBy(int dx, int dy);
 private:
-   void    settings          ();
    void    keyPressEvent     ( QKeyEvent* );
    void    customEvent       ( QEvent* );
    void    find              ();

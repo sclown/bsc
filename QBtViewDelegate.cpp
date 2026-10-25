@@ -31,7 +31,6 @@
 #include "QBtViewModel.h"
 #include "QBtViewItem.h"
 #include "QBtView.h"
-#include "QBtConfig.h"
 #include <QApplication>
 #include <QPalette>
 #include <QPainter>

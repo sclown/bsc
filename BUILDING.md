@@ -39,6 +39,10 @@ For another Qt install, set `QT_PREFIX` in a `CMakeUserPresets.json` (not commit
 2. Pick the **Debug** or **Release** preset in the CMake status bar / panel.
 3. Build: **⇧⌘B**. Run without debugger: *Terminal → Run Task → Run*.
    Debug: **F5** (“Debug bsc”, builds first).
+4. Preset-based alternatives that do not depend on the CMake Tools
+   selection: tasks *Build (debug preset)*, *Run (debug preset)*,
+   *Build (release preset)*, and the launch configurations
+   *Debug bsc (debug preset)* / *Debug bsc (release preset)*.
 
 IntelliSense uses the CMake Tools configuration (`compile_commands.json`).
 

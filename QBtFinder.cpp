@@ -29,7 +29,6 @@
 -------------------------------------------------------------------*/
 #include "QBtFinder.h"
 #include "QBtShared.h"
-#include "QBtConfig.h"
 #include "QBtPointsButton.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
@@ -217,10 +216,8 @@ void QBtFinder::run_find()
    result_->clear();
 
    const QString muster = file_regex_->isChecked() ? QString() : file_->text();
-   const bool is_filter = QBtConfig::instance()->filter();
-   
    qApp->setOverrideCursor( Qt::WaitCursor );
-   parser_.run( from_->text(), muster, is_filter );
+   parser_.run( from_->text(), muster, true );   // skip hidden files
 }
 // end of run_find
 

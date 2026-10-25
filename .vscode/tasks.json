@@ -3,6 +3,7 @@
   "tasks": [
     {
       "label": "Build",
+      "detail": "CMake Tools: build the preset selected in the status bar",
       "type": "cmake",
       "command": "build",
       "group": {
@@ -15,6 +16,7 @@
     },
     {
       "label": "Run",
+      "detail": "CMake Tools: start the built app in a terminal",
       "type": "shell",
       "command": "\"${command:cmake.launchTargetPath}\"",
       "dependsOn": "Build",
@@ -23,6 +25,61 @@
         "reveal": "always",
         "panel": "dedicated"
       }
+    },
+    {
+      "label": "Configure (debug preset)",
+      "detail": "cmake --preset debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--preset", "debug"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (debug preset)",
+      "detail": "cmake --build --preset debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "debug"],
+      "dependsOn": "Configure (debug preset)",
+      "group": "build",
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "Run (debug preset)",
+      "detail": "cmake --build --preset run: build and start, log in this terminal",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "run"],
+      "dependsOn": "Configure (debug preset)",
+      "problemMatcher": [
+        "$gcc"
+      ],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      }
+    },
+    {
+      "label": "Configure (release preset)",
+      "detail": "cmake --preset release",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--preset", "release"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Build (release preset)",
+      "detail": "cmake --build --preset release",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "release"],
+      "dependsOn": "Configure (release preset)",
+      "group": "build",
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

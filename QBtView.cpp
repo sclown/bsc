@@ -28,7 +28,6 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "QBtView.h"
-#include "QBtConfig.h"
 #include "QBtSettings.h"
 #include "QBtDirModel.h"
 #include "QBtViewSelectionModel.h"
@@ -97,7 +96,6 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    header()->setSectionsClickable( true );
    connect( header(), SIGNAL( sortIndicatorChanged(int, Qt::SortOrder ) ), this, SLOT( sortChanged( int, Qt::SortOrder ) ) );
 
-   settings();
    style_header();
    connect( qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, &QBtView::style_header );
 
@@ -123,9 +121,7 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    ec->append( this, QBtEvent::DESELECT_REQUEST );
    ec->append( this, QBtEvent::REVSEL_REQUEST );
    ec->append( this, QBtEvent::REFRESH_REQUEST );
-   ec->append( this, QBtEvent::FILTER_CHANGED_REQUEST );
    ec->append( this, QBtEvent::FIND_REQUEST );
-   ec->append( this, QBtEvent::CONFIG_CHANGED );
    
    connect( this, SIGNAL( doubleClicked ( const QModelIndex& ) ),
             this, SLOT  ( enter         ( const QModelIndex& ) ) );
@@ -154,20 +150,6 @@ void QBtView::keyboardSearch(const QString &search)
     setSelectionMode(mode);
 
 }
-
-//*******************************************************************
-// setting                                                   PRIVATE
-//*******************************************************************
-void QBtView::settings()
-{
-   QBtConfig* const cfg = QBtConfig::instance();
-   setFont( cfg->font() );
-
-   QPalette p = palette();
-   p.setColor( backgroundRole(), cfg->bkg_f_nc_ns_color() );
-   setPalette( p );
-}
-// end of settings
 
 //*******************************************************************
 // keyPressEvent                                   PRIVATE inherited
@@ -336,11 +318,6 @@ void QBtView::customEvent( QEvent* const in_event )
 
    if( !handled ) {
       switch( type ) {
-         case QBtEvent::CONFIG_CHANGED:
-            settings();
-            repaint();
-            break;
-         case QBtEvent::FILTER_CHANGED_REQUEST:
          case QBtEvent::REFRESH_REQUEST:
             refresh();
             break;

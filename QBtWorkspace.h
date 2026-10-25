@@ -61,17 +61,6 @@ public:
    };
    static const char* const InputCaption;
    static const char* const InputPrompt;
-   static const char* const CompareFiles;
-   static const char* const NoFiles;
-   static const char* const NoDiffTool;
-   static const char* const FilesJoining;
-   static const char* const EnterFileName;
-   static const char* const NoWritableDir;
-   static const char* const CanOverwrite;
-   static const char* const Md5;
-   static const char* const SyncNoDirs;
-   static const char* const CmpNoDirs;
-   static const char* const UserError;
 
 //******* MEMBERS *******
 private:
@@ -90,15 +79,6 @@ private:
    bool get_selections  ( QBtView* , SelectionsSet& ) const;
    void copy            ();
    void pack            ();
-   void compare_files   ();
-   void compare_dirs    ();
-   void sync_dirs       ();
-   void diff            ( const QString&, const QString& ) const;
-   void join_files      ();
-   void dir_tree        ();
-   void md5_create      ();
-   void md5_check       ();
-   void date_time       ();
    void open_editor     ();
    void drop_files      ( const QMap<QString, QVariant>& );
    void open_oposite    ();

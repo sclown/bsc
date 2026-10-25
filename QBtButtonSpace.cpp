@@ -29,8 +29,6 @@
 -------------------------------------------------------------------*/
 #include "QBtButtonSpace.h"
 #include "QBtEventsController.h"
-#include "QBtSettings.h"
-#include "QBtConfig.h"
 #include <QPushButton>
 #include <QSignalMapper>
 #include <QHBoxLayout>
@@ -78,34 +76,14 @@ QBtButtonSpace::QBtButtonSpace( QWidget* const in_parent ) : QWidget( in_parent 
 //*******************************************************************
 void QBtButtonSpace::retranslate()
 {
-   QBtConfig* const cfg = QBtConfig::instance();
-   const int   mode = cfg->btn_mode();;
-   const QFont font = cfg->btn_font();
-   
    for( qint32 i = F1; i < BUTTONS_COUNT;  ++i ) {
       const QString number = QString::number( i + 1 );
       const QString label  = tr( LABEL[ i ] );
-      QString text = "";
 
       // Captions show the plain number: the button answers to both
       // F<n> and Alt(Option)+<n> (Alt+0 for F10).
       const QString digit = QString::number( ( i + 1 ) % 10 );
-      switch( mode ) {
-         case ONLY_FN:
-            text = number;
-            break;
-         case ONLY_TEXT:
-            text = label;
-            break;
-         case FULL_DESC:
-            text = number + ' ' + label;
-            break;
-         case TWO_LINES:
-            text = number + '\n' + label;
-         break;
-      }
-      button_[ i ]->setFont( font );
-      button_[ i ]->setText( text );
+      button_[ i ]->setText( number + ' ' + label );
       button_[ i ]->setToolTip( QString( "%1 (F%2, %3)" ).arg( label, number,
          QKeySequence( Qt::ALT | ( Qt::Key_0 + digit.toInt() ) ).toString( QKeySequence::NativeText ) ) );
    }

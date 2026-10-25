@@ -8,6 +8,22 @@
       "program": "${command:cmake.launchTargetPath}",
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "Build"
+    },
+    {
+      "name": "Debug bsc (debug preset)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/debug/bsc.app/Contents/MacOS/bsc",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build (debug preset)"
+    },
+    {
+      "name": "Debug bsc (release preset)",
+      "type": "lldb",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/release/bsc.app/Contents/MacOS/bsc",
+      "cwd": "${workspaceFolder}",
+      "preLaunchTask": "Build (release preset)"
     }
   ]
 }

@@ -36,7 +36,6 @@
 #include "QBtWorkspace.h"
 #include "QBtButtonSpace.h"
 #include "QBtEventsController.h"
-#include "QBtConfigDialog.h"
 #include "QBtHelp.h"
 #include "QBtFinder.h"
 #include "QBtCommand.h"
@@ -65,25 +64,14 @@ const char* const QBtMainWindow::MENU_OPERATIONS = QT_TR_NOOP( "&Operations" );
 const char* const QBtMainWindow::MENU_HELP       = QT_TR_NOOP( "&Help" );
 //------- System -------
 const char* const QBtMainWindow::REFRESH_ICON   = "refresh.png";
-const char* const QBtMainWindow::FILTER_ICON    = "filter.png";
-const char* const QBtMainWindow::CONFIGURE_ICON = "configure.png";
 const char* const QBtMainWindow::EXIT_ICON      = "exit.png";
 const char* const QBtMainWindow::REFRESH        = QT_TR_NOOP( "&Refresh files window" );
-const char* const QBtMainWindow::FILTER         = QT_TR_NOOP( "&File filter" );
-const char* const QBtMainWindow::CONFIGURE      = QT_TR_NOOP( "&Configure" );
 const char* const QBtMainWindow::EXIT           = QT_TR_NOOP( "E&xit" );
-const char* const QBtMainWindow::FILTER_ACCEL   = QT_TR_NOOP( "Ctrl+F" );
 const char* const QBtMainWindow::EXIT_ACCEL     = QT_TR_NOOP( "Ctrl+Q" );
 //------- Operations -------
 const char* const QBtMainWindow::NEW_TAB_ICON        = "tab_new.png";
 const char* const QBtMainWindow::DEL_TAB_ICON        = "tab_remove.png";
 const char* const QBtMainWindow::SWITCH_TABS_ICON    = "switch.png";
-const char* const QBtMainWindow::FILE_JOIN_ICON      = "joining.png";
-const char* const QBtMainWindow::DIR_TREE_ICON       = "tree.png";
-const char* const QBtMainWindow::CMP_FILES_ICON      = "cmpfiles.png";
-const char* const QBtMainWindow::CMP_DIRS_ICON       = "cmpdir.png";
-const char* const QBtMainWindow::DIR_SYNC_ICON       = "dirsynch.png";
-const char* const QBtMainWindow::DATE_TIME_ICON      = "datetime.png";
 const char* const QBtMainWindow::SELECT_MASK_ICON    = "select.png";
 const char* const QBtMainWindow::UNSELECT_MASK_ICON  = "unselect.png";
 const char* const QBtMainWindow::SELECT_REV_ICON     = "revers.png";
@@ -92,25 +80,14 @@ const char* const QBtMainWindow::FIND_ICON           = "find.png";
 const char* const QBtMainWindow::NEW_TAB             = QT_TR_NOOP( "&Create new tab" );
 const char* const QBtMainWindow::DEL_TAB             = QT_TR_NOOP( "&Remove current tab" );
 const char* const QBtMainWindow::SWITCH_TABS         = QT_TR_NOOP( "&Switch panels" );
-const char* const QBtMainWindow::FILE_JOIN           = QT_TR_NOOP( "Files &joining" );
-const char* const QBtMainWindow::DIR_TREE            = QT_TR_NOOP( "&Tree of directories" );
-const char* const QBtMainWindow::CMP_FILES           = QT_TR_NOOP( "Compare &files" );
-const char* const QBtMainWindow::CMP_DIRS            = QT_TR_NOOP( "Compare &directories" );
-const char* const QBtMainWindow::DIR_SYNC            = QT_TR_NOOP( "Directories synchronisation" );
-const char* const QBtMainWindow::DATE_TIME           = QT_TR_NOOP( "&Last date/time modification" );
 const char* const QBtMainWindow::SELECT_MASK         = QT_TR_NOOP( "&Select files via mask" );
 const char* const QBtMainWindow::UNSELECT_MASK       = QT_TR_NOOP( "&Unselect files via mask" );
 const char* const QBtMainWindow::SELECT_REV          = QT_TR_NOOP( "&Reverse selections" );
-const char* const QBtMainWindow::MD5_CREATE          = QT_TR_NOOP( "Create MD5 control file" );
-const char* const QBtMainWindow::MD5_CHECK           = QT_TR_NOOP( "Check MD5 file" );
 const char* const QBtMainWindow::SYSTEM_INFO         = QT_TR_NOOP( "&System information" );
 const char* const QBtMainWindow::FIND                = QT_TR_NOOP( "&Find" );
 const char* const QBtMainWindow::NEW_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+T" );
 const char* const QBtMainWindow::DEL_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+W" );
 const char* const QBtMainWindow::SWITCH_TABS_ACCEL   = QT_TR_NOOP( "Ctrl+S");
-const char* const QBtMainWindow::FILE_JOIN_ACCEL     = QT_TR_NOOP( "Ctrl+J" );
-const char* const QBtMainWindow::MD5_CREATE_ACCEL    = QT_TR_NOOP( "Ctrl+5" );
-const char* const QBtMainWindow::MD5_CHECK_ACCEL     = QT_TR_NOOP( "Ctrl+Alt+5" ); // Alt+5 is Copy
 const char* const QBtMainWindow::FIND_ACCEL          = QT_TR_NOOP( "Ctrl+F7" );
 //------- Help -------
 const char* const QBtMainWindow::ABOUT_QT_ICON  = "qt.png";
@@ -129,24 +106,14 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 , menu_help_       ( new QMenu   )
 //------- System -------
 , refresh_         ( new QAction( QIcon( IMG_LOC + REFRESH_ICON   ), "", this ) )
-, filter_          ( new QAction( QIcon( IMG_LOC + FILTER_ICON    ), "", this  ) )
-, configure_       ( new QAction( QIcon( IMG_LOC + CONFIGURE_ICON ), "", this  ) )
 , exit_            ( new QAction( QIcon( IMG_LOC + EXIT_ICON      ), "", this  ) )
 //------- Operations -------
 , new_tab_         ( new QAction( QIcon( IMG_LOC + NEW_TAB_ICON        ), "", this  ) )
 , del_tab_         ( new QAction( QIcon( IMG_LOC + DEL_TAB_ICON        ), "", this  ) )
 , switch_tabs_     ( new QAction( QIcon( IMG_LOC + SWITCH_TABS_ICON    ), "", this  ) )
-, file_join_       ( new QAction( QIcon( IMG_LOC + FILE_JOIN_ICON      ), "", this  ) )
-, dir_tree_        ( new QAction( QIcon( IMG_LOC + DIR_TREE_ICON       ), "", this  ) )
-, cmp_files_       ( new QAction( QIcon( IMG_LOC + CMP_FILES_ICON      ), "", this  ) )
-, cmp_dirs_        ( new QAction( QIcon( IMG_LOC + CMP_DIRS_ICON       ), "", this  ) )
-, dir_sync_        ( new QAction( QIcon( IMG_LOC + DIR_SYNC_ICON       ), "", this  ) )
-, date_time_       ( new QAction( QIcon( IMG_LOC + DATE_TIME_ICON      ), "", this  ) )
 , select_mask_     ( new QAction( QIcon( IMG_LOC + SELECT_MASK_ICON    ), "", this  ) )
 , unselect_mask_   ( new QAction( QIcon( IMG_LOC + UNSELECT_MASK_ICON  ), "", this  ) )
 , select_rev_      ( new QAction( QIcon( IMG_LOC + SELECT_REV_ICON     ), "", this  ) )
-, md5_create_      ( new QAction( this ) )
-, md5_check_       ( new QAction( this ) )
 , system_info_     ( new QAction( QIcon( IMG_LOC + SYSTEM_INFO_ICON    ), "", this  ) )
 , find_            ( new QAction( QIcon( IMG_LOC + FIND_ICON           ), "", this  ) )
 //------- Help -------
@@ -157,7 +124,6 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 , buttons_         ( new QBtButtonSpace( this ) )
 {
    setWindowTitle( QBtShared::program_name() );
-   filter_->setCheckable( true );
 
    create_menu();
    update_action();
@@ -175,7 +141,6 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
  
    QBtEventsController::instance()->append( this, QBtEvent::F1_KEY         );
    QBtEventsController::instance()->append( this, QBtEvent::F10_KEY        );
-   QBtEventsController::instance()->append( this, QBtEvent::CONFIG_CHANGED );
 
    // Alt(Option)+1..0 act as F1..F10 (see eventFilter).
    qApp->installEventFilter( this );
@@ -254,10 +219,6 @@ void QBtMainWindow::save_settings() const
    stt.save( QBtConfig::MAIN_WINDOW_GROUP + QBtConfig::POS_KEY, pos() );
    stt.save( QBtConfig::MAIN_WINDOW_GROUP + QBtConfig::SIZE_KEY, size() );
    stt.save( QBtConfig::MAIN_WINDOW_GROUP + QBtConfig::STATE_KEY, saveState() );
-
-   QBtConfig* const cfg = QBtConfig::instance();
-   cfg->filter( filter_->isChecked() );
-   cfg->save_data();
 }
 // end of save_settings
 
@@ -277,8 +238,6 @@ void QBtMainWindow::restore_settings()
    if( stt.read( QBtConfig::MAIN_WINDOW_GROUP + QBtConfig::STATE_KEY, data ) ) {
       restoreState( data.toByteArray() );
    }
-   const bool state = QBtConfig::instance()->filter();
-   filter_->setChecked( state ? true : false );
 }
 // end of restore_setting
 
@@ -338,9 +297,6 @@ void QBtMainWindow::customEvent( QEvent* const in_event )
       case QBtEvent::F10_KEY:
          f10_key();
          break;
-      case QBtEvent::CONFIG_CHANGED:
-         retranslate();
-         break;
    }
 }
 // end of customEvent
@@ -356,9 +312,7 @@ void QBtMainWindow::create_menu()
    menuBar()->addMenu( menu_help_       );
    //------- System -------
    menu_system_->addAction( refresh_       );
-   menu_system_->addAction( filter_        );
    menu_system_->addSeparator();
-   menu_system_->addAction( configure_     );
    menu_system_->addAction( exit_          );
    //------- Operations -------
    menu_operations_->addAction( new_tab_        );
@@ -366,19 +320,10 @@ void QBtMainWindow::create_menu()
    menu_operations_->addAction( switch_tabs_    );
    menu_operations_->addSeparator();
    menu_operations_->addAction( find_           );
-   menu_operations_->addAction( file_join_      );
-   menu_operations_->addAction( dir_tree_       );
-   menu_operations_->addAction( cmp_files_      );
-   menu_operations_->addAction( cmp_dirs_       );
-   menu_operations_->addAction( dir_sync_       );
-   menu_operations_->addAction( date_time_      );
    menu_operations_->addSeparator();
    menu_operations_->addAction( select_mask_    );
    menu_operations_->addAction( unselect_mask_  );
    menu_operations_->addAction( select_rev_     );
-   menu_operations_->addSeparator();
-   menu_operations_->addAction( md5_create_     );
-   menu_operations_->addAction( md5_check_      );
    menu_operations_->addSeparator();
    menu_operations_->addAction( system_info_    );
    //------- Help -------
@@ -394,24 +339,14 @@ void QBtMainWindow::update_action()
 {
    //------- System -------
    connect( refresh_  , SIGNAL( triggered()           ), this, SLOT( refresh()         ) );
-   connect( filter_   , SIGNAL( triggered()           ), this, SLOT( filter ()         ) );
-   connect( configure_, SIGNAL( triggered()           ), this, SLOT( configure()       ) );
    connect( exit_     , SIGNAL( triggered()           ), qApp, SLOT( closeAllWindows() ) );
    //------- Operations -------
    connect( new_tab_       , SIGNAL( triggered() ), this, SLOT( new_tab()        ) );
    connect( del_tab_       , SIGNAL( triggered() ), this, SLOT( del_tab()        ) );
    connect( switch_tabs_   , SIGNAL( triggered() ), this, SLOT( switch_tabs()    ) );
-   connect( file_join_     , SIGNAL( triggered() ), this, SLOT( file_join()      ) );
-   connect( dir_tree_      , SIGNAL( triggered() ), this, SLOT( dir_tree()       ) );
-   connect( cmp_files_     , SIGNAL( triggered() ), this, SLOT( cmp_files()      ) );
-   connect( cmp_dirs_      , SIGNAL( triggered() ), this, SLOT( cmp_dirs()       ) );
-   connect( dir_sync_      , SIGNAL( triggered() ), this, SLOT( sync_dirs()      ) );
-   connect( date_time_     , SIGNAL( triggered() ), this, SLOT( date_time()      ) );
    connect( select_mask_   , SIGNAL( triggered() ), this, SLOT( select_mask()    ) );
    connect( unselect_mask_ , SIGNAL( triggered() ), this, SLOT( unselect_mask()  ) );
    connect( select_rev_    , SIGNAL( triggered() ), this, SLOT( select_rev()     ) );
-   connect( md5_create_    , SIGNAL( triggered() ), this, SLOT( md5_create()     ) );
-   connect( md5_check_     , SIGNAL( triggered() ), this, SLOT( md5_check()      ) );
    connect( system_info_   , SIGNAL( triggered() ), this, SLOT( system_info()    ) );
    connect( find_          , SIGNAL( triggered() ), this, SLOT( find()           ) );
    //------- Help -------
@@ -430,34 +365,20 @@ void QBtMainWindow::retranslate()
    menu_help_       ->setTitle( tr( MENU_HELP       ) );
    //------- System -------
    refresh_      ->setText( tr( REFRESH       ) );
-   filter_       ->setText( tr( FILTER        ) );
-   configure_    ->setText( tr( CONFIGURE     ) );
    exit_         ->setText( tr( EXIT          ) );
-   filter_       ->setShortcut( tr( FILTER_ACCEL ) );
    exit_         ->setShortcut( tr( EXIT_ACCEL   ) );
    //------- Operations -------
    new_tab_       ->setText( tr( NEW_TAB        ) );
    del_tab_       ->setText( tr( DEL_TAB        ) );
    switch_tabs_   ->setText( tr( SWITCH_TABS    ) );
-   file_join_     ->setText( tr( FILE_JOIN      ) );
-   dir_tree_      ->setText( tr( DIR_TREE       ) );
-   cmp_files_     ->setText( tr( CMP_FILES      ) );
-   cmp_dirs_      ->setText( tr( CMP_DIRS       ) );
-   dir_sync_      ->setText( tr( DIR_SYNC       ) );
-   date_time_     ->setText( tr( DATE_TIME      ) );
    select_mask_   ->setText( tr( SELECT_MASK    ) );
    unselect_mask_ ->setText( tr( UNSELECT_MASK  ) );
    select_rev_    ->setText( tr( SELECT_REV     ) );
-   md5_create_    ->setText( tr( MD5_CREATE     ) );
-   md5_check_     ->setText( tr( MD5_CHECK      ) );
    system_info_   ->setText( tr( SYSTEM_INFO    ) );
    find_          ->setText( tr( FIND           ) );
    new_tab_       ->setShortcut( tr( NEW_TAB_ACCEL     ) );
    del_tab_       ->setShortcut( tr( DEL_TAB_ACCEL     ) );
    switch_tabs_   ->setShortcut( tr( SWITCH_TABS_ACCEL ) );
-   file_join_     ->setShortcut( tr( FILE_JOIN_ACCEL   ) );
-   md5_create_    ->setShortcut( tr( MD5_CREATE_ACCEL  ) );
-   md5_check_     ->setShortcut( tr( MD5_CHECK_ACCEL   ) );
    find_          ->setShortcut( tr( FIND_ACCEL        ) );
    //------- Help -------
    about_qt_ ->setText( tr( ABOUT_QT  ) );
@@ -504,31 +425,6 @@ void QBtMainWindow::refresh()
 // end of refresh
 
 //*******************************************************************
-// filter                                               PRIVATE slot
-//-------------------------------------------------------------------
-// Uzytkownik zmienil ustawienia filtra.
-//*******************************************************************
-void QBtMainWindow::filter()
-{
-   QBtConfig* const cfg = QBtConfig::instance();
-   cfg->filter( filter_->isChecked() );
-   cfg->save_data();
-   
-   QBtEventsController::instance()->send_event( QBtEvent::FILTER_CHANGED_REQUEST );
-}
-// end of filter
-
-//*******************************************************************
-// configure                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::configure()
-{
-   QBtConfigDialog dialog( this );
-   dialog.exec();
-}
-// end of configure
-
-//*******************************************************************
 // new_tab                                              PRIVATE slot
 //*******************************************************************
 void QBtMainWindow::new_tab()
@@ -556,60 +452,6 @@ void QBtMainWindow::switch_tabs()
 // end of switch_tabs
 
 //*******************************************************************
-// file_join                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::file_join()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::JOIN_FILES );
-}
-// end of file_join
-
-//*******************************************************************
-// dir_tree                                             PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::dir_tree()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::DIR_TREE );
-}
-// end of dir_tree
-
-//*******************************************************************
-// cmp_files                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::cmp_files()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::COMPARE_FILES );
-}
-// end of cmp_files
-
-//*******************************************************************
-// cmp_dirs                                             PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::cmp_dirs()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::COMPARE_DIRS );
-}
-// end of cmp_dirs
-
-//*******************************************************************
-// sync_dirs                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::sync_dirs()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::SYNC_DIRS );
-}
-// end of sync_dirs
-
-//*******************************************************************
-// date_time                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::date_time()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::DATE_TIME );
-}
-// end of date_time
-
-//*******************************************************************
 // select_mask                                          PRIVATE slot
 //*******************************************************************
 void QBtMainWindow::select_mask()
@@ -635,24 +477,6 @@ void QBtMainWindow::select_rev()
    QBtEventsController::instance()->send_event( QBtEvent::REVSEL_REQUEST );
 }
 // end of select_mask
-
-//*******************************************************************
-// md5_create                                           PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::md5_create()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::MD5_CREATE );
-}
-// end of md5_create
-
-//*******************************************************************
-// md5_check                                            PRIVATE slot
-//*******************************************************************
-void QBtMainWindow::md5_check()
-{
-   QBtEventsController::instance()->send_event( QBtEvent::MD5_CHECK );
-}
-// end of md5_check
 
 //*******************************************************************
 // system_info                                          PRIVATE slot

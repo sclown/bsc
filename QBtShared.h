@@ -34,7 +34,6 @@
 #include <QString>
 #include <QFile>
 #include <QFileInfo>
-#include <QDateTime>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
@@ -87,8 +86,6 @@ public:
    static void           restore_cursor ();
    static QString        slashed_dir    ( const QString& );
    static QString        quoted_fpath   ( const QString& );
-   static void           touch          ( const QString& muster_fpath, const QString& dst_fpath );
-   static bool           set_modification_time( const QString& fpath, const QDateTime& );
    static QStringList urlsToPathes (const QList<QUrl>& urls);
    static QFileInfo pathFromFSItem (const QFileInfo& info);
 };
@@ -99,8 +96,6 @@ namespace BtShared {
 void openTerminal( const QString& dir );
 // Opens the file in the system's default (text) editor.
 void openInEditor( const QString& path );
-// Starts the configured (or a detected) diff tool on two files; false when none is available.
-bool openDiff( const QString& file1, const QString& file2 );
 
 }
 

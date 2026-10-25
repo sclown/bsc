@@ -30,20 +30,16 @@
 -------------------------------------------------------------------*/
 #include "QBtShared.h"
 #include "QBtFileInfo.h"
-#include "QBtSettings.h"
-#include "QBtConfig.h"
 #include "QBTMacTools.h"
 #include <QApplication>
 #include <QScreen>
 #include <QFontMetrics>
-#include <QDateTime>
 #include <QProcess>
 #include <QWidget>
 #include <QDir>
 #include <QUrl>
 #include <QDesktopServices>
 #include <QStandardPaths>
-#include <QVariant>
 
 /*------- constants:
 -------------------------------------------------------------------*/
@@ -322,31 +318,6 @@ QString QBtShared::quoted_fpath( const QString& in_fpath )
 }
 // end of quoted_fpath
 
-//*******************************************************************
-// touch                                                PRIVATE slot
-//*******************************************************************
-void QBtShared::touch( const QString& in_muster_fpath, const QString& in_dst_fpath )
-{
-   set_modification_time( in_dst_fpath, QFileInfo( in_muster_fpath ).lastModified() );
-}
-// end of touch
-
-//*******************************************************************
-// set_modification_time
-//*******************************************************************
-bool QBtShared::set_modification_time( const QString& in_fpath, const QDateTime& in_time )
-{
-   // QFileDevice::setFileTime needs an open file; write access is preferred
-   // (required on Windows), read-only is enough for an owned file on Unix.
-   QFile file( in_fpath );
-   if( !file.open( QIODevice::ReadWrite | QIODevice::ExistingOnly ) &&
-       !file.open( QIODevice::ReadOnly ) ) {
-      return false;
-   }
-   return file.setFileTime( in_time, QFileDevice::FileModificationTime );
-}
-// end of set_modification_time
-
 QStringList QBtShared::urlsToPathes(const QList<QUrl> &urls)
 {
     QStringList pathes;
@@ -397,51 +368,3 @@ void BtShared::openInEditor( const QString& path )
 #endif
 }
 // end of openInEditor
-
-bool BtShared::openDiff( const QString& in_file1, const QString& in_file2 )
-{
-    QBtSettings stt;
-    QVariant    data;
-    bool        use_default = true;
-    if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::USE_DEFAULT_KEY, data ) ) {
-        use_default = data.toBool();
-    }
-
-    QString     program;
-    QStringList args;
-    if( use_default ) {
-#if defined(Q_OS_MAC)
-        static const QStringList candidates = { "opendiff", "meld", "kdiff3" };
-#elif defined(Q_OS_WIN)
-        static const QStringList candidates = { "WinMergeU", "meld", "kdiff3" };
-#else
-        static const QStringList candidates = { "meld", "kdiff3", "kompare", "diffuse" };
-#endif
-        for( const QString& name : candidates ) {
-            program = QStandardPaths::findExecutable( name );
-            if( !program.isEmpty() ) break;
-        }
-        args << in_file1 << in_file2;
-    }
-    else {
-        QString muster;
-        if( stt.read( QBtConfig::DIFF_GROUP + QBtConfig::COMMAND_KEY, data ) ) {
-            muster = data.toString().trimmed();
-        }
-        if( muster.isEmpty() ) return false;
-        // The configured command keeps the "%1 %2" placeholders of the old
-        // shell-based launcher; without them the files are appended.
-        const bool has_placeholders = muster.contains( "%1" );
-        if( has_placeholders ) {
-            muster = muster.arg( QBtShared::quoted_fpath( in_file1 ), QBtShared::quoted_fpath( in_file2 ) );
-        }
-        args = QProcess::splitCommand( muster );
-        if( args.isEmpty() ) return false;
-        program = args.takeFirst();
-        if( !has_placeholders ) args << in_file1 << in_file2;
-    }
-
-    if( program.isEmpty() ) return false;
-    return QProcess::startDetached( program, args );
-}
-// end of openDiff

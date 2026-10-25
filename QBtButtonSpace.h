@@ -50,13 +50,6 @@ private:
    QBtButtonSpace& operator=( const QBtButtonSpace& );
 
 //******* CONSTANTS *******
-public:
-   enum {
-      ONLY_FN = 0,
-      ONLY_TEXT,
-      FULL_DESC,
-      TWO_LINES
-   };
 private:
    enum {
       F1 = 0,

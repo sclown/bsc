@@ -29,7 +29,6 @@
 -------------------------------------------------------------------*/
 #include "QBtMainWindow.h"
 #include "QBtShared.h"
-#include "QBtConfig.h"
 #include "QBtEventsController.h"
 #include "QBtCommand.h"
 #include "QBtOverwriteAnswer.h"
@@ -57,7 +56,6 @@ int main( int in_argc, char** in_argv )
        bsc.setWindowIcon( QIcon( ":/img/bsc.png" ) );
    #endif
 
-   QBtConfig::instance();
    QBtEventsController::instance();
    qRegisterMetaType<QVariant>( "QVariant" );
    qRegisterMetaType<QBtOverwriteAnswer>( "QBtOverwriteAnswer" );
