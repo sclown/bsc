@@ -32,7 +32,7 @@
 -------------------------------------------------------------------*/
 #include <QDialog>
 #include <QFontMetrics>
-#include "QBtDirParser.h"
+#include <QFutureWatcher>
 
 /*------- forward declaration:
 -------------------------------------------------------------------*/
@@ -53,6 +53,7 @@ class QBtFinder : public QDialog
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
    QBtFinder( QWidget* = 0, const QString &workDir="" );
+   ~QBtFinder();
 private:
    QBtFinder( const QBtFinder& );
    QBtFinder& operator=( const QBtFinder& );
@@ -76,6 +77,7 @@ private:
    static const char* const ASK_FOR_FROM;
    static const char* const FILE_NAME;
    static const char* const FILE_PATH;
+   static const char* const BAD_PATTERN;
 
 //******* MEMBERS *******
 private:
@@ -96,7 +98,7 @@ private:
    QPushButton*     const cancel_;
    QTreeWidget*     const result_;
    QLineEdit*       const fpath_;
-   QBtDirParser           parser_;
+   QFutureWatcher<QString> watcher_;
    QFontMetrics           font_metrics_;
    QString                selected_file_path_;
 
@@ -105,15 +107,14 @@ public:
    void selected_file      ( QString& ) const;
 private:
    void showEvent          ( QShowEvent* );
-   bool search_what        ( const QString& ) const;
 private slots:
    void select_dir         ();
    void run_find           ();
    void break_find         ();
    void goto_find          ();
-   void parser_dir_changed ( const QString& );
-   void parser_current_item( const QString& );
-   void parser_finished    ();
+   void search_progress    ( const QString& );
+   void result_ready       ( int );
+   void search_finished    ();
 };
 
  #endif // INCLUDED_QBtFinder_h

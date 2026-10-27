@@ -38,12 +38,16 @@
 #include <QProgressBar>
 #include <QPushButton>
 #include <QLabel>
+#include <QLineEdit>
+#include <QDir>
 #include <QFileInfo>
 #include <QFileSystemModel>
 #include <QCompleter>
+#include <QCoreApplication>
 
 /*------- constants:
 -------------------------------------------------------------------*/
+const char* const QBtCopyDialog::CAPTION          = QT_TR_NOOP( "Copy processing" );
 const char* const QBtCopyDialog::SRC_DST_CAPTION  = QT_TR_NOOP( "Source and destination" );
 const char* const QBtCopyDialog::PROGRESS_CAPTION = QT_TR_NOOP( "Progress" );
 const char* const QBtCopyDialog::START            = QT_TR_NOOP( "&Start" );
@@ -51,34 +55,36 @@ const char* const QBtCopyDialog::EXIT             = QT_TR_NOOP( "&Exit" );
 const char* const QBtCopyDialog::BREAK            = QT_TR_NOOP( "&Break" );
 const char* const QBtCopyDialog::SRC_LABEL        = QT_TR_NOOP( "Source:" );
 const char* const QBtCopyDialog::DST_LABEL        = QT_TR_NOOP( "Destination:" );
-const char* const QBtCopyDialog::SRC_ITEMS_COUNT_TEXT    = QT_TR_NOOP( "%1 items" );
+const char* const QBtCopyDialog::SRC_ITEMS_COUNT_TEXT = QT_TR_NOOP( "%1 items" );
+const int         QBtCopyDialog::REFRESH_MS       = 50;
+const int         QBtCopyDialog::PROGRESS_STEPS   = 1000;
 
 
 //*******************************************************************
 // QBtCopyDialog                                         CONSTRUCTOR
 //*******************************************************************
 QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
-, font_metrics_ ( font() )
-, progress_     ( new QProgressBar )
-, start_        ( new QPushButton( tr( START     ) ) )
-, exit_         ( new QPushButton( tr( EXIT      ) ) )
-, started_      ( false )
-, sources_      ( SelectionsSet() )
-, destpath_     ( QString() )
-, src_path_     ( new QBtInfoField )
-, dst_path_     ( new QLineEdit )
-, can_overwrite_ ( new QBtCanOverwrite(this) )
+, progress_       ( new QProgressBar )
+, start_          ( new QPushButton( tr( START ) ) )
+, exit_           ( new QPushButton( tr( EXIT  ) ) )
+, src_path_       ( new QBtInfoField )
+, dst_path_       ( new QLineEdit )
+, can_overwrite_  ( new QBtCanOverwrite( this ) )
+, started_        ( false )
+, sources_        ()
+, destpath_       ()
+, command_        ( QBtOverwriteAnswer::ASK )
 {
-   reset_progress( 1000 );
-   
+   setWindowTitle( tr( CAPTION ) );
+
    QGroupBox* const src_dst_gbox = new QGroupBox( tr( SRC_DST_CAPTION ) );
    QGridLayout* const grid = new QGridLayout( src_dst_gbox );
 
-   QCompleter *completer = new QCompleter(this);
-   QFileSystemModel* const completer_model = new QFileSystemModel(completer);
-   completer_model->setRootPath(QString());
-   completer->setModel(completer_model);
-   dst_path_->setCompleter(completer);
+   QCompleter* const completer = new QCompleter( this );
+   QFileSystemModel* const completer_model = new QFileSystemModel( completer );
+   completer_model->setRootPath( QString() );
+   completer->setModel( completer_model );
+   dst_path_->setCompleter( completer );
 
    QLabel* const src_label = new QLabel( tr( SRC_LABEL ) );
    QLabel* const dst_label = new QLabel( tr( DST_LABEL ) );
@@ -93,8 +99,10 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    QGroupBox* const progress_gbox = new QGroupBox( tr( PROGRESS_CAPTION ) );
    QHBoxLayout* const progress_layout = new QHBoxLayout( progress_gbox );
    progress_->setAlignment( Qt::AlignHCenter );
+   progress_->setRange( 0, PROGRESS_STEPS );
+   progress_->setValue( 0 );
    progress_layout->addWidget( progress_ );
-   
+
    // Buttons
    QHBoxLayout* const in_layout = new QHBoxLayout;
    in_layout->addWidget( start_ );
@@ -107,18 +115,55 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    main_layout->addLayout( in_layout );
    setLayout( main_layout );
 
-   src_path_->setFocusPolicy(Qt::StrongFocus);
-   exit_->setFocusPolicy(Qt::StrongFocus);
-   start_->setFocusPolicy(Qt::StrongFocus);
-   setTabOrder(src_path_, dst_path_);
-   setTabOrder(dst_path_, start_);
-   setTabOrder(start_, exit_);
+   src_path_->setFocusPolicy( Qt::StrongFocus );
+   exit_->setFocusPolicy( Qt::StrongFocus );
+   start_->setFocusPolicy( Qt::StrongFocus );
+   setTabOrder( src_path_, dst_path_ );
+   setTabOrder( dst_path_, start_ );
+   setTabOrder( start_, exit_ );
    dst_path_->setFocus();
 
-   connect( exit_ , SIGNAL( clicked() ), this, SLOT( reject() ) );
-   connect( start_, SIGNAL( clicked() ), this, SLOT( start () ) );
+   connect( exit_ , &QPushButton::clicked, this, &QBtCopyDialog::reject );
+   connect( start_, &QPushButton::clicked, this, &QBtCopyDialog::start  );
+
+   // The worker reports every item; a tree of tens of thousands of
+   // small files would flood the GUI thread if each report repainted.
+   // The slots only record the latest state and refresh_ paints it.
+   refresh_.setInterval( REFRESH_MS );
+   connect( &refresh_, &QTimer::timeout, this, &QBtCopyDialog::refresh );
+
+   connect( &worker_, &QBtCopyWorker::progress, this, &QBtCopyDialog::progress );
+   connect( &watcher_, &QFutureWatcher<void>::finished, this, &QBtCopyDialog::finish );
 }
 // end of QBtCopyDialog
+
+//*******************************************************************
+// ~QBtCopyDialog                                         DESTRUCTOR
+//-------------------------------------------------------------------
+// The worker may be blocked on a question for this thread, so a
+// plain waitForFinished could deadlock. Keep delivering events until
+// it has unwound; a pending question sees the cancel and returns.
+//*******************************************************************
+QBtCopyDialog::~QBtCopyDialog()
+{
+   watcher_.cancel();
+   while( watcher_.isRunning() ) {
+      QCoreApplication::processEvents( QEventLoop::ExcludeUserInputEvents | QEventLoop::WaitForMoreEvents );
+   }
+}
+// end of ~QBtCopyDialog
+
+//*******************************************************************
+// executeCopy                                                PUBLIC
+//*******************************************************************
+int QBtCopyDialog::executeCopy( const SelectionsSet& sources, const QString& destination, const QBtOverwriteAnswer::Action command )
+{
+   sources_  = sources;
+   destpath_ = destination;
+   command_  = command;
+   return exec();
+}
+// end of executeCopy
 
 //*******************************************************************
 // showEvent                                       PRIVATE inherited
@@ -137,94 +182,139 @@ void QBtCopyDialog::showEvent( QShowEvent* const in_event )
       p.setColor( dst_path_->foregroundRole(), palette().color( foregroundRole() ) );
       dst_path_->setPalette( p );
    }
-   if(sources_.size() == 1) {
-       QFileInfo srcInfo(*sources_.begin());
-       if(!srcInfo.isDir()) {
-           destpath_ += QDir::separator() + srcInfo.fileName();
-       }
+   if( sources_.size() == 1 ) {
+      const QFileInfo src( *sources_.begin() );
+      if( !src.isDir() ) {
+         destpath_ += QDir::separator() + src.fileName();
+      }
    }
-   display_paths(sourceInitialText(), destpath_);
+   display_paths( sourceInitialText(), destpath_ );
    QBtShared::resize_width( this, 40 );
    start_->setDefault( true );
    QDialog::showEvent( in_event );
-   if(command_ == QBtOverwriteAnswer::AUTORENAME) {
-       start();
+   if( QBtOverwriteAnswer::AUTORENAME == command_ ) {
+      start();
    }
 }
 // end of showEvent
 
-QString QBtCopyDialog::sourceInitialText()
+//*******************************************************************
+// sourceInitialText                                         PRIVATE
+//*******************************************************************
+QString QBtCopyDialog::sourceInitialText() const
 {
-    if( sources_.size() == 1 )
-    {
-        return *sources_.begin();
-    }
-    return tr( SRC_ITEMS_COUNT_TEXT ).arg( sources_.size() );
+   if( sources_.size() == 1 ) {
+      return *sources_.begin();
+   }
+   return tr( SRC_ITEMS_COUNT_TEXT ).arg( sources_.size() );
 }
+// end of sourceInitialText
 
 //*******************************************************************
-// started                                                 PROTECTED
-//*******************************************************************
-void QBtCopyDialog::started()
-{
-   start_->setVisible( false );
-   exit_->setText( tr( BREAK ) );
-   started_ = true;
-}
-// end of started
-
-//*******************************************************************
-// finished                                                PROTECTED
-//*******************************************************************
-void QBtCopyDialog::finished()
-{
-   QDialog::accept();
-}
-// end of finished
-
-//*******************************************************************
-// reject                                          PRIVATE inherited
-//*******************************************************************
-void QBtCopyDialog::reject()
-{
-   if( !started_ ) QDialog::reject();
-   stop();
-}
-// end of reject
-
-int QBtCopyDialog::executeCopy(const SelectionsSet &sources, const QString &destination, const QBtOverwriteAnswer::Action command)
-{
-    sources_ = sources;
-    destpath_ = destination;
-    command_ = command;
-    return exec();
-}
-
-//*******************************************************************
-// display_info                                            PROTECTED
+// display_paths                                             PRIVATE
 //*******************************************************************
 void QBtCopyDialog::display_paths( const QString& in_src_path, const QString& in_dst_path )
 {
    src_path_->setText( in_src_path );
    dst_path_->setText( in_dst_path );
 }
-// end of display_info
+// end of display_paths
 
 //*******************************************************************
-// reset_progress                                          PROTECTED
+// start                                                PRIVATE slot
 //*******************************************************************
-void QBtCopyDialog:: reset_progress( const qint64 in_maximum )
+void QBtCopyDialog::start()
 {
-   progress_->setRange( 0, in_maximum );
-   progress_->setValue( 0 );
+   if( started_ ) return;
+   started_ = true;
+   start_->setVisible( false );
+   exit_->setText( tr( BREAK ) );
+   destpath_ = dst_path_->text();
+   refresh_.start();
+
+   std::optional<QBtOverwriteAnswer> sticky;
+   if( QBtOverwriteAnswer::AUTORENAME == command_ ) {
+      sticky = QBtOverwriteAnswer( true, QBtOverwriteAnswer::AUTORENAME, QString() );
+   }
+
+   watcher_.setFuture( worker_.start(
+      QStringList( sources_.begin(), sources_.end() ),
+      QFileInfo( destpath_ ).absoluteFilePath(),
+      sticky,
+      [this]( const QString& path, const QBtOverwriteAnswer::ErrorType type ) {
+         return ask_overwrite( path, type );
+      } ) );
 }
-// end of reset_progress
+// end of start
 
 //*******************************************************************
-// set_progress                                            PROTECTED
+// reject                                      PRIVATE inherited slot
+//-------------------------------------------------------------------
+// Before Start this closes the dialog. Once running it breaks the
+// copy; finish() then closes the dialog when the worker has stopped.
 //*******************************************************************
-void QBtCopyDialog::set_progress( const qint64 in_value )
+void QBtCopyDialog::reject()
 {
-   progress_->setValue( in_value );
+   if( started_ ) {
+      watcher_.cancel();
+   }
+   else {
+      QDialog::reject();
+   }
 }
-// end of set_progress
+// end of reject
+
+//*******************************************************************
+// ask_overwrite                                             PRIVATE
+//-------------------------------------------------------------------
+// Runs on the worker thread. The modal question is shown on this
+// dialog's thread and the worker waits for the answer.
+//*******************************************************************
+QBtOverwriteAnswer QBtCopyDialog::ask_overwrite( const QString& path, const QBtOverwriteAnswer::ErrorType type )
+{
+   QBtOverwriteAnswer answer( false, QBtOverwriteAnswer::CANCEL, QString() );
+   QMetaObject::invokeMethod( this, [&]() {
+      if( !watcher_.isCanceled() ) {
+         answer = can_overwrite_->ask( path, type );
+      }
+   }, Qt::BlockingQueuedConnection );
+   return answer;
+}
+// end of ask_overwrite
+
+//*******************************************************************
+// finish                                               PRIVATE slot
+//-------------------------------------------------------------------
+// Items may have been copied even when the run was broken, so the
+// caller always gets Accepted and refreshes both views.
+//*******************************************************************
+void QBtCopyDialog::finish()
+{
+   refresh_.stop();
+   refresh();
+   accept();
+}
+// end of finish
+
+//*******************************************************************
+// progress                                             PRIVATE slot
+//*******************************************************************
+void QBtCopyDialog::progress( const QBtCopyProgress& in_progress )
+{
+   status_update_ = in_progress;
+}
+// end of progress
+
+//*******************************************************************
+// refresh                                              PRIVATE slot
+//*******************************************************************
+void QBtCopyDialog::refresh()
+{
+   if( !status_update_ ) return;
+   display_paths( status_update_->source, status_update_->destination );
+   progress_->setValue( status_update_->size > 0
+                        ? static_cast<int>( status_update_->done * PROGRESS_STEPS / status_update_->size )
+                        : PROGRESS_STEPS );
+   status_update_.reset();
+}
+// end of refresh

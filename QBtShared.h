@@ -78,7 +78,6 @@ public:
    static QString&       reverse        ( QString& );
    static QString        num2str        ( qint64, const QChar& = DIGIT_SEPARATOR );
    static QString        access         ( const QBtFileInfo& );
-   static void           idle           ();
    static void           elide          ( const QFontMetrics&, qint32, QString& );
    static QString        auto_rename    ( const QString& );
    static bool           is_regular_file( const QString& );

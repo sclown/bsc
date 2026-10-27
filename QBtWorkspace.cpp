@@ -35,7 +35,7 @@
 #include "QBtEventsController.h"
 #include "QBtView.h"
 #include "BtTypes.h"
-#include "QBtDirCopyDialog.h"
+#include "QBtCopyDialog.h"
 #include "QBtPackDialog.h"
 #include "QBtShared.h"
 #include <QSplitter>
@@ -242,7 +242,7 @@ void QBtWorkspace::copy()
         return;
     }
 
-    QBtDirCopyDialog dialog( this );
+    QBtCopyDialog dialog( this );
     if( dialog.executeCopy(data, dst->current_path(), QBtOverwriteAnswer::ASK) != QDialog::Accepted ) return;
 
     src->unselect_all();
@@ -306,7 +306,7 @@ void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
         command = QBtOverwriteAnswer::AUTORENAME;
     }
 
-    QBtDirCopyDialog dialog( this );
+    QBtCopyDialog dialog( this );
     if( dialog.executeCopy(dropedFiles, dropPath, command) != QDialog::Accepted ) return;
     left_panel_->current_view()->refresh();
     right_panel_->current_view()->refresh();

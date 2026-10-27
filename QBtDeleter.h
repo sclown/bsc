@@ -31,6 +31,8 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include <QDialog>
+#include <QFutureWatcher>
+#include <QStringList>
 #include "BtTypes.h"
 
 /*------- forward declarations:
@@ -38,10 +40,12 @@
 class QFrame;
 class QPushButton;
 class QBtInfoField;
-class QBtDirParser;
 
 /*------- class declaration:
 -------------------------------------------------------------------*/
+// Moves the selected files and directories to the system trash.
+// The work runs on a thread-pool thread; the dialog only shows
+// progress and collects the paths that could not be trashed.
 class QBtDeleter : public QDialog
 {
    Q_OBJECT
@@ -49,6 +53,7 @@ class QBtDeleter : public QDialog
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
    QBtDeleter( QWidget* = 0 );
+   ~QBtDeleter();
 private:
    QBtDeleter( const QBtDeleter& );
    QBtDeleter& operator=( const QBtDeleter& );
@@ -59,9 +64,7 @@ private:
    static const char* const RUN;
    static const char* const CANCEL;
    static const char* const BREAK;
-   static const char* const DIR_ERROR;
-   static const char* const CANT_DEL_FILE;
-   static const char* const CANT_DEL_DIR;
+   static const char* const CANT_TRASH;
 
 //******* MEMBERS *******
 private:
@@ -69,28 +72,23 @@ private:
    QFrame*                 const line_;
    QPushButton*            const run_;
    QPushButton*            const cancel_;
-   QBtDirParser*           const parser_;
-   bool                          break_;
-   bool                          runned_;
+   QFutureWatcher<QString>       watcher_;
    SelectionsSet                 data_;
-   SelectionsSet::const_iterator it_;
-   SelectionsSet::const_iterator end_;
+   QStringList                   failed_;
+   bool                          running_;
 
 //******* METHODS *******
 public:
    void set_data( const SelectionsSet& );
 private:
-   void showEvent         ( QShowEvent* );
-   void keyPressEvent     ( QKeyEvent* );
+   void showEvent    ( QShowEvent* );
+   void keyPressEvent( QKeyEvent* );
 private slots:
-   void run               ();
-   void cancel            ();
-   void current_item      ( const QString& );
-   void finished          ();
-   void read_dir_error    ( const QString& );
-   void remove_dir_error  ( const QString& );
-   void remove_file_error ( const QString& );
-   void progress          ( const QString& );
+   void run         ();
+   void cancel      ();
+   void progress    ( const QString& );
+   void result_ready( int );
+   void finished    ();
 };
 
-#endif // INCLUDED_QBtDeleter_h 
+#endif // INCLUDED_QBtDeleter_h

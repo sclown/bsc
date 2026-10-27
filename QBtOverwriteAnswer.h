@@ -3,6 +3,11 @@
 
 #include <QString>
 
+/*------- class declaration:
+-------------------------------------------------------------------
+ * The user's decision about one conflicting item. With dontAsk set
+ * the same action is to be applied to every later conflict as well.
+-------------------------------------------------------------------*/
 class QBtOverwriteAnswer
 {
 public:
@@ -15,49 +20,32 @@ public:
     enum Action {
         ASK = 0,
         CANCEL,
-       SKIP,
-       OVERWRITE,
-       UPDATE,
-       RENAME,
-       AUTORENAME
+        SKIP,
+        OVERWRITE,
+        UPDATE,
+        RENAME,
+        AUTORENAME
     };
 
-    QBtOverwriteAnswer() :
-        resolved_(false),
-        dontAsk_(false),
-        action_(ASK) {
-
-    }
-    QBtOverwriteAnswer(bool dontAsk, Action action, QString newName) :
-        resolved_(true),
-        dontAsk_(dontAsk),
-        action_(action),
-        newName_(newName) {
-
+    QBtOverwriteAnswer( bool dontAsk, Action action, QString newName ) :
+        dontAsk_( dontAsk ),
+        action_( action ),
+        newName_( newName ) {
     }
 
-    void reset() {
-        resolved_ = false;
-        newName_ = "";
+    bool dontAsk() const {
+        return dontAsk_;
     }
-    bool valid() {
-        return dontAsk_ || resolved_;
-    }
-    bool hasNewName() {
-        return resolved_ && newName_.size();
-    }
-    Action action() {
+    Action action() const {
         return action_;
     }
-    QString newName() {
+    QString newName() const {
         return newName_;
     }
 private:
-    bool resolved_;
-    bool dontAsk_;
-    Action action_;
+    bool    dontAsk_;
+    Action  action_;
     QString newName_;
-
 };
 
 #endif // QBTOVERWRITEANSWER_H

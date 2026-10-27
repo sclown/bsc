@@ -30,6 +30,7 @@
 #include "QBtFinder.h"
 #include "QBtShared.h"
 #include "QBtPointsButton.h"
+#include "QBtFileSearch.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QGroupBox>
@@ -40,14 +41,13 @@
 #include <QLabel>
 #include <QCheckBox>
 #include <QDir>
-#include <QFile>
-#include <QTextStream>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QFontMetrics>
 #include <QHeaderView>
 #include <QRegularExpression>
 #include <QApplication>
+#include <QtConcurrent>
 
 /*------- local constants:
 -------------------------------------------------------------------*/
@@ -68,6 +68,7 @@ const char* const QBtFinder::ASK_FOR_FILE = QT_TR_NOOP( "What file would you lik
 const char* const QBtFinder::ASK_FOR_FROM = QT_TR_NOOP( "From where would you like to start a search process?" );
 const char* const QBtFinder::FILE_NAME    = QT_TR_NOOP( "File name" );
 const char* const QBtFinder::FILE_PATH    = QT_TR_NOOP( "File path" );
+const char* const QBtFinder::BAD_PATTERN  = QT_TR_NOOP( "Invalid regular expression:\n%1" );
 
 
 //*******************************************************************
@@ -155,11 +156,21 @@ QBtFinder::QBtFinder( QWidget* const in_parent, const QString &workDir ) : QDial
    connect( break_      , SIGNAL( clicked() ), this, SLOT( break_find() ) );
    connect( goto_       , SIGNAL( clicked() ), this, SLOT( goto_find () ) );
 
-   connect( &parser_, SIGNAL( change_dir  ( const QString& ) ), this, SLOT( parser_dir_changed ( const QString& ) ) );
-   connect( &parser_, SIGNAL( current_item( const QString& ) ), this, SLOT( parser_current_item( const QString& ) ) );
-   connect( &parser_, SIGNAL( finished    ()                 ), this, SLOT( parser_finished    () ) );
+   connect( &watcher_, &QFutureWatcher<QString>::progressTextChanged, this, &QBtFinder::search_progress );
+   connect( &watcher_, &QFutureWatcher<QString>::resultReadyAt      , this, &QBtFinder::result_ready    );
+   connect( &watcher_, &QFutureWatcher<QString>::finished           , this, &QBtFinder::search_finished );
 }
 // end of QBtFinder
+
+//*******************************************************************
+// ~QBtFinder                                             DESTRUCTOR
+//*******************************************************************
+QBtFinder::~QBtFinder()
+{
+   watcher_.cancel();
+   watcher_.waitForFinished();
+}
+// end of ~QBtFinder
 
 //*******************************************************************
 // showEvent                                       PRIVATE inherited
@@ -208,6 +219,27 @@ void QBtFinder::run_find()
       return;
    }
 
+   BtSearch::Spec spec;
+   spec.root             = from_->text();
+   spec.name_pattern     = file_->text();
+   spec.name_regex       = file_regex_->isChecked();
+   spec.content          = what_->text();
+   spec.content_regex    = what_regex_->isChecked();
+   spec.case_insensitive = case_->isChecked();
+
+   const QRegularExpression name_rx = BtSearch::name_matcher( spec );
+   if( !name_rx.isValid() ) {
+      QMessageBox::warning( this, tr( CAPTION ), tr( BAD_PATTERN ).arg( name_rx.errorString() ) );
+      file_->setFocus( Qt::OtherFocusReason );
+      return;
+   }
+   const QRegularExpression content_rx = BtSearch::content_matcher( spec );
+   if( !content_rx.isValid() ) {
+      QMessageBox::warning( this, tr( CAPTION ), tr( BAD_PATTERN ).arg( content_rx.errorString() ) );
+      what_->setFocus( Qt::OtherFocusReason );
+      return;
+   }
+
    run_->setEnabled( false );
    break_->setEnabled( true );
    goto_->setEnabled( false );
@@ -215,9 +247,8 @@ void QBtFinder::run_find()
    settings_gbox_->setEnabled( false );
    result_->clear();
 
-   const QString muster = file_regex_->isChecked() ? QString() : file_->text();
-   qApp->setOverrideCursor( Qt::WaitCursor );
-   parser_.run( from_->text(), muster, true );   // skip hidden files
+   qApp->setOverrideCursor( Qt::BusyCursor );
+   watcher_.setFuture( QtConcurrent::run( BtSearch::run, spec ) );
 }
 // end of run_find
 
@@ -226,7 +257,7 @@ void QBtFinder::run_find()
 //*******************************************************************
 void QBtFinder::break_find()
 {
-   parser_.cancel();
+   watcher_.cancel();
 }
 // end of break_find
 
@@ -253,9 +284,9 @@ void QBtFinder::selected_file( QString& out_file_path ) const
 // end of selected_file
 
 //*******************************************************************
-// parser_dir_changed                                   PRIVATE slot
+// search_progress                                      PRIVATE slot
 //*******************************************************************
-void QBtFinder::parser_dir_changed( const QString& in_dir )
+void QBtFinder::search_progress( const QString& in_dir )
 {
    static qint32 field_width = 0;
    if( !field_width ) field_width = fpath_->width();
@@ -264,29 +295,15 @@ void QBtFinder::parser_dir_changed( const QString& in_dir )
    QBtShared::elide( font_metrics_, field_width, dir );
    fpath_->setText( dir );
 }
-// end of parser_dir_changed
+// end of search_progress
 
 //*******************************************************************
-// parser_current_item                                  PRIVATE slot
+// result_ready                                         PRIVATE slot
 //*******************************************************************
-void QBtFinder::parser_current_item( const QString& in_fpath )
+void QBtFinder::result_ready( const int in_index )
 {
-   const QFileInfo fi( in_fpath );
+   const QFileInfo fi( watcher_.resultAt( in_index ) );
 
-   // W przypadku uzywania wyrazen regularnych w odniesieniu do
-   // nazw plikow, sprawdzamy czy nazwa pliku jest zgodna ze wzorcem.
-   if( file_regex_->isChecked() ) {
-      const QRegularExpression regex( file_->text() );
-      if( !regex.match( fi.fileName() ).hasMatch() ) return;
-   }
-
-   // W przypadku wyszukiwania wzorca zawartosci, sprawdzamy czy
-   // plik zawiera taki wzorzec.
-   if( !what_->text().isEmpty() ) {
-      if( !search_what( fi.filePath() ) ) return;
-   }
-   
-   
    QTreeWidgetItem* const root = result_->invisibleRootItem();
    QTreeWidgetItem* const itm = new QTreeWidgetItem();
    itm->setText( 0, fi.fileName() );
@@ -294,14 +311,13 @@ void QBtFinder::parser_current_item( const QString& in_fpath )
    root->addChild( itm );
    result_->resizeColumnToContents( 0 );
    result_->resizeColumnToContents( 1 );
-   QBtShared::idle();
 }
-// end of parser_current_item
+// end of result_ready
 
 //*******************************************************************
-// parser_finished                                      PRIVATE slot
+// search_finished                                      PRIVATE slot
 //*******************************************************************
-void QBtFinder::parser_finished()
+void QBtFinder::search_finished()
 {
    qApp->restoreOverrideCursor();
    run_->setEnabled( true );
@@ -320,38 +336,4 @@ void QBtFinder::parser_finished()
       file_->setFocus( Qt::OtherFocusReason );
    }
 }
-// end of parser_finished
-
-//*******************************************************************
-// search_what                                               PRIVATE
-//*******************************************************************
-bool QBtFinder::search_what( const QString& in_path ) const
-{
-   QFile file( in_path );
-   if( file.open( QIODevice::ReadOnly ) ) {
-      QTextStream in( &file );
-      QString text = in.readAll();
-      file.close();
-
-      QString what_to_find = what_->text();
-      if( case_->isChecked() ) {
-         text = text.toLower();
-         what_to_find = what_to_find.toLower();
-      }
-               
-      if( what_regex_->isChecked() ) {
-         const QRegularExpression regex( what_to_find );
-         if( regex.match( text ).hasMatch() ) {
-            return true;
-         }
-      }
-      else {
-         if( text.indexOf( what_to_find ) != -1 ) {
-            return true;
-         }
-      }   
-   }
-
-   return false;
-}
-// end of search_what
+// end of search_finished

@@ -22,7 +22,7 @@
  * Boston, MA  02110-1301  USA
  *-------------------------------------------------------------------
  * Project      : Beesoft Commander
- * File         : QBtCopyDialog.cpp
+ * File         : QBtCopyDialog.h
  * Author       : Piotr Pszczolkowski
  * Contact      : piotr@beesoft.org
  * Creation date: 02.09.2007
@@ -32,13 +32,15 @@
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
 #include "QBtOverwriteAnswer.h"
+#include "QBtCopyWorker.h"
 #include <QDialog>
-#include <QFontMetrics>
+#include <QFutureWatcher>
+#include <QTimer>
+#include <optional>
 
 /*------- forward declarations:
 -------------------------------------------------------------------*/
 class QProgressBar;
-class QCheckBox;
 class QPushButton;
 class QLineEdit;
 class QBtInfoField;
@@ -53,12 +55,14 @@ class QBtCopyDialog : public QDialog
 //******* CONSTRUCTION / DESTRUCTION *******
 public:
    QBtCopyDialog( QWidget* = 0 );
+   virtual ~QBtCopyDialog();
 private:
    QBtCopyDialog( const QBtCopyDialog& );
    QBtCopyDialog& operator=( const QBtCopyDialog& );
 
 //******* CONSTANTS *******
 private:
+   static const char* const CAPTION;
    static const char* const SRC_DST_CAPTION;
    static const char* const PROGRESS_CAPTION;
    static const char* const START;
@@ -67,40 +71,42 @@ private:
    static const char* const SRC_LABEL;
    static const char* const DST_LABEL;
    static const char* const SRC_ITEMS_COUNT_TEXT;
+   static const int         REFRESH_MS;
+   static const int         PROGRESS_STEPS;
 
 //******* MEMBERS *******
 private:
-   QFontMetrics  const font_metrics_;
-   QProgressBar* const progress_;
-   QPushButton*  const start_;
-   QPushButton*  const exit_;
-   bool                started_;
-protected:
-   SelectionsSet       sources_;
-   QString             destpath_;
-   QBtInfoField* const src_path_;
-   QLineEdit*    const dst_path_;
-   QBtCanOverwrite*  const can_overwrite_;
+   QProgressBar*    const progress_;
+   QPushButton*     const start_;
+   QPushButton*     const exit_;
+   QBtInfoField*    const src_path_;
+   QLineEdit*       const dst_path_;
+   QBtCanOverwrite* const can_overwrite_;
+   bool                   started_;
+   SelectionsSet          sources_;
+   QString                destpath_;
    QBtOverwriteAnswer::Action command_;
+
+   QBtCopyWorker       worker_;
+   QFutureWatcher<void>   watcher_;
+   // Latest unpainted update from the worker; refresh_ paints and clears it.
+   QTimer                 refresh_;
+   std::optional<QBtCopyProgress> status_update_;
 
 //******* METHODS *******
 public:
-   int executeCopy( const SelectionsSet&, const QString&, const QBtOverwriteAnswer::Action);
+   int executeCopy( const SelectionsSet&, const QString&, QBtOverwriteAnswer::Action );
 private:
-   void     showEvent           ( QShowEvent* );
-   QString  sourceInitialText   ();
-protected:
-   virtual void stop() = 0;
-
-   void started        ();
-   void finished       ();
-   void display_paths  ( const QString&, const QString& );
-   void reset_progress (const qint64 = 0 );
-   void set_progress   (const qint64 );
-
+   void     showEvent        ( QShowEvent* );
+   QString  sourceInitialText() const;
+   void     display_paths    ( const QString&, const QString& );
+   QBtOverwriteAnswer ask_overwrite( const QString&, QBtOverwriteAnswer::ErrorType );
 private slots:
-   virtual void start  () = 0;
-   void reject         ();
+   void start         ();
+   void reject        ();
+   void finish        ();
+   void progress      ( const QBtCopyProgress& );
+   void refresh       ();
 };
 
 #endif // INCLUDED_QBtCopyDialog_h

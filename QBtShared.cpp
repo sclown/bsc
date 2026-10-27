@@ -184,15 +184,6 @@ QString QBtShared::access( const QBtFileInfo& in_fi )
 // access
 
 //*******************************************************************
-// idle
-//*******************************************************************
-void QBtShared::idle()
-{
-   QApplication::processEvents();
-}
-// end of idle
-
-//*******************************************************************
 // elide
 //*******************************************************************
 void QBtShared::elide( const QFontMetrics& in_fm, const qint32 in_width, QString& in_out_path )

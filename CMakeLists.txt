@@ -22,11 +22,10 @@ set(BSC_SOURCES
     QBtCopyDialog.cpp
     QBtDeleteQuest.cpp
     QBtDeleter.cpp
-    QBtDirCopyDialog.cpp
     QBtDirModel.cpp
-    QBtDirParser.cpp
     QBtEventsController.cpp
     QBtFileViewer.cpp
+    QBtFileSearch.cpp
     QBtFinder.cpp
     QBtHelp.cpp
     QBtInfoLabel.cpp
@@ -48,7 +47,8 @@ set(BSC_SOURCES
     3rdprty/dircompleter.cpp
     QBtPathBox.cpp
     QBtDirListWorker.cpp
-    QBtDirCopyWorker.cpp
+    QBtCopyWorker.cpp
+    QBtFileTimes.cpp
 )
 
 set(BSC_HEADERS
@@ -60,13 +60,12 @@ set(BSC_HEADERS
     QBtCopyDialog.h
     QBtDeleteQuest.h
     QBtDeleter.h
-    QBtDirCopyDialog.h
     QBtDirModel.h
-    QBtDirParser.h
     QBtEvent.h
     QBtEventsController.h
     QBtFileInfo.h
     QBtFileViewer.h
+    QBtFileSearch.h
     QBtFinder.h
     QBtHelp.h
     QBtInfoField.h
@@ -92,7 +91,8 @@ set(BSC_HEADERS
     QBtPathBox.h
     QBTMacTools.h
     QBtDirListWorker.h
-    QBtDirCopyWorker.h
+    QBtCopyWorker.h
+    QBtFileTimes.h
     QBtOverwriteAnswer.h
 )
 

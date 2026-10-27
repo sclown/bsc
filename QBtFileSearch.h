@@ -1,6 +1,3 @@
-#ifndef INCLUDED_QBtDirCopyDialog_h
-#define INCLUDED_QBtDirCopyDialog_h
-
 /********************************************************************
  * Copyright (C) Piotr Pszczolkowski
  *-------------------------------------------------------------------
@@ -22,60 +19,48 @@
  * Boston, MA  02110-1301  USA
  *-------------------------------------------------------------------
  * Project      : Beesoft Commander
- * File         : QBtDirCopyDialog.cpp
+ * File         : QBtFinder.cpp
  * Author       : Piotr Pszczolkowski
  * Contact      : piotr@beesoft.org
- * Creation date: 02.09.2007
+ * Creation date: 2007.11.05
  *******************************************************************/
+
+#ifndef INCLUDED_QBtFileSearch_h
+#define INCLUDED_QBtFileSearch_h
 
 /*------- include files:
 -------------------------------------------------------------------*/
-#include "QBtCopyDialog.h"
-#include "QBtOverwriteAnswer.h"
-#include <QThread>
+#include <QString>
+#include <QRegularExpression>
+#include <QPromise>
 
-/*------- forward declarations:
+/*------- declarations:
 -------------------------------------------------------------------*/
-class QFileInfo;
-class QBtDirParser;
-class QBtDirCopyWorker;
+// Recursive file search used by the Finder dialog. Pure functions,
+// no Qt object: meant to run on a thread-pool thread via
+// QtConcurrent::run( BtSearch::run, spec ).
+namespace BtSearch {
 
-/*------- class declaration:
--------------------------------------------------------------------*/
-class QBtDirCopyDialog : public QBtCopyDialog
-{
-   Q_OBJECT
-
-//******* CONSTRUCTION / DESTRUCTION *******
-public:
-   QBtDirCopyDialog( QWidget* = 0 );
-   virtual ~QBtDirCopyDialog();
-private:
-   QBtDirCopyDialog( const QBtDirCopyDialog& );
-   QBtDirCopyDialog& operator=( const QBtDirCopyDialog& );
-
-//******* CONSTANTS *******
-private:
-   static const char* const CAPTION;
-
-//******* MEMBERS *******
-private:
-   QThread thread_;
-   QBtDirCopyWorker *worker_;
-
-//******* METHODS *******
-private:
-   void stop();
-private slots:
-   void start();
-   void finish();
-   void progress_slot(qint64);
-   void item_info_slot(const QString&, const QString&, const qint64);
-   void ask_overwrite(const QString&, QBtOverwriteAnswer::ErrorType);
-
-signals:
-   void copy(QStringList, QString);
-   void resume(QBtOverwriteAnswer);
+struct Spec {
+   QString root;
+   QString name_pattern;      // "a;b" globs, or one regular expression
+   bool    name_regex       = false;
+   QString content;           // empty: names only
+   bool    content_regex    = false;
+   bool    case_insensitive = false;   // applies to the content match
 };
 
-#endif // INCLUDED_QBtDirCopyDialog_h
+// One anchored regex built from the glob list or the user's regex.
+QRegularExpression name_matcher( const Spec& );
+// Invalid (default) regex when the content is not a regular expression.
+QRegularExpression content_matcher( const Spec& );
+
+// Walks the tree, reporting every matching file as a result and the
+// directory being scanned as progress text. Hidden entries are skipped
+// at every level; symlinked directories are not followed. Returns at
+// the next file once the promise is cancelled.
+void run( QPromise<QString>& promise, const Spec spec );
+
+}
+
+#endif // INCLUDED_QBtFileSearch_h
