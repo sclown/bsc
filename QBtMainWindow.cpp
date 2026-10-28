@@ -88,7 +88,6 @@ const char* const QBtMainWindow::FIND                = QT_TR_NOOP( "&Find" );
 const char* const QBtMainWindow::NEW_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+T" );
 const char* const QBtMainWindow::DEL_TAB_ACCEL       = QT_TR_NOOP( "Ctrl+W" );
 const char* const QBtMainWindow::SWITCH_TABS_ACCEL   = QT_TR_NOOP( "Ctrl+S");
-const char* const QBtMainWindow::FIND_ACCEL          = QT_TR_NOOP( "Ctrl+F7" );
 //------- Help -------
 const char* const QBtMainWindow::ABOUT_QT_ICON  = "qt.png";
 const char* const QBtMainWindow::ABOUT_BSC_ICON = "bsc.png";
@@ -379,7 +378,7 @@ void QBtMainWindow::retranslate()
    new_tab_       ->setShortcut( tr( NEW_TAB_ACCEL     ) );
    del_tab_       ->setShortcut( tr( DEL_TAB_ACCEL     ) );
    switch_tabs_   ->setShortcut( tr( SWITCH_TABS_ACCEL ) );
-   find_          ->setShortcut( tr( FIND_ACCEL        ) );
+   find_          ->setShortcut( QKeySequence::Find );
    //------- Help -------
    about_qt_ ->setText( tr( ABOUT_QT  ) );
    about_bsc_->setText( tr( ABOUT_BSC ) );

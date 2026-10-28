@@ -72,10 +72,6 @@ void run( QPromise<QString>& promise, const Spec spec )
    const QRegularExpression name_rx    = name_matcher( spec );
    const QRegularExpression content_rx = content_matcher( spec );
 
-   // Breadth-first over an explicit queue. Non-recursive listings are
-   // used on purpose: QDirIterator's recursive mode does not honour the
-   // hidden-entry filter in every Qt release, and a queue lets hidden
-   // and symlinked directories be pruned before they are entered.
    const QDir::Filters filters = QDir::AllDirs | QDir::Files | QDir::NoDotAndDotDot;
    QStringList pending{ QDir( spec.root ).absolutePath() };
    int dirs_seen = 0;

@@ -40,13 +40,13 @@
 #include <QLineEdit>
 #include <QLabel>
 #include <QCheckBox>
+#include <QEvent>
 #include <QDir>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QFontMetrics>
 #include <QHeaderView>
 #include <QRegularExpression>
-#include <QApplication>
 #include <QtConcurrent>
 
 /*------- local constants:
@@ -64,11 +64,11 @@ const char* const QBtFinder::CANCEL       = QT_TR_NOOP( "&Cancel" );
 const char* const QBtFinder::REGEX        = QT_TR_NOOP( "as reg.expr." );
 const char* const QBtFinder::CASE         = QT_TR_NOOP( "case insensitive" );
 const char* const QBtFinder::DIRSEL       = QT_TR_NOOP( "Select a directory" );
-const char* const QBtFinder::ASK_FOR_FILE = QT_TR_NOOP( "What file would you like to search?" );
 const char* const QBtFinder::ASK_FOR_FROM = QT_TR_NOOP( "From where would you like to start a search process?" );
 const char* const QBtFinder::FILE_NAME    = QT_TR_NOOP( "File name" );
 const char* const QBtFinder::FILE_PATH    = QT_TR_NOOP( "File path" );
 const char* const QBtFinder::BAD_PATTERN  = QT_TR_NOOP( "Invalid regular expression:\n%1" );
+const int         QBtFinder::REFRESH_MS   = 50;
 
 
 //*******************************************************************
@@ -94,6 +94,7 @@ QBtFinder::QBtFinder( QWidget* const in_parent, const QString &workDir ) : QDial
 , fpath_             ( new QLineEdit )
 , font_metrics_      ( fontMetrics() )
 , selected_file_path_( QString() )
+, shown_count_       ( 0 )
 {
    setWindowTitle( tr( CAPTION ) );
 
@@ -102,13 +103,20 @@ QBtFinder::QBtFinder( QWidget* const in_parent, const QString &workDir ) : QDial
    header->setText( 1, tr( FILE_PATH ) );
    result_->setHeaderItem( header );
    result_->setRootIsDecorated( false );
+   result_->setUniformRowHeights( true );
    result_->setSortingEnabled( true );
    result_->sortByColumn( 0, Qt::AscendingOrder );
+   result_->resizeColumnToContents( 0 );
+   result_->setColumnWidth(0, 200);
 
    run_->setDefault( true );
    break_->setEnabled( false );
    goto_->setEnabled( false );
+   file_->setText( "*" );
    from_->setText( workDir.length()? workDir : QDir::homePath() );
+   for( QLineEdit* const edit : { file_, from_, what_ } ) {
+      edit->setTextMargins( 4, 2, 4, 2 );
+   }
    
    fpath_->setFrame( false );
    fpath_->setReadOnly( true );
@@ -156,8 +164,12 @@ QBtFinder::QBtFinder( QWidget* const in_parent, const QString &workDir ) : QDial
    connect( break_      , SIGNAL( clicked() ), this, SLOT( break_find() ) );
    connect( goto_       , SIGNAL( clicked() ), this, SLOT( goto_find () ) );
 
+   result_->installEventFilter( this );
+
+   refresh_.setInterval( REFRESH_MS );
+   connect( &refresh_, &QTimer::timeout, this, &QBtFinder::refresh );
+
    connect( &watcher_, &QFutureWatcher<QString>::progressTextChanged, this, &QBtFinder::search_progress );
-   connect( &watcher_, &QFutureWatcher<QString>::resultReadyAt      , this, &QBtFinder::result_ready    );
    connect( &watcher_, &QFutureWatcher<QString>::finished           , this, &QBtFinder::search_finished );
 }
 // end of QBtFinder
@@ -179,8 +191,27 @@ void QBtFinder::showEvent( QShowEvent* const in_event )
 {
    QBtShared::resize_width( this, 50 );
    QDialog::showEvent( in_event );
+   file_->setFocus( Qt::OtherFocusReason );
+   file_->selectAll();
 }
 // end of showEvent
+
+//*******************************************************************
+// eventFilter                                     PRIVATE inherited
+//*******************************************************************
+bool QBtFinder::eventFilter( QObject* const in_object, QEvent* const in_event )
+{
+   if( in_object == result_ ) {
+      if( in_event->type() == QEvent::FocusIn && goto_->isEnabled() ) {
+         goto_->setDefault( true );
+      }
+      else if( in_event->type() == QEvent::FocusOut ) {
+         run_->setDefault( true );
+      }
+   }
+   return QDialog::eventFilter( in_object, in_event );
+}
+// end of eventFilter
 
 //*******************************************************************
 // select_dir                                           PRIVATE slot
@@ -208,9 +239,7 @@ void QBtFinder::run_find()
    what_->setText( what_->text().trimmed() );
    
    if( file_->text().isEmpty() ) {
-      QMessageBox::question( this, tr( CAPTION ), tr( ASK_FOR_FILE ) );
-      file_->setFocus( Qt::OtherFocusReason );
-      return;
+      file_->setText( file_regex_->isChecked() ? ".*" : "*" );
    }
 
    if( from_->text().isEmpty() ) {
@@ -247,8 +276,12 @@ void QBtFinder::run_find()
    settings_gbox_->setEnabled( false );
    result_->clear();
 
-   qApp->setOverrideCursor( Qt::BusyCursor );
+   root_dir_ = QDir( QDir( spec.root ).absolutePath() );
+   shown_count_ = 0;
+   progress_dir_.reset();
    watcher_.setFuture( QtConcurrent::run( BtSearch::run, spec ) );
+   refresh_.start();
+   result_->setFocus( Qt::OtherFocusReason );
 }
 // end of run_find
 
@@ -268,7 +301,8 @@ void QBtFinder::goto_find()
 {
    const QTreeWidgetItem* const itm = result_->currentItem();
    if( itm ) {
-      selected_file_path_ = itm->text( 1 );
+      selected_file_path_ = itm->data( 1, Qt::UserRole ).toString();
+      watcher_.cancel();
       accept();
    }
 }
@@ -288,49 +322,72 @@ void QBtFinder::selected_file( QString& out_file_path ) const
 //*******************************************************************
 void QBtFinder::search_progress( const QString& in_dir )
 {
-   static qint32 field_width = 0;
-   if( !field_width ) field_width = fpath_->width();
-
-   QString dir = in_dir;
-   QBtShared::elide( font_metrics_, field_width, dir );
-   fpath_->setText( dir );
+   progress_dir_ = in_dir;
 }
 // end of search_progress
 
 //*******************************************************************
-// result_ready                                         PRIVATE slot
+// refresh                                              PRIVATE slot
 //*******************************************************************
-void QBtFinder::result_ready( const int in_index )
+void QBtFinder::refresh()
 {
-   const QFileInfo fi( watcher_.resultAt( in_index ) );
+   if( progress_dir_ ) {
+      QString dir = root_dir_.relativeFilePath( *progress_dir_ );
+      QBtShared::elide( font_metrics_, fpath_->width(), dir );
+      fpath_->setText( dir );
+      progress_dir_.reset();
+   }
 
-   QTreeWidgetItem* const root = result_->invisibleRootItem();
-   QTreeWidgetItem* const itm = new QTreeWidgetItem();
-   itm->setText( 0, fi.fileName() );
-   itm->setText( 1, fi.filePath() );
-   root->addChild( itm );
-   result_->resizeColumnToContents( 0 );
-   result_->resizeColumnToContents( 1 );
+   const QFuture<QString> future = watcher_.future();
+   const int count = future.resultCount();
+   if( count <= shown_count_ ) return;
+
+   QList<QTreeWidgetItem*> items;
+   items.reserve( count - shown_count_ );
+   for( int i = shown_count_; i < count; ++i ) {
+      const QString path = future.resultAt( i );
+      QTreeWidgetItem* const itm = new QTreeWidgetItem;
+      itm->setText( 0, QFileInfo( path ).fileName() );
+      itm->setText( 1, root_dir_.relativeFilePath( path ) );
+      itm->setData( 1, Qt::UserRole, path );
+      items.append( itm );
+   }
+   result_->addTopLevelItems( items );
+   shown_count_ = count;
+
+   const QHeaderView* const header = result_->header();
+   result_->sortItems( header->sortIndicatorSection(), header->sortIndicatorOrder() );
+
+   if( !goto_->isEnabled() ) {
+      goto_->setEnabled( true );
+      result_->setCurrentItem( result_->topLevelItem( 0 ) );
+      if( result_->hasFocus() ) goto_->setDefault( true );
+   }
+   result_->scrollToItem( result_->currentItem(), QAbstractItemView::PositionAtCenter );
 }
-// end of result_ready
+// end of refresh
 
 //*******************************************************************
 // search_finished                                      PRIVATE slot
 //*******************************************************************
 void QBtFinder::search_finished()
 {
-   qApp->restoreOverrideCursor();
+   refresh_.stop();
+   refresh();   // whatever arrived since the last tick
+
    run_->setEnabled( true );
    break_->setEnabled( false );
    cancel_->setEnabled( true );
    settings_gbox_->setEnabled( true );
    fpath_->setText( QString() );
 
+
    const QTreeWidgetItem* const root = result_->invisibleRootItem();
    if( root->childCount() ) {
-      goto_->setEnabled( true );
-      result_->setCurrentItem( root->child( 0 ) );
+      if( !result_->currentItem() ) result_->setCurrentItem( root->child( 0 ) );
+      result_->scrollToItem( result_->currentItem(), QAbstractItemView::PositionAtCenter );
       result_->setFocus( Qt::OtherFocusReason );
+      goto_->setDefault( true );
    }
    else {
       file_->setFocus( Qt::OtherFocusReason );

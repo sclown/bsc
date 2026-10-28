@@ -31,8 +31,11 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include <QDialog>
+#include <QDir>
 #include <QFontMetrics>
 #include <QFutureWatcher>
+#include <QTimer>
+#include <optional>
 
 /*------- forward declaration:
 -------------------------------------------------------------------*/
@@ -73,11 +76,11 @@ private:
    static const char* const CASE;
    static const char* const REGEX;
    static const char* const DIRSEL;
-   static const char* const ASK_FOR_FILE;
    static const char* const ASK_FOR_FROM;
    static const char* const FILE_NAME;
    static const char* const FILE_PATH;
    static const char* const BAD_PATTERN;
+   static const int         REFRESH_MS;
 
 //******* MEMBERS *******
 private:
@@ -101,19 +104,24 @@ private:
    QFutureWatcher<QString> watcher_;
    QFontMetrics           font_metrics_;
    QString                selected_file_path_;
+   QDir                   root_dir_;
+   QTimer                 refresh_;
+   int                    shown_count_;
+   std::optional<QString> progress_dir_;
 
 //******* METHODS *******
 public:
    void selected_file      ( QString& ) const;
 private:
    void showEvent          ( QShowEvent* );
+   bool eventFilter        ( QObject*, QEvent* );
 private slots:
    void select_dir         ();
    void run_find           ();
    void break_find         ();
    void goto_find          ();
    void search_progress    ( const QString& );
-   void result_ready       ( int );
+   void refresh            ();
    void search_finished    ();
 };
 

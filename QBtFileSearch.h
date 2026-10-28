@@ -43,22 +43,16 @@ namespace BtSearch {
 
 struct Spec {
    QString root;
-   QString name_pattern;      // "a;b" globs, or one regular expression
+   QString name_pattern;
    bool    name_regex       = false;
-   QString content;           // empty: names only
+   QString content;
    bool    content_regex    = false;
-   bool    case_insensitive = false;   // applies to the content match
+   bool    case_insensitive = false;
 };
 
-// One anchored regex built from the glob list or the user's regex.
 QRegularExpression name_matcher( const Spec& );
-// Invalid (default) regex when the content is not a regular expression.
 QRegularExpression content_matcher( const Spec& );
 
-// Walks the tree, reporting every matching file as a result and the
-// directory being scanned as progress text. Hidden entries are skipped
-// at every level; symlinked directories are not followed. Returns at
-// the next file once the promise is cancelled.
 void run( QPromise<QString>& promise, const Spec spec );
 
 }

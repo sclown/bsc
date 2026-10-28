@@ -343,7 +343,6 @@ void QBtView::find()
 
    if( file_path.isEmpty() ) return;
 
-   model_->clear();
    const QFileInfo fi( file_path );
    requests_.push( RESIZE_COLUMNS );
    set_initial_file_request( fi.fileName() );

@@ -88,7 +88,6 @@ private:
    static const char* const NEW_TAB_ACCEL;
    static const char* const DEL_TAB_ACCEL;
    static const char* const SWITCH_TABS_ACCEL;
-   static const char* const FIND_ACCEL;
    //------- Help -------
    static const char* const ABOUT_QT_ICON;
    static const char* const ABOUT_BSC_ICON;
