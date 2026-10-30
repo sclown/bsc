@@ -148,15 +148,13 @@ QBtMainWindow::QBtMainWindow() : QMainWindow()
 //*******************************************************************
 // eventFilter                                     PRIVATE inherited
 //*******************************************************************
-// Turns Alt(Option)+digit into the matching function key, so every
-// existing F-key handler also answers to it: Alt+1 -> F1 ... Alt+0 -> F10.
-// Text fields keep Alt+digit for typing special characters.
 bool QBtMainWindow::eventFilter( QObject* const in_obj, QEvent* const in_event )
 {
    if( in_event->type() != QEvent::KeyPress ) return false;
 
    QKeyEvent* const key = static_cast< QKeyEvent* >( in_event );
-   if( ( key->modifiers() & ~Qt::KeypadModifier ) != Qt::AltModifier ) return false;
+   const Qt::KeyboardModifiers mods = key->modifiers() & ~Qt::KeypadModifier;
+   if( ( mods & ~Qt::ShiftModifier ) != Qt::AltModifier ) return false;
 
    // The app-wide filter sees the event once per widget it propagates to;
    // act only on the first receiver, inside this window.
@@ -192,7 +190,7 @@ bool QBtMainWindow::eventFilter( QObject* const in_obj, QEvent* const in_event )
    if( digit < 0 ) return false;
 
    const int fkey = ( digit == 0 ) ? Qt::Key_F10 : Qt::Key_F1 + digit - 1;
-   QKeyEvent fn( QEvent::KeyPress, fkey, Qt::NoModifier );
+   QKeyEvent fn( QEvent::KeyPress, fkey, mods & Qt::ShiftModifier );
    QApplication::sendEvent( target, &fn );
    return true;
 }

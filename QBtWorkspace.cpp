@@ -77,6 +77,7 @@ QBtWorkspace::QBtWorkspace( QWidget* const in_parent ) : QWidget( in_parent )
 
     QBtEventsController::instance()->append( this, QBtEvent::SWITCH_TAB_REQUEST );
     QBtEventsController::instance()->append( this, QBtEvent::F5_KEY );
+    QBtEventsController::instance()->append( this, QBtEvent::F6_KEY );
     QBtEventsController::instance()->append( this, QBtEvent::F9_KEY );
     QBtEventsController::instance()->append( this, QBtEvent::DROP_FILES );
     QBtEventsController::instance()->append( this, QBtEvent::OPEN_OPOSITE );
@@ -106,6 +107,12 @@ void QBtWorkspace::keyPressEvent( QKeyEvent* in_event )
         in_event->accept();
         copy();
         break;
+    case Qt::Key_F6:
+        if( !(in_event->modifiers() & Qt::ShiftModifier) ) {
+            in_event->accept();
+            move();
+        }
+        break;
     case Qt::Key_F9:
         in_event->accept();
         pack();
@@ -129,6 +136,9 @@ void QBtWorkspace::customEvent( QEvent* const in_event )
         break;
     case QBtEvent::F5_KEY:
         copy();
+        break;
+    case QBtEvent::F6_KEY:
+        move();
         break;
     case QBtEvent::F9_KEY:
         pack();
@@ -231,6 +241,26 @@ bool QBtWorkspace::get_selections( QBtView* const in_view, SelectionsSet& out_da
 //*******************************************************************
 void QBtWorkspace::copy()
 {
+    transfer( QBtCopyWorker::Mode::COPY );
+}
+// end of copy
+
+//*******************************************************************
+// move                                                      PRIVATE
+//*******************************************************************
+void QBtWorkspace::move()
+{
+    transfer( QBtCopyWorker::Mode::MOVE );
+}
+// end of move
+
+//*******************************************************************
+// transfer                                                  PRIVATE
+//-------------------------------------------------------------------
+// Copy or move of the selection from the current panel to the other.
+//*******************************************************************
+void QBtWorkspace::transfer( const QBtCopyWorker::Mode mode )
+{
     QBtView* src = 0;
     QBtView* dst = 0;
     if( !src_and_dst_view( src, dst ) ) {
@@ -243,13 +273,13 @@ void QBtWorkspace::copy()
     }
 
     QBtCopyDialog dialog( this );
-    if( dialog.executeCopy(data, dst->current_path(), QBtOverwriteAnswer::ASK) != QDialog::Accepted ) return;
+    if( dialog.execute( mode, data, dst->current_path(), QBtOverwriteAnswer::ASK ) != QDialog::Accepted ) return;
 
     src->unselect_all();
     src->refresh();
     dst->refresh();
 }
-// end of copy
+// end of transfer
 
 //*******************************************************************
 // pack                                                      PRIVATE
@@ -307,7 +337,7 @@ void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
     }
 
     QBtCopyDialog dialog( this );
-    if( dialog.executeCopy(dropedFiles, dropPath, command) != QDialog::Accepted ) return;
+    if( dialog.execute( QBtCopyWorker::Mode::COPY, dropedFiles, dropPath, command ) != QDialog::Accepted ) return;
     left_panel_->current_view()->refresh();
     right_panel_->current_view()->refresh();
 }

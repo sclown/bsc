@@ -48,6 +48,7 @@
 /*------- constants:
 -------------------------------------------------------------------*/
 const char* const QBtCopyDialog::CAPTION          = QT_TR_NOOP( "Copy processing" );
+const char* const QBtCopyDialog::MOVE_CAPTION     = QT_TR_NOOP( "Move processing" );
 const char* const QBtCopyDialog::SRC_DST_CAPTION  = QT_TR_NOOP( "Source and destination" );
 const char* const QBtCopyDialog::PROGRESS_CAPTION = QT_TR_NOOP( "Progress" );
 const char* const QBtCopyDialog::START            = QT_TR_NOOP( "&Start" );
@@ -74,6 +75,7 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , sources_        ()
 , destpath_       ()
 , command_        ( QBtOverwriteAnswer::ASK )
+, mode_           ( QBtCopyWorker::Mode::COPY )
 {
    setWindowTitle( tr( CAPTION ) );
 
@@ -154,16 +156,19 @@ QBtCopyDialog::~QBtCopyDialog()
 // end of ~QBtCopyDialog
 
 //*******************************************************************
-// executeCopy                                                PUBLIC
+// execute                                                    PUBLIC
 //*******************************************************************
-int QBtCopyDialog::executeCopy( const SelectionsSet& sources, const QString& destination, const QBtOverwriteAnswer::Action command )
+int QBtCopyDialog::execute( const QBtCopyWorker::Mode mode, const SelectionsSet& sources,
+                            const QString& destination, const QBtOverwriteAnswer::Action command )
 {
+   mode_     = mode;
    sources_  = sources;
    destpath_ = destination;
    command_  = command;
+   setWindowTitle( tr( QBtCopyWorker::Mode::MOVE == mode ? MOVE_CAPTION : CAPTION ) );
    return exec();
 }
-// end of executeCopy
+// end of execute
 
 //*******************************************************************
 // showEvent                                       PRIVATE inherited
@@ -238,6 +243,7 @@ void QBtCopyDialog::start()
    }
 
    watcher_.setFuture( worker_.start(
+      mode_,
       QStringList( sources_.begin(), sources_.end() ),
       QFileInfo( destpath_ ).absoluteFilePath(),
       sticky,

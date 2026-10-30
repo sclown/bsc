@@ -31,6 +31,7 @@
 /*------- include files:
 -------------------------------------------------------------------*/
 #include "BtTypes.h"
+#include "QBtCopyWorker.h"
 #include <QWidget>
 
 /*------- forward declarations:
@@ -78,6 +79,8 @@ private:
    bool src_and_dst_view( QBtView*&, QBtView*&      ) const;
    bool get_selections  ( QBtView* , SelectionsSet& ) const;
    void copy            ();
+   void move            ();
+   void transfer        ( QBtCopyWorker::Mode );
    void pack            ();
    void open_editor     ();
    void drop_files      ( const QMap<QString, QVariant>& );

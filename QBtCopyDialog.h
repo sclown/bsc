@@ -63,6 +63,7 @@ private:
 //******* CONSTANTS *******
 private:
    static const char* const CAPTION;
+   static const char* const MOVE_CAPTION;
    static const char* const SRC_DST_CAPTION;
    static const char* const PROGRESS_CAPTION;
    static const char* const START;
@@ -86,6 +87,7 @@ private:
    SelectionsSet          sources_;
    QString                destpath_;
    QBtOverwriteAnswer::Action command_;
+   QBtCopyWorker::Mode    mode_;
 
    QBtCopyWorker       worker_;
    QFutureWatcher<void>   watcher_;
@@ -95,7 +97,7 @@ private:
 
 //******* METHODS *******
 public:
-   int executeCopy( const SelectionsSet&, const QString&, QBtOverwriteAnswer::Action );
+   int execute( QBtCopyWorker::Mode, const SelectionsSet&, const QString&, QBtOverwriteAnswer::Action );
 private:
    void     showEvent        ( QShowEvent* );
    QString  sourceInitialText() const;

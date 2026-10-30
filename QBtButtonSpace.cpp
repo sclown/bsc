@@ -43,7 +43,7 @@ const char* const QBtButtonSpace::LABEL[] = {
    QT_TR_NOOP( "View"   ),
    QT_TR_NOOP( "Edit"   ),
    QT_TR_NOOP( "Copy"   ),
-   QT_TR_NOOP( "Rename" ),
+   QT_TR_NOOP( "Move"   ),
    QT_TR_NOOP( "MkDir"  ),
    QT_TR_NOOP( "Delete" ),
    QT_TR_NOOP( "Pack"   ),

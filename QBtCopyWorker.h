@@ -11,11 +11,6 @@
 #include <optional>
 #include <vector>
 
-/*------- update sent to the dialog:
--------------------------------------------------------------------
- * What the worker is doing right now: the item being copied and how
- * far into it the copy is. Links and empty files report size 0.
--------------------------------------------------------------------*/
 struct QBtCopyProgress
 {
     QString source;
@@ -24,53 +19,60 @@ struct QBtCopyProgress
     qint64  size = 0;
 };
 
-/*------- class declaration:
--------------------------------------------------------------------
- * Copies files and directories on a thread from the global pool.
- *
- * Whenever the user has to decide something (an existing target, an
- * unreadable source, an unwritable target) the worker calls the ask
- * callback from the pool thread and blocks until it returns. The
- * caller is responsible for moving that question onto the GUI thread.
- * Progress is reported through progress(), one update per item and
- * per block copied; cancellation comes through the future.
--------------------------------------------------------------------*/
 class QBtCopyWorker : public QObject
 {
     Q_OBJECT
 
 public:
     using Ask = std::function<QBtOverwriteAnswer(const QString&, QBtOverwriteAnswer::ErrorType)>;
+    enum class Mode { COPY, MOVE };
 
     explicit QBtCopyWorker( QObject* parent = nullptr );
 
-    // Starts one copy run. A sticky answer, e.g. AUTORENAME for drops,
-    // decides every conflict up front; without one the user is asked.
-    QFuture<void> start( const QStringList& sources, const QString& destination,
+    QFuture<void> start( Mode mode, const QStringList& sources, const QString& destination,
                          std::optional<QBtOverwriteAnswer> sticky, Ask ask );
 
 signals:
     void progress( const QBtCopyProgress& );
 
 private:
-    // Read/write chunk. Throughput is flat from ~64 KiB up to a few MiB;
-    // larger chunks only delay Break and progress updates.
     static constexpr qint64 BLOCK_SIZE = 1024 * 1024;
 
-    void run        ( QPromise<void>& promise, const QStringList& sources, const QString& destination );
-    bool stopped    () const;
-    void copy_into  ( const QString& source, const QString& dest_dir );
-    void copy_item  ( const QString& source, const QString& destination );
-    void copy_dir   ( const QString& source, const QString& destination );
-    void copy_link  ( const QString& source, const QString& destination );
-    void copy_file  ( const QString& source, const QString& destination );
-    bool resolve    ( const QString& source, QString& destination );
-    void report     ( const QString& path, QBtOverwriteAnswer::ErrorType type );
+    void run     ( QPromise<void>& promise, const QStringList& sources, const QString& destination );
+    bool stopped () const;
+
+    bool transfer_into( const QString& source, const QString& dest_dir );
+    bool transfer     ( const QString& source, const QString& destination );
+    bool copy( const QString& source, const QString& destination );
+    bool move( const QString& source, const QString& destination );
+    // directories
+    bool copy_dir  ( const QString& source, const QString& destination );
+    bool move_dir  ( const QString& source, const QString& destination );
+    bool write_dir ( const QString& source, const QString& destination );
+    // symbolic links
+    bool copy_link ( const QString& source, const QString& destination );
+    bool move_link ( const QString& source, const QString& destination );
+    bool write_link( const QString& source, const QString& destination );
+    // files
+    bool copy_file ( const QString& source, const QString& destination );
+    bool move_file ( const QString& source, const QString& destination );
+    bool write_file( const QString& source, const QString& destination );
+    // shared helpers
+    bool rename_item  ( const QString& source, const QString& destination, bool* cross_device = nullptr );
+    bool remove_source( const QString& source );
+    bool resolve      ( const QString& source, QString& destination );
+    void report       ( const QString& path, QBtOverwriteAnswer::ErrorType type );
     QBtOverwriteAnswer decide( const QString& path, QBtOverwriteAnswer::ErrorType type );
-    static bool is_inside( const QString& path, const QString& dir );
+    static bool is_same   ( const QString& a, const QString& b );
+    static bool is_inside ( const QString& path, const QString& dir );
     static bool can_update( const QString& source, const QString& destination );
+    static bool renames( const QStringList& sources, const QString& destination, bool move_mode );
+
+    using Operation = bool (QBtCopyWorker::*)( const QString& source, const QString& destination );
 
     QPromise<void>*     promise_;
+    Mode                mode_;
+    Operation           transfer_;
     Ask                 ask_;
     std::optional<QBtOverwriteAnswer> answer_;
     bool                stop_;

@@ -5,6 +5,8 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QtConcurrent>
+#include <filesystem>
+#include <system_error>
 
 #if defined(Q_OS_UNIX)
 #include <unistd.h>   // chown
@@ -22,8 +24,10 @@ const Qt::CaseSensitivity PathCase = Qt::CaseSensitive;
 // QBtCopyWorker                                      CONSTRUCTOR
 //*******************************************************************
 QBtCopyWorker::QBtCopyWorker( QObject* const parent ) : QObject( parent )
-, promise_ ( nullptr )
-, stop_    ( false )
+, promise_  ( nullptr )
+, mode_     ( Mode::COPY )
+, transfer_ ( &QBtCopyWorker::copy )
+, stop_     ( false )
 , block_   ( BLOCK_SIZE )
 {
 }
@@ -32,9 +36,10 @@ QBtCopyWorker::QBtCopyWorker( QObject* const parent ) : QObject( parent )
 //*******************************************************************
 // start                                                      PUBLIC
 //*******************************************************************
-QFuture<void> QBtCopyWorker::start( const QStringList& sources, const QString& destination,
+QFuture<void> QBtCopyWorker::start( const Mode mode, const QStringList& sources, const QString& destination,
                                        std::optional<QBtOverwriteAnswer> sticky, Ask ask )
 {
+   mode_   = mode;
    ask_    = std::move( ask );
    answer_ = std::move( sticky );
    stop_   = false;
@@ -46,29 +51,19 @@ QFuture<void> QBtCopyWorker::start( const QStringList& sources, const QString& d
 
 //*******************************************************************
 // run                                                       PRIVATE
-//-------------------------------------------------------------------
-// A single file source may be copied under a new name: the target is
-// then a file path unless it names an existing directory. Everything
-// else is copied into the target directory under its own name.
 //*******************************************************************
 void QBtCopyWorker::run( QPromise<void>& promise, const QStringList& sources, const QString& destination )
 {
-   promise_ = &promise;
+   promise_  = &promise;
+   transfer_ = ( mode_ == Mode::MOVE ) ? &QBtCopyWorker::move : &QBtCopyWorker::copy;
 
-   const QFileInfo single( sources.size() == 1 ? sources.first() : QString() );
-   if( sources.size() == 1 && !single.isDir() ) {
-      const QFileInfo dst( destination );
-      if( dst.exists() && dst.isDir() ) {
-         copy_into( sources.first(), destination );
-      }
-      else {
-         copy_item( sources.first(), destination );
-      }
+   if( renames( sources, destination, mode_ == Mode::MOVE) ) {
+      transfer( sources.first(), destination );
    }
    else {
       for( const QString& source : sources ) {
          if( stopped() ) break;
-         copy_into( source, destination );
+         transfer_into( source, destination );
       }
    }
 
@@ -86,59 +81,111 @@ bool QBtCopyWorker::stopped() const
 // end of stopped
 
 //*******************************************************************
-// copy_into                                                 PRIVATE
+// transfer_into                                             PRIVATE
 //*******************************************************************
-void QBtCopyWorker::copy_into( const QString& source, const QString& dest_dir )
+bool QBtCopyWorker::transfer_into( const QString& source, const QString& dest_dir )
 {
-   copy_item( source, dest_dir + QDir::separator() + QFileInfo( source ).fileName() );
+   return transfer( source, dest_dir + QDir::separator() + QFileInfo( source ).fileName() );
 }
-// end of copy_into
+// end of transfer_into
 
 //*******************************************************************
-// copy_item                                                 PRIVATE
-//-------------------------------------------------------------------
-// Symlinks are recreated as links, even when they point at a
-// directory, so a copy never follows them.
+// transfer                                                  PRIVATE
 //*******************************************************************
-void QBtCopyWorker::copy_item( const QString& source, const QString& destination )
+bool QBtCopyWorker::transfer( const QString& source, const QString& destination )
 {
-   if( stopped() ) return;
+   if( stopped() ) return false;
+   return ( this->*transfer_ )( source, destination );
+}
+// end of transfer
 
+//*******************************************************************
+// copy                                                      PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::copy( const QString& source, const QString& destination )
+{
    const QFileInfo src( source );
    if( src.isSymLink() ) {
-      copy_link( source, destination );
-   }
-   else if( src.isDir() ) {
-      copy_dir( source, destination );
-   }
-   else {
-      copy_file( source, destination );
+      return copy_link( source, destination );
+   } else if( src.isDir() ) {
+      return copy_dir ( source, destination );
+   } else {
+      return copy_file( source, destination );
    }
 }
-// end of copy_item
+// end of copy
+
+//*******************************************************************
+// move                                                      PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::move( const QString& source, const QString& destination )
+{
+   const QFileInfo src( source );
+   if( src.isSymLink() ) {
+      return move_link( source, destination );
+   }
+   else if( src.isDir() ) {
+      return move_dir ( source, destination );
+   } else {
+      return move_file( source, destination );
+   }
+}
+// end of move
+
+//===================================================================
+// DIRECTORIES
+//===================================================================
 
 //*******************************************************************
 // copy_dir                                                  PRIVATE
-//-------------------------------------------------------------------
-// Existing target directories are merged into; the user is asked
-// only about files. The entry list is taken before the target is
-// created so a copy never descends into its own output.
 //*******************************************************************
-void QBtCopyWorker::copy_dir( const QString& source, const QString& in_destination )
+bool QBtCopyWorker::copy_dir( const QString& source, const QString& in_destination )
 {
    QString destination = QDir::cleanPath( in_destination );
-   if( destination.compare( QDir::cleanPath( source ), PathCase ) == 0 ) {
+   if( is_same( source, destination ) ) {
       destination = QBtShared::auto_rename( destination );
    }
    if( is_inside( destination, source ) ) {
       report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-      return;
+      return false;
    }
+   return write_dir( source, destination );
+}
+// end of copy_dir
 
+//*******************************************************************
+// move_dir                                                  PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::move_dir( const QString& source, const QString& destination )
+{
+   if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
+   if( is_inside( destination, source ) ) {
+      report( destination, QBtOverwriteAnswer::WRITE_ERROR );
+      return false;
+   }
+   if( !QFileInfo::exists( destination ) ) {
+      bool cross_device = false;
+      if( rename_item( source, destination, &cross_device ) ) return true;
+      if( !cross_device ) {
+         report( destination, QBtOverwriteAnswer::WRITE_ERROR );
+         return false;
+      }
+   }
+   if( !write_dir( source, destination ) ) return false;
+   QDir().rmdir( source );   // succeeds only when every entry has moved out
+   return true;
+}
+// end of move_dir
+
+//*******************************************************************
+// write_dir                                                 PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::write_dir( const QString& source, const QString& destination )
+{
    const QFileInfo src( source );
    if( !src.isReadable() ) {
       report( source, QBtOverwriteAnswer::READ_ERROR );
-      return;
+      return false;
    }
    const QBtFileTimes times = QBtFileTimes::read( source, false );
 
@@ -152,13 +199,13 @@ void QBtCopyWorker::copy_dir( const QString& source, const QString& in_destinati
    if( !created ) {
       if( !dst.isDir() ) {
          report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-         return;
+         return false;
       }
    }
    else {
       if( !QDir().mkdir( destination ) ) {
          report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-         return;
+         return false;
       }
       QFile::setPermissions( destination, src.permissions() );
 #if defined(Q_OS_UNIX)
@@ -167,61 +214,113 @@ void QBtCopyWorker::copy_dir( const QString& source, const QString& in_destinati
    }
 
    for( const QFileInfo& entry : entries ) {
-      if( stopped() ) return;
-      copy_item( entry.absoluteFilePath(), destination + QDir::separator() + entry.fileName() );
+      if( stopped() ) return false;
+      transfer( entry.absoluteFilePath(), destination + QDir::separator() + entry.fileName() );
    }
-   // Last: copying the entries touched the directory's own times.
+   // Last: transferring the entries touched the directory's own times.
    if( created ) {
       times.apply( destination, false );
    }
+   return true;
 }
-// end of copy_dir
+// end of write_dir
+
+//===================================================================
+// SYMBOLIC LINKS
+//===================================================================
 
 //*******************************************************************
 // copy_link                                                 PRIVATE
 //*******************************************************************
-void QBtCopyWorker::copy_link( const QString& source, const QString& in_destination )
+bool QBtCopyWorker::copy_link( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
-   if( !resolve( source, destination ) ) return;
+   if( !resolve( source, destination ) ) return false;
+   return write_link( source, destination );
+}
+// end of copy_link
+
+//*******************************************************************
+// move_link                                                 PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::move_link( const QString& source, const QString& in_destination )
+{
+   QString destination = in_destination;
+   if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
+   if( !resolve( source, destination ) ) return false;
+   if( rename_item( source, destination ) ) return true;
+   return write_link( source, destination ) && remove_source( source );
+}
+// end of move_link
+
+//*******************************************************************
+// write_link                                                PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::write_link( const QString& source, const QString& destination )
+{
    emit progress( QBtCopyProgress{ source, destination, 0, 0 } );
 
-   // Raw link text (relative links stay relative), not the resolved path.
    const QString target = QFileInfo( source ).readSymLink();
    if( target.isEmpty() ) {
       report( source, QBtOverwriteAnswer::READ_ERROR );
-      return;
+      return false;
    }
    if( QFileInfo( destination ).isSymLink() || QFile::exists( destination ) ) {
       QFile::remove( destination );
    }
    if( !QFile::link( target, destination ) ) {
       report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-      return;
+      return false;
    }
    QBtFileTimes::read( source, true ).apply( destination, true );
+   return true;
 }
-// end of copy_link
+// end of write_link
+
+//===================================================================
+// FILES
+//===================================================================
 
 //*******************************************************************
 // copy_file                                                 PRIVATE
 //*******************************************************************
-void QBtCopyWorker::copy_file( const QString& source, const QString& in_destination )
+bool QBtCopyWorker::copy_file( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
-   if( !resolve( source, destination ) ) return;
+   if( !resolve( source, destination ) ) return false;
+   return write_file( source, destination );
+}
+// end of copy_file
 
+//*******************************************************************
+// move_file                                                 PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::move_file( const QString& source, const QString& in_destination )
+{
+   QString destination = in_destination;
+   if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
+   if( !resolve( source, destination ) ) return false;
+   if( rename_item( source, destination ) ) return true;
+   return write_file( source, destination ) && remove_source( source );
+}
+// end of move_file
+
+//*******************************************************************
+// write_file                                                PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::write_file( const QString& source, const QString& destination )
+{
    const QFileInfo fi( source );
    const QBtFileTimes times = QBtFileTimes::read( source, false );
    QFile in( source );
    if( !fi.isReadable() || !in.open( QIODevice::ReadOnly ) ) {
       report( source, QBtOverwriteAnswer::READ_ERROR );
-      return;
+      return false;
    }
    QFile out( destination );
    if( !out.open( QIODevice::WriteOnly | QIODevice::Truncate ) ) {
       report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-      return;
+      return false;
    }
 
    const qint64 size = fi.size();
@@ -230,18 +329,18 @@ void QBtCopyWorker::copy_file( const QString& source, const QString& in_destinat
    while( !in.atEnd() ) {
       if( stopped() ) {
          out.remove();
-         return;
+         return false;
       }
       const qint64 n = in.read( block_.data(), BLOCK_SIZE );
       if( n < 0 ) {
          out.remove();
          report( source, QBtOverwriteAnswer::READ_ERROR );
-         return;
+         return false;
       }
       if( out.write( block_.data(), n ) != n ) {
          out.remove();
          report( destination, QBtOverwriteAnswer::WRITE_ERROR );
-         return;
+         return false;
       }
       done += n;
       emit progress( QBtCopyProgress{ source, destination, done, size } );
@@ -253,18 +352,46 @@ void QBtCopyWorker::copy_file( const QString& source, const QString& in_destinat
    chown( destination.toUtf8(), fi.ownerId(), fi.groupId() );
 #endif
    times.apply( destination, false );
+   return true;
 }
-// end of copy_file
+// end of write_file
+
+//===================================================================
+// SHARED HELPERS
+//===================================================================
+
+//*******************************************************************
+// rename_item                                               PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::rename_item( const QString& source, const QString& destination, bool* const cross_device )
+{
+   emit progress( QBtCopyProgress{ source, destination, 0, 0 } );
+
+   std::error_code ec;
+   std::filesystem::rename( std::filesystem::path( source.toStdU16String() ),
+                            std::filesystem::path( destination.toStdU16String() ), ec );
+   if( cross_device ) *cross_device = ( ec == std::errc::cross_device_link );
+   return !ec;
+}
+// end of rename_item
+
+//*******************************************************************
+// remove_source                                             PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::remove_source( const QString& source )
+{
+   if( QFile::remove( source ) ) return true;   // unlinks a symlink itself
+   report( source, QBtOverwriteAnswer::WRITE_ERROR );
+   return false;
+}
+// end of remove_source
 
 //*******************************************************************
 // resolve                                                   PRIVATE
-//-------------------------------------------------------------------
-// Decides what to do about an existing target. Returns false when
-// the item is to be left alone; destination may come back renamed.
 //*******************************************************************
 bool QBtCopyWorker::resolve( const QString& source, QString& destination )
 {
-   if( destination.compare( source, PathCase ) == 0 ) {
+   if( is_same( source, destination ) ) {
       destination = QBtShared::auto_rename( destination );
    }
    const QFileInfo dst( destination );
@@ -300,9 +427,6 @@ bool QBtCopyWorker::resolve( const QString& source, QString& destination )
 
 //*******************************************************************
 // report                                                    PRIVATE
-//-------------------------------------------------------------------
-// Tells the user about an unreadable or unwritable item. The item
-// is skipped whatever they answer, unless they cancel the whole run.
 //*******************************************************************
 void QBtCopyWorker::report( const QString& path, const QBtOverwriteAnswer::ErrorType type )
 {
@@ -315,10 +439,6 @@ void QBtCopyWorker::report( const QString& path, const QBtOverwriteAnswer::Error
 
 //*******************************************************************
 // decide                                                    PRIVATE
-//-------------------------------------------------------------------
-// A sticky answer settles every conflict; otherwise the user is
-// asked. "Don't ask again" makes the action sticky, but a typed
-// name applies to this one item only.
 //*******************************************************************
 QBtOverwriteAnswer QBtCopyWorker::decide( const QString& path, const QBtOverwriteAnswer::ErrorType type )
 {
@@ -332,13 +452,21 @@ QBtOverwriteAnswer QBtCopyWorker::decide( const QString& path, const QBtOverwrit
 // end of decide
 
 //*******************************************************************
+// is_same                                            PRIVATE static
+//*******************************************************************
+bool QBtCopyWorker::is_same( const QString& a, const QString& b )
+{
+   return QDir::cleanPath( a ).compare( QDir::cleanPath( b ), PathCase ) == 0;
+}
+// end of is_same
+
+//*******************************************************************
 // is_inside                                          PRIVATE static
 //*******************************************************************
 bool QBtCopyWorker::is_inside( const QString& path, const QString& dir )
 {
-   const QString p = QDir::cleanPath( path );
-   const QString d = QDir::cleanPath( dir );
-   return p.compare( d, PathCase ) == 0 || p.startsWith( d + '/', PathCase );
+   return is_same( path, dir )
+       || QDir::cleanPath( path ).startsWith( QDir::cleanPath( dir ) + '/', PathCase );
 }
 // end of is_inside
 
@@ -350,3 +478,18 @@ bool QBtCopyWorker::can_update( const QString& source, const QString& destinatio
    return QFileInfo( source ).lastModified() > QFileInfo( destination ).lastModified();
 }
 // end of can_update
+
+//*******************************************************************
+// renames                                                   PRIVATE
+//*******************************************************************
+bool QBtCopyWorker::renames( 
+   const QStringList& sources,
+   const QString& destination,
+   const bool move_mode
+) {
+   if( sources.size() != 1 ) return false;
+   const QFileInfo src( sources.first() );
+   if( src.isDir() && !src.isSymLink() && !move_mode ) return false;
+   return !QFileInfo( destination ).isDir();
+}
+// end of renames

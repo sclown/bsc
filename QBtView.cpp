@@ -114,7 +114,6 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    ec->append( this, QBtEvent::F2_KEY );
    ec->append( this, QBtEvent::F3_KEY );
    ec->append( this, QBtEvent::F4_KEY );
-   ec->append( this, QBtEvent::F6_KEY );
    ec->append( this, QBtEvent::F7_KEY );
    ec->append( this, QBtEvent::F8_KEY );
    ec->append( this, QBtEvent::SELECT_REQUEST );
@@ -248,7 +247,12 @@ void QBtView::keyPressEvent( QKeyEvent* in_event )
             edit();
             break;
          case Qt::Key_F6:
-            rename();
+            // Shift+F6 renames here; plain F6 is left for the workspace (Move).
+            if( in_event->modifiers() & Qt::ShiftModifier ) {
+               in_event->accept();
+               rename();
+               return;
+            }
             break;
          case Qt::Key_F7:
             mkdir();
@@ -284,10 +288,6 @@ void QBtView::customEvent( QEvent* const in_event )
             break;
          case QBtEvent::F4_KEY:
             edit();
-            break;
-         case QBtEvent::F6_KEY:
-            rename();
-            handled = true;
             break;
          case QBtEvent::F7_KEY:
             mkdir();
