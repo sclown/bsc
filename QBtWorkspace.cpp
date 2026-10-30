@@ -241,7 +241,7 @@ bool QBtWorkspace::get_selections( QBtView* const in_view, SelectionsSet& out_da
 //*******************************************************************
 void QBtWorkspace::copy()
 {
-    transfer( QBtCopyWorker::Mode::COPY );
+    transfer( QBtCopyJob::Mode::COPY );
 }
 // end of copy
 
@@ -250,7 +250,7 @@ void QBtWorkspace::copy()
 //*******************************************************************
 void QBtWorkspace::move()
 {
-    transfer( QBtCopyWorker::Mode::MOVE );
+    transfer( QBtCopyJob::Mode::MOVE );
 }
 // end of move
 
@@ -259,7 +259,7 @@ void QBtWorkspace::move()
 //-------------------------------------------------------------------
 // Copy or move of the selection from the current panel to the other.
 //*******************************************************************
-void QBtWorkspace::transfer( const QBtCopyWorker::Mode mode )
+void QBtWorkspace::transfer( const QBtCopyJob::Mode mode )
 {
     QBtView* src = 0;
     QBtView* dst = 0;
@@ -337,7 +337,7 @@ void QBtWorkspace::drop_files(const QMap<QString, QVariant> &userInfo)
     }
 
     QBtCopyDialog dialog( this );
-    if( dialog.execute( QBtCopyWorker::Mode::COPY, dropedFiles, dropPath, command ) != QDialog::Accepted ) return;
+    if( dialog.execute( QBtCopyJob::Mode::COPY, dropedFiles, dropPath, command ) != QDialog::Accepted ) return;
     left_panel_->current_view()->refresh();
     right_panel_->current_view()->refresh();
 }

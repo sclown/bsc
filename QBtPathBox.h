@@ -25,6 +25,9 @@ private:
     void handleDrop(const QString& path);
     bool completeWithTab();
 
+private slots:
+    void refreshCompletion();
+
 };
 
 #endif // QBTPATHBOX_H

@@ -75,7 +75,7 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
 , sources_        ()
 , destpath_       ()
 , command_        ( QBtOverwriteAnswer::ASK )
-, mode_           ( QBtCopyWorker::Mode::COPY )
+, mode_           ( QBtCopyJob::Mode::COPY )
 {
    setWindowTitle( tr( CAPTION ) );
 
@@ -134,7 +134,8 @@ QBtCopyDialog::QBtCopyDialog( QWidget* const in_parent ) : QDialog( in_parent )
    refresh_.setInterval( REFRESH_MS );
    connect( &refresh_, &QTimer::timeout, this, &QBtCopyDialog::refresh );
 
-   connect( &worker_, &QBtCopyWorker::progress, this, &QBtCopyDialog::progress );
+   connect( &channel_, &QBtCopyChannel::progress, this, &QBtCopyDialog::progress );
+   connect( &channel_, &QBtCopyChannel::ask     , this, &QBtCopyDialog::ask, Qt::BlockingQueuedConnection );
    connect( &watcher_, &QFutureWatcher<void>::finished, this, &QBtCopyDialog::finish );
 }
 // end of QBtCopyDialog
@@ -158,14 +159,14 @@ QBtCopyDialog::~QBtCopyDialog()
 //*******************************************************************
 // execute                                                    PUBLIC
 //*******************************************************************
-int QBtCopyDialog::execute( const QBtCopyWorker::Mode mode, const SelectionsSet& sources,
+int QBtCopyDialog::execute( const QBtCopyJob::Mode mode, const SelectionsSet& sources,
                             const QString& destination, const QBtOverwriteAnswer::Action command )
 {
    mode_     = mode;
    sources_  = sources;
    destpath_ = destination;
    command_  = command;
-   setWindowTitle( tr( QBtCopyWorker::Mode::MOVE == mode ? MOVE_CAPTION : CAPTION ) );
+   setWindowTitle( tr( QBtCopyJob::Mode::MOVE == mode ? MOVE_CAPTION : CAPTION ) );
    return exec();
 }
 // end of execute
@@ -237,19 +238,17 @@ void QBtCopyDialog::start()
    destpath_ = dst_path_->text();
    refresh_.start();
 
-   std::optional<QBtOverwriteAnswer> sticky;
+   std::optional<QBtOverwriteAnswer> answer;
    if( QBtOverwriteAnswer::AUTORENAME == command_ ) {
-      sticky = QBtOverwriteAnswer( true, QBtOverwriteAnswer::AUTORENAME, QString() );
+      answer = QBtOverwriteAnswer( true, QBtOverwriteAnswer::AUTORENAME, QString() );
    }
 
-   watcher_.setFuture( worker_.start(
+   watcher_.setFuture( QBtCopyJob::start(
+      channel_,
       mode_,
       QStringList( sources_.begin(), sources_.end() ),
       QFileInfo( destpath_ ).absoluteFilePath(),
-      sticky,
-      [this]( const QString& path, const QBtOverwriteAnswer::ErrorType type ) {
-         return ask_overwrite( path, type );
-      } ) );
+      answer ) );
 }
 // end of start
 
@@ -271,22 +270,15 @@ void QBtCopyDialog::reject()
 // end of reject
 
 //*******************************************************************
-// ask_overwrite                                             PRIVATE
-//-------------------------------------------------------------------
-// Runs on the worker thread. The modal question is shown on this
-// dialog's thread and the worker waits for the answer.
+// ask                                                  PRIVATE slot
 //*******************************************************************
-QBtOverwriteAnswer QBtCopyDialog::ask_overwrite( const QString& path, const QBtOverwriteAnswer::ErrorType type )
+void QBtCopyDialog::ask( const QString& path, const QBtOverwriteAnswer::ErrorType type, QBtOverwriteAnswer* const answer )
 {
-   QBtOverwriteAnswer answer( false, QBtOverwriteAnswer::CANCEL, QString() );
-   QMetaObject::invokeMethod( this, [&]() {
-      if( !watcher_.isCanceled() ) {
-         answer = can_overwrite_->ask( path, type );
-      }
-   }, Qt::BlockingQueuedConnection );
-   return answer;
+   if( !watcher_.isCanceled() ) {
+      *answer = can_overwrite_->ask( path, type );
+   }
 }
-// end of ask_overwrite
+// end of ask
 
 //*******************************************************************
 // finish                                               PRIVATE slot

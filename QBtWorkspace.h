@@ -80,7 +80,7 @@ private:
    bool get_selections  ( QBtView* , SelectionsSet& ) const;
    void copy            ();
    void move            ();
-   void transfer        ( QBtCopyWorker::Mode );
+   void transfer        ( QBtCopyJob::Mode );
    void pack            ();
    void open_editor     ();
    void drop_files      ( const QMap<QString, QVariant>& );

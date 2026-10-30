@@ -4,9 +4,11 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QPromise>
 #include <QtConcurrent>
 #include <filesystem>
 #include <system_error>
+#include <vector>
 
 #if defined(Q_OS_UNIX)
 #include <unistd.h>   // chown
@@ -21,43 +23,30 @@ const Qt::CaseSensitivity PathCase = Qt::CaseSensitive;
 }
 
 //*******************************************************************
-// QBtCopyWorker                                      CONSTRUCTOR
+// QBtCopyJob                                         CONSTRUCTOR
 //*******************************************************************
-QBtCopyWorker::QBtCopyWorker( QObject* const parent ) : QObject( parent )
-, promise_  ( nullptr )
-, mode_     ( Mode::COPY )
-, transfer_ ( &QBtCopyWorker::copy )
+QBtCopyJob::QBtCopyJob( 
+   QPromise<void>& promise,
+   QBtCopyChannel& channel,
+   const Mode mode,
+   std::optional<QBtOverwriteAnswer> sticky 
+) : promise_  ( promise )
+, channel_  ( channel )
+, mode_     ( mode )
+, transfer_ ( Mode::MOVE == mode ? &QBtCopyJob::move : &QBtCopyJob::copy )
+, answer_   ( std::move( sticky ) )
 , stop_     ( false )
-, block_   ( BLOCK_SIZE )
+, block_    ( BLOCK_SIZE )
 {
 }
-// end of QBtCopyWorker
+// end of QBtCopyJob
 
 //*******************************************************************
-// start                                                      PUBLIC
+// run                                                        PRIVATE
 //*******************************************************************
-QFuture<void> QBtCopyWorker::start( const Mode mode, const QStringList& sources, const QString& destination,
-                                       std::optional<QBtOverwriteAnswer> sticky, Ask ask )
+void QBtCopyJob::run( const QStringList& sources, const QString& destination )
 {
-   mode_   = mode;
-   ask_    = std::move( ask );
-   answer_ = std::move( sticky );
-   stop_   = false;
-   return QtConcurrent::run( [this, sources, destination]( QPromise<void>& promise ) {
-      run( promise, sources, destination );
-   } );
-}
-// end of start
-
-//*******************************************************************
-// run                                                       PRIVATE
-//*******************************************************************
-void QBtCopyWorker::run( QPromise<void>& promise, const QStringList& sources, const QString& destination )
-{
-   promise_  = &promise;
-   transfer_ = ( mode_ == Mode::MOVE ) ? &QBtCopyWorker::move : &QBtCopyWorker::copy;
-
-   if( renames( sources, destination, mode_ == Mode::MOVE) ) {
+   if( renames( sources, destination, Mode::MOVE == mode_ ) ) {
       transfer( sources.first(), destination );
    }
    else {
@@ -66,24 +55,22 @@ void QBtCopyWorker::run( QPromise<void>& promise, const QStringList& sources, co
          transfer_into( source, destination );
       }
    }
-
-   promise_ = nullptr;
 }
 // end of run
 
 //*******************************************************************
 // stopped                                                   PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::stopped() const
+bool QBtCopyJob::stopped() const
 {
-   return stop_ || promise_->isCanceled();
+   return stop_ || promise_.isCanceled();
 }
 // end of stopped
 
 //*******************************************************************
 // transfer_into                                             PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::transfer_into( const QString& source, const QString& dest_dir )
+bool QBtCopyJob::transfer_into( const QString& source, const QString& dest_dir )
 {
    return transfer( source, dest_dir + QDir::separator() + QFileInfo( source ).fileName() );
 }
@@ -92,7 +79,7 @@ bool QBtCopyWorker::transfer_into( const QString& source, const QString& dest_di
 //*******************************************************************
 // transfer                                                  PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::transfer( const QString& source, const QString& destination )
+bool QBtCopyJob::transfer( const QString& source, const QString& destination )
 {
    if( stopped() ) return false;
    return ( this->*transfer_ )( source, destination );
@@ -102,7 +89,7 @@ bool QBtCopyWorker::transfer( const QString& source, const QString& destination 
 //*******************************************************************
 // copy                                                      PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::copy( const QString& source, const QString& destination )
+bool QBtCopyJob::copy( const QString& source, const QString& destination )
 {
    const QFileInfo src( source );
    if( src.isSymLink() ) {
@@ -118,7 +105,7 @@ bool QBtCopyWorker::copy( const QString& source, const QString& destination )
 //*******************************************************************
 // move                                                      PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::move( const QString& source, const QString& destination )
+bool QBtCopyJob::move( const QString& source, const QString& destination )
 {
    const QFileInfo src( source );
    if( src.isSymLink() ) {
@@ -139,7 +126,7 @@ bool QBtCopyWorker::move( const QString& source, const QString& destination )
 //*******************************************************************
 // copy_dir                                                  PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::copy_dir( const QString& source, const QString& in_destination )
+bool QBtCopyJob::copy_dir( const QString& source, const QString& in_destination )
 {
    QString destination = QDir::cleanPath( in_destination );
    if( is_same( source, destination ) ) {
@@ -156,7 +143,7 @@ bool QBtCopyWorker::copy_dir( const QString& source, const QString& in_destinati
 //*******************************************************************
 // move_dir                                                  PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::move_dir( const QString& source, const QString& destination )
+bool QBtCopyJob::move_dir( const QString& source, const QString& destination )
 {
    if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
    if( is_inside( destination, source ) ) {
@@ -180,7 +167,7 @@ bool QBtCopyWorker::move_dir( const QString& source, const QString& destination 
 //*******************************************************************
 // write_dir                                                 PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::write_dir( const QString& source, const QString& destination )
+bool QBtCopyJob::write_dir( const QString& source, const QString& destination )
 {
    const QFileInfo src( source );
    if( !src.isReadable() ) {
@@ -232,7 +219,7 @@ bool QBtCopyWorker::write_dir( const QString& source, const QString& destination
 //*******************************************************************
 // copy_link                                                 PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::copy_link( const QString& source, const QString& in_destination )
+bool QBtCopyJob::copy_link( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
    if( !resolve( source, destination ) ) return false;
@@ -243,7 +230,7 @@ bool QBtCopyWorker::copy_link( const QString& source, const QString& in_destinat
 //*******************************************************************
 // move_link                                                 PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::move_link( const QString& source, const QString& in_destination )
+bool QBtCopyJob::move_link( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
    if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
@@ -256,9 +243,9 @@ bool QBtCopyWorker::move_link( const QString& source, const QString& in_destinat
 //*******************************************************************
 // write_link                                                PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::write_link( const QString& source, const QString& destination )
+bool QBtCopyJob::write_link( const QString& source, const QString& destination )
 {
-   emit progress( QBtCopyProgress{ source, destination, 0, 0 } );
+   emit channel_.progress( QBtCopyProgress{ source, destination, 0, 0 } );
 
    const QString target = QFileInfo( source ).readSymLink();
    if( target.isEmpty() ) {
@@ -284,7 +271,7 @@ bool QBtCopyWorker::write_link( const QString& source, const QString& destinatio
 //*******************************************************************
 // copy_file                                                 PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::copy_file( const QString& source, const QString& in_destination )
+bool QBtCopyJob::copy_file( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
    if( !resolve( source, destination ) ) return false;
@@ -295,7 +282,7 @@ bool QBtCopyWorker::copy_file( const QString& source, const QString& in_destinat
 //*******************************************************************
 // move_file                                                 PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::move_file( const QString& source, const QString& in_destination )
+bool QBtCopyJob::move_file( const QString& source, const QString& in_destination )
 {
    QString destination = in_destination;
    if( is_same( source, destination ) ) return true;   // moved onto itself: nothing to do
@@ -308,7 +295,7 @@ bool QBtCopyWorker::move_file( const QString& source, const QString& in_destinat
 //*******************************************************************
 // write_file                                                PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::write_file( const QString& source, const QString& destination )
+bool QBtCopyJob::write_file( const QString& source, const QString& destination )
 {
    const QFileInfo fi( source );
    const QBtFileTimes times = QBtFileTimes::read( source, false );
@@ -325,7 +312,7 @@ bool QBtCopyWorker::write_file( const QString& source, const QString& destinatio
 
    const qint64 size = fi.size();
    qint64 done = 0;
-   emit progress( QBtCopyProgress{ source, destination, done, size } );
+   emit channel_.progress( QBtCopyProgress{ source, destination, done, size } );
    while( !in.atEnd() ) {
       if( stopped() ) {
          out.remove();
@@ -343,7 +330,7 @@ bool QBtCopyWorker::write_file( const QString& source, const QString& destinatio
          return false;
       }
       done += n;
-      emit progress( QBtCopyProgress{ source, destination, done, size } );
+      emit channel_.progress( QBtCopyProgress{ source, destination, done, size } );
    }
 
    out.close();
@@ -363,9 +350,9 @@ bool QBtCopyWorker::write_file( const QString& source, const QString& destinatio
 //*******************************************************************
 // rename_item                                               PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::rename_item( const QString& source, const QString& destination, bool* const cross_device )
+bool QBtCopyJob::rename_item( const QString& source, const QString& destination, bool* const cross_device )
 {
-   emit progress( QBtCopyProgress{ source, destination, 0, 0 } );
+   emit channel_.progress( QBtCopyProgress{ source, destination, 0, 0 } );
 
    std::error_code ec;
    std::filesystem::rename( std::filesystem::path( source.toStdU16String() ),
@@ -378,7 +365,7 @@ bool QBtCopyWorker::rename_item( const QString& source, const QString& destinati
 //*******************************************************************
 // remove_source                                             PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::remove_source( const QString& source )
+bool QBtCopyJob::remove_source( const QString& source )
 {
    if( QFile::remove( source ) ) return true;   // unlinks a symlink itself
    report( source, QBtOverwriteAnswer::WRITE_ERROR );
@@ -389,7 +376,7 @@ bool QBtCopyWorker::remove_source( const QString& source )
 //*******************************************************************
 // resolve                                                   PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::resolve( const QString& source, QString& destination )
+bool QBtCopyJob::resolve( const QString& source, QString& destination )
 {
    if( is_same( source, destination ) ) {
       destination = QBtShared::auto_rename( destination );
@@ -428,7 +415,7 @@ bool QBtCopyWorker::resolve( const QString& source, QString& destination )
 //*******************************************************************
 // report                                                    PRIVATE
 //*******************************************************************
-void QBtCopyWorker::report( const QString& path, const QBtOverwriteAnswer::ErrorType type )
+void QBtCopyJob::report( const QString& path, const QBtOverwriteAnswer::ErrorType type )
 {
    if( stopped() ) return;
    if( QBtOverwriteAnswer::CANCEL == decide( path, type ).action() ) {
@@ -440,10 +427,11 @@ void QBtCopyWorker::report( const QString& path, const QBtOverwriteAnswer::Error
 //*******************************************************************
 // decide                                                    PRIVATE
 //*******************************************************************
-QBtOverwriteAnswer QBtCopyWorker::decide( const QString& path, const QBtOverwriteAnswer::ErrorType type )
+QBtOverwriteAnswer QBtCopyJob::decide( const QString& path, const QBtOverwriteAnswer::ErrorType type )
 {
    if( answer_ ) return *answer_;
-   const QBtOverwriteAnswer answer = ask_( path, type );
+   QBtOverwriteAnswer answer( false, QBtOverwriteAnswer::CANCEL, QString() );
+   emit channel_.ask( path, type, &answer );
    if( answer.dontAsk() ) {
       answer_ = QBtOverwriteAnswer( true, answer.action(), QString() );
    }
@@ -454,7 +442,7 @@ QBtOverwriteAnswer QBtCopyWorker::decide( const QString& path, const QBtOverwrit
 //*******************************************************************
 // is_same                                            PRIVATE static
 //*******************************************************************
-bool QBtCopyWorker::is_same( const QString& a, const QString& b )
+bool QBtCopyJob::is_same( const QString& a, const QString& b )
 {
    return QDir::cleanPath( a ).compare( QDir::cleanPath( b ), PathCase ) == 0;
 }
@@ -463,7 +451,7 @@ bool QBtCopyWorker::is_same( const QString& a, const QString& b )
 //*******************************************************************
 // is_inside                                          PRIVATE static
 //*******************************************************************
-bool QBtCopyWorker::is_inside( const QString& path, const QString& dir )
+bool QBtCopyJob::is_inside( const QString& path, const QString& dir )
 {
    return is_same( path, dir )
        || QDir::cleanPath( path ).startsWith( QDir::cleanPath( dir ) + '/', PathCase );
@@ -473,7 +461,7 @@ bool QBtCopyWorker::is_inside( const QString& path, const QString& dir )
 //*******************************************************************
 // can_update                                         PRIVATE static
 //*******************************************************************
-bool QBtCopyWorker::can_update( const QString& source, const QString& destination )
+bool QBtCopyJob::can_update( const QString& source, const QString& destination )
 {
    return QFileInfo( source ).lastModified() > QFileInfo( destination ).lastModified();
 }
@@ -482,7 +470,7 @@ bool QBtCopyWorker::can_update( const QString& source, const QString& destinatio
 //*******************************************************************
 // renames                                                   PRIVATE
 //*******************************************************************
-bool QBtCopyWorker::renames( 
+bool QBtCopyJob::renames( 
    const QStringList& sources,
    const QString& destination,
    const bool move_mode
@@ -493,3 +481,21 @@ bool QBtCopyWorker::renames(
    return !QFileInfo( destination ).isDir();
 }
 // end of renames
+
+//*******************************************************************
+// start                                                      PUBLIC
+//*******************************************************************
+QFuture<void> QBtCopyJob::start( 
+   QBtCopyChannel& channel,
+   const Mode mode,
+   const QStringList& sources,
+   const QString& destination,
+   std::optional<QBtOverwriteAnswer> answer 
+) {
+   return QtConcurrent::run( [&channel, mode, sources, destination, answer]( QPromise<void>& promise ) {
+      QBtCopyJob job( promise, channel, mode, answer );
+      job.run( sources, destination );
+   } );
+}
+// end of start
+

@@ -87,9 +87,9 @@ private:
    SelectionsSet          sources_;
    QString                destpath_;
    QBtOverwriteAnswer::Action command_;
-   QBtCopyWorker::Mode    mode_;
+   QBtCopyJob::Mode    mode_;
 
-   QBtCopyWorker       worker_;
+   QBtCopyChannel         channel_;
    QFutureWatcher<void>   watcher_;
    // Latest unpainted update from the worker; refresh_ paints and clears it.
    QTimer                 refresh_;
@@ -97,13 +97,13 @@ private:
 
 //******* METHODS *******
 public:
-   int execute( QBtCopyWorker::Mode, const SelectionsSet&, const QString&, QBtOverwriteAnswer::Action );
+   int execute( QBtCopyJob::Mode, const SelectionsSet&, const QString&, QBtOverwriteAnswer::Action );
 private:
    void     showEvent        ( QShowEvent* );
    QString  sourceInitialText() const;
    void     display_paths    ( const QString&, const QString& );
-   QBtOverwriteAnswer ask_overwrite( const QString&, QBtOverwriteAnswer::ErrorType );
 private slots:
+   void ask           ( const QString&, QBtOverwriteAnswer::ErrorType, QBtOverwriteAnswer* );
    void start         ();
    void reject        ();
    void finish        ();

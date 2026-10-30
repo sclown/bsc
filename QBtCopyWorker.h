@@ -7,7 +7,6 @@
 #include <QPromise>
 #include <QString>
 #include <QStringList>
-#include <functional>
 #include <optional>
 #include <vector>
 
@@ -19,26 +18,33 @@ struct QBtCopyProgress
     qint64  size = 0;
 };
 
-class QBtCopyWorker : public QObject
+class QBtCopyChannel : public QObject
 {
     Q_OBJECT
 
 public:
-    using Ask = std::function<QBtOverwriteAnswer(const QString&, QBtOverwriteAnswer::ErrorType)>;
-    enum class Mode { COPY, MOVE };
-
-    explicit QBtCopyWorker( QObject* parent = nullptr );
-
-    QFuture<void> start( Mode mode, const QStringList& sources, const QString& destination,
-                         std::optional<QBtOverwriteAnswer> sticky, Ask ask );
+    using QObject::QObject;
 
 signals:
     void progress( const QBtCopyProgress& );
+    void ask     ( const QString& path, QBtOverwriteAnswer::ErrorType type, QBtOverwriteAnswer* answer );
+};
+
+class QBtCopyJob
+{
+public:
+    enum class Mode { COPY, MOVE };
+
+    static QFuture<void> start( QBtCopyChannel& channel, Mode mode, const QStringList& sources,
+                                const QString& destination, std::optional<QBtOverwriteAnswer> sticky );
 
 private:
     static constexpr qint64 BLOCK_SIZE = 1024 * 1024;
+    using Operation = bool (QBtCopyJob::*)( const QString& source, const QString& destination );
 
-    void run     ( QPromise<void>& promise, const QStringList& sources, const QString& destination );
+    QBtCopyJob( QPromise<void>& promise, QBtCopyChannel& channel, Mode mode, std::optional<QBtOverwriteAnswer> sticky );
+
+    void run     ( const QStringList& sources, const QString& destination );
     bool stopped () const;
 
     bool transfer_into( const QString& source, const QString& dest_dir );
@@ -68,12 +74,10 @@ private:
     static bool can_update( const QString& source, const QString& destination );
     static bool renames( const QStringList& sources, const QString& destination, bool move_mode );
 
-    using Operation = bool (QBtCopyWorker::*)( const QString& source, const QString& destination );
-
-    QPromise<void>*     promise_;
-    Mode                mode_;
-    Operation           transfer_;
-    Ask                 ask_;
+    QPromise<void>&     promise_;
+    QBtCopyChannel&     channel_;
+    const Mode          mode_;
+    const Operation     transfer_;
     std::optional<QBtOverwriteAnswer> answer_;
     bool                stop_;
     std::vector<char>   block_;
