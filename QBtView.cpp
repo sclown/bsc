@@ -41,6 +41,7 @@
 #include "QBtAttrDialog.h"
 #include "QBtFinder.h"
 #include "QBtCanOverwrite.h"
+#include "QBtHeaderView.h"
 #include "QBTMacTools.h"
 #include <QHeaderView>
 #include <QStyleHints>
@@ -87,6 +88,9 @@ QBtView::QBtView( const QString& in_path, int sortColumn, Qt::SortOrder sortOrde
    setSelectionMode(QAbstractItemView::ExtendedSelection);
    setHorizontalScrollMode(ScrollPerItem);
    setVerticalScrollMode(ScrollPerItem);
+
+   // Use custom header view that draws without stylesheets to avoid theme-change caching issues
+   setHeader( new QBtHeaderView( Qt::Horizontal, this ) );
 
    header()->setStretchLastSection( true );
    header()->setHighlightSections( false );
@@ -874,27 +878,9 @@ void QBtView::resize_columns()
 // follows light/dark mode.
 void QBtView::style_header()
 {
-   const QPalette pal = palette();
-   const QColor base = pal.color( QPalette::Base );
-   const QColor text = pal.color( QPalette::Text );
-   const auto mix = [&]( qreal t ) {
-      return QColor::fromRgbF( base.redF()   + ( text.redF()   - base.redF()   ) * t,
-                               base.greenF() + ( text.greenF() - base.greenF() ) * t,
-                               base.blueF()  + ( text.blueF()  - base.blueF()  ) * t ).name();
-   };
-
-   QFont hf = font();
-   hf.setPointSizeF( hf.pointSizeF() * 0.92 );
-   hf.setWeight( QFont::DemiBold );
-   header()->setFont( hf );
-
-   header()->setStyleSheet( QString(
-      "QHeaderView { background: %1; border: none; border-bottom: 1px solid %2; }"
-      "QHeaderView::section { background: %1; color: %3; border: none;"
-      "  border-right: 1px solid %4; padding: 4px 6px; }"
-      "QHeaderView::section:last { border-right: none; }"
-      "QHeaderView::section:hover { color: %5; }" )
-      .arg( base.name(), mix( 0.15 ), mix( 0.55 ), mix( 0.10 ), text.name() ) );
+   // The custom QBtHeaderView handles all drawing, including theme-aware colors,
+   // borders, hover effects, etc. We just need to trigger a repaint.
+   header()->viewport()->update();
 }
 // end of style_header
 

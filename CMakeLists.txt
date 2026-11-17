@@ -27,6 +27,7 @@ set(BSC_SOURCES
     QBtFileViewer.cpp
     QBtFileSearch.cpp
     QBtFinder.cpp
+    QBtHeaderView.cpp
     QBtHelp.cpp
     QBtInfoLabel.cpp
     QBtMainWindow.cpp
@@ -67,6 +68,7 @@ set(BSC_HEADERS
     QBtFileViewer.h
     QBtFileSearch.h
     QBtFinder.h
+    QBtHeaderView.h
     QBtHelp.h
     QBtInfoField.h
     QBtInfoLabel.h
